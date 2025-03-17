@@ -12,7 +12,7 @@ export async function GET(
 ) {
 	console.log("GET");
 	try {
-		const { universeId, entityId } = params;
+		const { universeId, entityId } = await params;
 
 		if (!universeId || !entityId) {
 			return NextResponse.json(
@@ -85,7 +85,7 @@ export async function PUT(
 	{ params }: { params: { universeId: string; entityId: string } }
 ) {
 	try {
-		const { universeId, entityId } = params;
+		const { universeId, entityId } = await params;
 
 		if (!universeId || !entityId) {
 			return NextResponse.json(
@@ -197,7 +197,7 @@ export async function DELETE(
 	{ params }: { params: { universeId: string; entityId: string } }
 ) {
 	try {
-		const { universeId, entityId } = params;
+		const { universeId, entityId } = await params;
 
 		if (!universeId || !entityId) {
 			return NextResponse.json(

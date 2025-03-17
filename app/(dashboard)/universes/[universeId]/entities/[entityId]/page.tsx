@@ -31,7 +31,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Trash } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -82,12 +82,14 @@ export default function EntityEditPage() {
 	const [customType, setCustomType] = useState("");
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
+	const [deleting, setDeleting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [formError, setFormError] = useState<string | null>(null);
 	const [isTypeCustom, setIsTypeCustom] = useState(false);
 	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 	const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 	const [navigationTarget, setNavigationTarget] = useState("");
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
 	// Fetch entity data
 	useEffect(() => {
@@ -230,7 +232,38 @@ export default function EntityEditPage() {
 			setFormError(
 				err instanceof Error ? err.message : "Failed to update entity"
 			);
+		} finally {
 			setSaving(false);
+		}
+	};
+
+	// Handle entity deletion
+	const handleDelete = async () => {
+		try {
+			setDeleting(true);
+			setFormError(null);
+
+			const response = await fetch(
+				`/api/universes/${universeId}/entities/${entityId}`,
+				{
+					method: "DELETE",
+				}
+			);
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || "Failed to delete entity");
+			}
+
+			// Navigate back to entities list
+			router.push(`/universes/${universeId}/entities`);
+		} catch (err) {
+			console.error("Error deleting entity:", err);
+			setFormError(
+				err instanceof Error ? err.message : "Failed to delete entity"
+			);
+			setShowDeleteDialog(false);
+			setDeleting(false);
 		}
 	};
 
@@ -365,6 +398,38 @@ export default function EntityEditPage() {
 				</AlertDialogContent>
 			</AlertDialog>
 
+			{/* Delete confirmation dialog */}
+			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Delete Entity</AlertDialogTitle>
+						<AlertDialogDescription>
+							Are you sure you want to delete "{entity.name}"? This action
+							cannot be undone.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel onClick={() => setShowDeleteDialog(false)}>
+							Cancel
+						</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleDelete}
+							className="bg-red-600 hover:bg-red-700 text-white"
+						>
+							{deleting ? (
+								<>
+									<Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
+								</>
+							) : (
+								<>
+									<Trash className="mr-2 h-4 w-4" /> Delete Entity
+								</>
+							)}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
+
 			{/* Header */}
 			<div className="mb-6">
 				<Button
@@ -431,6 +496,7 @@ export default function EntityEditPage() {
 											{type.charAt(0).toUpperCase() + type.slice(1)}
 										</SelectItem>
 									))}
+									<SelectItem value="custom">Custom</SelectItem>
 								</SelectContent>
 							</Select>
 							{formData.type === "custom" && (
@@ -501,21 +567,33 @@ export default function EntityEditPage() {
 						</div>
 					</CardContent>
 					<CardFooter className="flex justify-between border-t p-6">
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() =>
-								handleNavigation(
-									`/universes/${universeId}/entities/${entityId}`
-								)
-							}
-						>
-							Cancel
-						</Button>
+						<div className="flex gap-2">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() =>
+									handleNavigation(
+										`/universes/${universeId}/entities/${entityId}`
+									)
+								}
+							>
+								Cancel
+							</Button>
+							<Button
+								type="button"
+								variant="destructive"
+								onClick={() => setShowDeleteDialog(true)}
+								disabled={deleting}
+							>
+								<Trash className="mr-2 h-4 w-4" /> Delete
+							</Button>
+						</div>
 						<Button
 							type="submit"
 							disabled={
-								saving || (formData.type === "custom" && !customType?.trim())
+								saving ||
+								deleting ||
+								(formData.type === "custom" && !customType?.trim())
 							}
 							className={!hasUnsavedChanges ? "opacity-50" : ""}
 						>

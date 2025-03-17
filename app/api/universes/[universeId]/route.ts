@@ -46,8 +46,6 @@ export async function GET(
 			);
 		}
 
-		console.log(universe[0].teamId, teamData.id);
-
 		// Verify the universe belongs to the user's team
 		if (universe[0].teamId !== teamData.id) {
 			return NextResponse.json(

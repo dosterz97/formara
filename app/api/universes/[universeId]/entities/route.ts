@@ -1,12 +1,12 @@
 import { db } from "@/lib/db/drizzle";
 import {
-	createEntityVectorDirect,
+	createEntityVector,
 	createUniverseCollection,
 	verifyCollection,
 } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
 import { entities, universes } from "@/lib/db/schema";
-import { count, eq, like, sql } from "drizzle-orm";
+import { count, eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import slugify from "slugify";
 
@@ -69,17 +69,17 @@ export async function GET(
 			.from(entities)
 			.where(eq(entities.universeId, parseInt(universeId, 10)));
 
-		// Add search if provided
-		if (search) {
-			// This is a basic implementation - you might want to use a more sophisticated
-			// search method like full-text search depending on your database
-			query = query.where(like(entities.name, `%${search}%`));
-		}
+		// // Add search if provided
+		// if (search) {
+		// 	// This is a basic implementation - you might want to use a more sophisticated
+		// 	// search method like full-text search depending on your database
+		// 	query = query.where(like(entities.name, `%${search}%`));
+		// }
 
 		// Add pagination
 		const allEntities = await query.limit(limit).offset(offset);
 
-		console.log(allEntities);
+		// console.log(allEntities);
 
 		// Get total count for pagination
 		const countResult = await db
@@ -176,19 +176,9 @@ export async function POST(
 			updatedAt: new Date(),
 		} satisfies Omit<typeof entities.$inferInsert, "id">;
 
-		console.log("newEntity", newEntity);
+		// console.log("newEntity", newEntity);
 		const [entity] = await db.insert(entities).values(newEntity).returning();
 
-		// If this universe uses vector embeddings, you might need to create a vector for this entity
-		// if (universe[0].vectorNamespace) {
-		// 	const vectorId = await createEntityVector(entity, universe[0]);
-
-		// 	await db.update(entities).set({
-		// 		...newEntity,
-		// 		updatedAt: new Date(),
-		// 		vectorId,
-		// 	});
-		// }
 		// For your entity update after vector creation:
 		if (universe[0].vectorNamespace) {
 			try {
@@ -202,7 +192,7 @@ export async function POST(
 					await createUniverseCollection(universe[0]);
 				}
 
-				const vectorId = await createEntityVectorDirect(entity, universe[0]);
+				const vectorId = await createEntityVector(entity, universe[0]);
 
 				await db
 					.update(entities)

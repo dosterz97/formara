@@ -45,8 +45,8 @@ export async function createUniverseCollection(
 		console.log(
 			`Created collection ${collectionName} for universe ${universe.name}`
 		);
-	} catch (error) {
-		console.error("Error creating Qdrant collection:", error);
+	} catch (error: any) {
+		console.error("Error creating Qdrant collection:", error?.message || error);
 		throw error;
 	}
 }
@@ -74,8 +74,8 @@ export async function deleteUniverseCollection(
 		console.log(
 			`Deleted collection ${collectionName} for universe ${universe.name}`
 		);
-	} catch (error) {
-		console.error("Error deleting Qdrant collection:", error);
+	} catch (error: any) {
+		console.error("Error deleting Qdrant collection:", error?.message || error);
 		throw error;
 	}
 }
@@ -118,140 +118,6 @@ function formatEntityForEmbedding(entity: Entity): string {
 
 	return formattedText;
 }
-/**
- * Creates entity vector in Qdrant
- * @param entity The entity object
- * @param universe The universe object
- * returns vector id
- */
-export async function createEntityVector(
-	entity: Entity,
-	universe: Universe
-): Promise<string> {
-	try {
-		const collectionName = universe.vectorNamespace;
-
-		// Use a string ID for Qdrant (required for REST API)
-		const vectorId = `entity-${entity.id}`;
-
-		// Format the entity for embedding
-		const formattedEntity = formatEntityForEmbedding(entity);
-		console.log("Formatted entity for embedding:", formattedEntity);
-
-		// Generate embedding using OpenAI
-		const embeddingResponse = await openai.embeddings.create({
-			model: "text-embedding-ada-002",
-			input: formattedEntity,
-		});
-
-		const embedding = embeddingResponse.data[0].embedding;
-		console.log("Got embedding with length:", embedding.length);
-
-		// Log the request before sending (only show first few dimensions)
-		console.log(
-			"Upsert request to",
-			collectionName,
-			"with point ID:",
-			vectorId
-		);
-
-		// Make sure all payload values are properly formatted
-		const payload = {
-			entity_id: entity.id,
-			universe_id: entity.universeId,
-			name: entity.name || "",
-			type: entity.entityType || "default",
-			description: entity.description || "",
-			created_at: new Date().toISOString(),
-			updated_at: new Date().toISOString(),
-		};
-
-		// Verify embedding is the expected length for the collection
-		if (embedding.length !== 1536) {
-			throw new Error(
-				`Embedding has incorrect length: ${embedding.length}, expected 1536`
-			);
-		}
-
-		// Check if the point already exists and delete it if it does
-		try {
-			const pointExists = await qdrantClient.retrieve(collectionName, {
-				ids: [vectorId],
-				with_payload: false,
-				with_vector: false,
-			});
-
-			if (pointExists.length > 0) {
-				console.log(`Point ${vectorId} already exists, deleting it first`);
-				await qdrantClient.delete(collectionName, {
-					points: [vectorId],
-					wait: true,
-				});
-			}
-		} catch (e) {
-			// Ignore errors from retrieve - it could be that the point doesn't exist
-			console.log(
-				"Point retrieval error (likely doesn't exist yet):",
-				e.message
-			);
-		}
-
-		// Add a small delay to ensure any deletion completes
-		await new Promise((resolve) => setTimeout(resolve, 100));
-
-		// Store in Qdrant with careful validation of all data
-		await qdrantClient.upsert(collectionName, {
-			wait: true,
-			points: [
-				{
-					id: vectorId,
-					vector: embedding,
-					payload: payload,
-				},
-			],
-		});
-
-		console.log(
-			`Created vector for entity ${entity.name} (ID: ${entity.id}) in universe ${universe.name}`
-		);
-		return vectorId;
-	} catch (error) {
-		// Improved error handling with detailed logging
-		console.error("Error creating entity vector:", error.message);
-
-		if (error.response) {
-			console.error("Error details:", {
-				status: error.response.status,
-				statusText: error.response.statusText,
-			});
-
-			try {
-				// Try to parse and log the response data
-				if (typeof error.response.data === "object") {
-					console.error(
-						"Error response data:",
-						JSON.stringify(error.response.data, null, 2)
-					);
-				} else {
-					const errorData = JSON.parse(error.response.data);
-					console.error(
-						"Error response data:",
-						JSON.stringify(errorData, null, 2)
-					);
-				}
-			} catch (e) {
-				console.error("Raw error response:", error.response.data);
-			}
-		}
-
-		// Create a fallback vector ID if we have to return something
-		// (though it's better to handle this error at a higher level)
-		const fallbackId = `error-${entity.id}-${Date.now()}`;
-		throw new Error(
-			`Failed to create vector: ${error.message}, fallback ID: ${fallbackId}`
-		);
-	}
-}
 
 /**
  * Verifies a Qdrant collection exists and has the correct configuration
@@ -284,27 +150,34 @@ export async function verifyCollection(
 
 		console.log(`Collection ${collectionName} verified successfully`);
 		return true;
-	} catch (error) {
-		console.error(`Error verifying collection ${collectionName}:`, error);
+	} catch (error: any) {
+		console.error(
+			`Error verifying collection ${collectionName}:`,
+			error?.message || error
+		);
 		return false;
 	}
 }
 
 /**
- * Creates entity vector using direct API with correct ID format
+ * Creates entity vector in Qdrant
+ * @param entity The entity object
+ * @param universe The universe object
+ * returns vector id
  */
-export async function createEntityVectorDirect(
+export async function createEntityVector(
 	entity: Entity,
 	universe: Universe
 ): Promise<string> {
 	try {
 		const collectionName = universe.vectorNamespace;
 
-		// Use a numeric ID - Qdrant requires either unsigned integers or UUIDs
+		// Use a numeric ID for Qdrant (required for this Qdrant instance)
 		const numericId = entity.id;
 
 		// Format the entity for embedding
 		const formattedEntity = formatEntityForEmbedding(entity);
+		console.log("Formatted entity for embedding:", formattedEntity);
 
 		// Generate embedding using OpenAI
 		const embeddingResponse = await openai.embeddings.create({
@@ -313,68 +186,84 @@ export async function createEntityVectorDirect(
 		});
 
 		const embedding = embeddingResponse.data[0].embedding;
+		console.log("Got embedding with length:", embedding.length);
 
-		// Build the request directly
-		const qdrantUrl = process.env.QDRANT_URL || "http://localhost:6333";
-		const apiKey = process.env.QDRANT_API_KEY || "";
+		// Log the request before sending
+		console.log("Upserting to collection:", collectionName);
+		console.log("Using numeric ID:", numericId);
 
-		// Log the URL and ID format
-		console.log(
-			`Sending direct API request to: ${qdrantUrl}/collections/${collectionName}/points`
-		);
-		console.log(`Using numeric ID: ${numericId}`);
-
-		// Prepare the request body with numeric ID
-		const requestBody = {
-			points: [
-				{
-					id: numericId, // Use the numeric ID directly
-					vector: embedding,
-					payload: {
-						entity_id: entity.id,
-						universe_id: entity.universeId,
-						name: entity.name || "",
-						type: entity.entityType || "default",
-						description: entity.description || "",
-					},
-				},
-			],
+		// Make sure all payload values are properly formatted
+		const payload = {
+			entity_id: entity.id,
+			universe_id: entity.universeId,
+			name: entity.name || "",
+			type: entity.entityType || "default",
+			description: entity.description || "",
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString(),
 		};
 
-		// Make the API call directly with fetch
-		const response = await fetch(
-			`${qdrantUrl}/collections/${collectionName}/points?wait=true`,
-			{
-				method: "PUT",
-				headers: {
-					"Content-Type": "application/json",
-					"api-key": apiKey,
-				},
-				body: JSON.stringify(requestBody),
-			}
-		);
-
-		// Check if the request was successful
-		if (!response.ok) {
-			const errorText = await response.text();
-			console.error(
-				`Qdrant API error: ${response.status} ${response.statusText}`
-			);
-			console.error(`Error response: ${errorText}`);
+		// Verify embedding is the expected length for the collection
+		if (embedding.length !== 1536) {
 			throw new Error(
-				`Qdrant API error: ${response.status} ${response.statusText}`
+				`Embedding has incorrect length: ${embedding.length}, expected 1536`
 			);
 		}
 
-		// Return the vector ID as a string for storage in the database
+		// Store in Qdrant with numeric ID
+		await qdrantClient.upsert(collectionName, {
+			wait: true,
+			points: [
+				{
+					id: numericId,
+					vector: embedding,
+					payload: payload,
+				},
+			],
+		});
+
+		// Return the ID as a string for storage in database
 		const vectorId = numericId.toString();
 		console.log(
-			`Vector created successfully for entity ${entity.id} with vectorId ${vectorId}`
+			`Created vector for entity ${entity.name} (ID: ${entity.id}) in universe ${universe.name}`
 		);
 		return vectorId;
-	} catch (error) {
-		console.error("Error with direct API approach:", error);
-		throw error;
+	} catch (error: any) {
+		// Improved error handling with detailed logging
+		console.error("Error creating entity vector:", error?.message || error);
+
+		if (error.response) {
+			console.error("Error details:", {
+				status: error.response.status,
+				statusText: error.response.statusText,
+			});
+
+			try {
+				// Try to parse and log the response data
+				if (typeof error.response.data === "object") {
+					console.error(
+						"Error response data:",
+						JSON.stringify(error.response.data, null, 2)
+					);
+				} else {
+					const errorData = JSON.parse(error.response.data);
+					console.error(
+						"Error response data:",
+						JSON.stringify(errorData, null, 2)
+					);
+				}
+			} catch (e) {
+				console.error("Raw error response:", error.response.data);
+			}
+		}
+
+		// Return a fallback ID based on the entity ID
+		const fallbackId = entity.id.toString();
+		throw new Error(
+			`Failed to create vector: ${
+				error?.message || "Unknown error"
+			}, fallback ID: ${fallbackId}`
+		);
 	}
 }
 
@@ -392,19 +281,44 @@ export async function updateEntityVector(
 
 		// If no vectorId exists, create a new vector
 		if (!entity.vectorId) {
-			return createEntityVector(entity, universe);
+			await createEntityVector(entity, universe);
+			return;
+		}
+
+		// Convert to numeric ID for Qdrant
+		let numericId: number;
+		try {
+			numericId = parseInt(entity.vectorId, 10);
+			if (isNaN(numericId)) {
+				// If not a valid number, fallback to entity ID
+				console.log(
+					`Invalid vectorId ${entity.vectorId}, using entity ID instead`
+				);
+				numericId = entity.id;
+			}
+		} catch {
+			// If conversion fails, use entity ID
+			numericId = entity.id;
 		}
 
 		// Check if point exists
-		const pointExists = await qdrantClient.retrieve(collectionName, {
-			ids: [entity.vectorId],
-			with_payload: false,
-			with_vector: false,
-		});
+		try {
+			const pointExists = await qdrantClient.retrieve(collectionName, {
+				ids: [numericId],
+				with_payload: false,
+				with_vector: false,
+			});
 
-		if (pointExists.length === 0) {
-			// If point doesn't exist, create it
-			return createEntityVector(entity, universe);
+			if (pointExists.length === 0) {
+				// If point doesn't exist, create it
+				await createEntityVector(entity, universe);
+				return;
+			}
+		} catch (error) {
+			// If retrieve fails, try to create a new vector
+			console.log(`Error checking if vector exists, creating new: ${error}`);
+			await createEntityVector(entity, universe);
+			return;
 		}
 
 		// Format the entity for embedding
@@ -418,19 +332,19 @@ export async function updateEntityVector(
 
 		const embedding = embeddingResponse.data[0].embedding;
 
-		// Update in Qdrant
+		// Update in Qdrant with numeric ID
 		await qdrantClient.upsert(collectionName, {
 			wait: true,
 			points: [
 				{
-					id: entity.vectorId,
+					id: numericId,
 					vector: embedding,
 					payload: {
 						entity_id: entity.id,
 						universe_id: entity.universeId,
-						name: entity.name,
-						type: entity.entityType,
-						description: entity.description,
+						name: entity.name || "",
+						type: entity.entityType || "default",
+						description: entity.description || "",
 						updated_at: new Date().toISOString(),
 					},
 				},
@@ -440,8 +354,8 @@ export async function updateEntityVector(
 		console.log(
 			`Updated vector for entity ${entity.name} (ID: ${entity.id}) in universe ${universe.name}`
 		);
-	} catch (error) {
-		console.error("Error updating entity vector:", error);
+	} catch (error: any) {
+		console.error("Error updating entity vector:", error?.message || error);
 		throw error;
 	}
 }
@@ -464,17 +378,33 @@ export async function deleteEntityVector(
 			return;
 		}
 
-		// Delete point from Qdrant
+		// Convert to numeric ID for Qdrant
+		let numericId: number;
+		try {
+			numericId = parseInt(entity.vectorId, 10);
+			if (isNaN(numericId)) {
+				// If not a valid number, fallback to entity ID
+				console.log(
+					`Invalid vectorId ${entity.vectorId}, using entity ID instead`
+				);
+				numericId = entity.id;
+			}
+		} catch {
+			// If conversion fails, use entity ID
+			numericId = entity.id;
+		}
+
+		// Delete point from Qdrant using numeric ID
 		await qdrantClient.delete(collectionName, {
 			wait: true,
-			points: [entity.vectorId],
+			points: [numericId],
 		});
 
 		console.log(
 			`Deleted vector for entity ${entity.name} (ID: ${entity.id}) from universe ${universe.name}`
 		);
-	} catch (error) {
-		console.error("Error deleting entity vector:", error);
+	} catch (error: any) {
+		console.error("Error deleting entity vector:", error?.message || error);
 		throw error;
 	}
 }
@@ -509,14 +439,14 @@ export async function searchEntities(
 			with_payload: true,
 		});
 
-		// Format results
+		// Format results - converting numeric IDs to strings for consistency
 		return searchResults.map((result) => ({
-			id: result.id as string,
+			id: result.id.toString(),
 			score: result.score,
 			payload: result.payload,
 		}));
-	} catch (error) {
-		console.error("Error searching entities:", error);
+	} catch (error: any) {
+		console.error("Error searching entities:", error?.message || error);
 		throw error;
 	}
 }

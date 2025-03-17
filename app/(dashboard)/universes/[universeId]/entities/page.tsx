@@ -186,7 +186,6 @@ export default function EntitiesPage() {
 			}
 		};
 
-		console.log("UniverseId", universeId);
 		if (universeId) {
 			fetchUniverse();
 		}
@@ -981,17 +980,7 @@ export default function EntitiesPage() {
 												{formatDate(entity.createdAt)}
 											</TableCell>
 											<TableCell>
-												<Badge
-													variant={
-														entity.status === "active"
-															? "character"
-															: entity.status === "draft"
-															? "secondary"
-															: entity.status === "archived"
-															? "outline"
-															: "secondary"
-													}
-												>
+												<Badge variant={"default"}>
 													{entity.status.charAt(0).toUpperCase() +
 														entity.status.slice(1)}
 												</Badge>

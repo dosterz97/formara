@@ -61,7 +61,6 @@ export function UniverseDetails({ id }: UniverseDetailsProps) {
 				setLoading(true);
 				setError(null);
 
-				console.log(id);
 				const response = await fetch(`/api/universes/${id}`);
 
 				if (!response.ok) {
