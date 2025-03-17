@@ -60,7 +60,6 @@ import {
 	ChevronRight,
 	Filter,
 	Loader2,
-	Pencil,
 	Plus,
 	Search,
 } from "lucide-react";
@@ -104,6 +103,7 @@ const ENTITY_TYPES = [
 	"concept",
 	"default",
 ];
+
 const ENTITY_STATUSES = ["active", "inactive", "draft", "archived"];
 
 export default function EntitiesPage() {
@@ -993,7 +993,7 @@ export default function EntitiesPage() {
 													</p>
 												)}
 											</TableCell>
-											{/* <TableCell>{getEntityTypeDisplay(entity.type)}</TableCell> */}
+											<TableCell>{entity.type ?? "undefined"}</TableCell>
 											<TableCell className="hidden md:table-cell">
 												{formatDate(entity.createdAt)}
 											</TableCell>
@@ -1015,18 +1015,6 @@ export default function EntitiesPage() {
 											</TableCell>
 											<TableCell className="text-right">
 												<div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-													<Button
-														variant="ghost"
-														size="icon"
-														onClick={() =>
-															router.push(
-																`/universes/${universeId}/entities/${entity.id}/edit`
-															)
-														}
-													>
-														<Pencil className="h-4 w-4" />
-														<span className="sr-only">Edit</span>
-													</Button>
 													<Button
 														variant="ghost"
 														size="icon"
