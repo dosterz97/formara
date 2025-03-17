@@ -1,8 +1,14 @@
 import { db } from "@/lib/db/drizzle";
+import {
+	createEntityVectorDirect,
+	createUniverseCollection,
+	verifyCollection,
+} from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
 import { entities, universes } from "@/lib/db/schema";
-import { count, eq, like } from "drizzle-orm";
+import { count, eq, like, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
+import slugify from "slugify";
 
 // GET a specific universe by ID with its entities
 // GET all entities for a universe
@@ -107,7 +113,7 @@ export async function POST(
 	{ params }: { params: { universeId: string } }
 ) {
 	try {
-		const { universeId } = params;
+		const { universeId } = await params;
 
 		if (!universeId) {
 			return NextResponse.json(
@@ -130,7 +136,7 @@ export async function POST(
 		const universe = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, universeId))
+			.where(eq(universes.id, parseInt(universeId, 10)))
 			.limit(1);
 
 		if (!universe || universe.length === 0) {
@@ -154,25 +160,68 @@ export async function POST(
 			return NextResponse.json({ error: "Name is required" }, { status: 400 });
 		}
 
-		// Create the entity
+		// await resetEntitySequence();
+
 		const newEntity = {
-			universeId,
+			universeId: parseInt(universeId, 10),
 			name: body.name,
+			slug: slugify(body.name),
 			description: body.description || "",
-			type: body.type || "default",
-			attributes: body.attributes || {},
+			entityType: body.type || "default", // Make sure this matches your enum values
+			basicAttributes: body.attributes || {},
 			status: body.status || "active",
+			vectorId: "pending", // Temporary placeholder that satisfies the NOT NULL constraint
 			createdBy: user.id,
 			createdAt: new Date(),
 			updatedAt: new Date(),
-		};
+		} satisfies Omit<typeof entities.$inferInsert, "id">;
 
+		console.log("newEntity", newEntity);
 		const [entity] = await db.insert(entities).values(newEntity).returning();
 
 		// If this universe uses vector embeddings, you might need to create a vector for this entity
+		// if (universe[0].vectorNamespace) {
+		// 	const vectorId = await createEntityVector(entity, universe[0]);
+
+		// 	await db.update(entities).set({
+		// 		...newEntity,
+		// 		updatedAt: new Date(),
+		// 		vectorId,
+		// 	});
+		// }
+		// For your entity update after vector creation:
 		if (universe[0].vectorNamespace) {
-			const { createEntityVector } = await import("@/lib/db/qdrant-client");
-			await createEntityVector(entity, universe[0]);
+			try {
+				// First verify the collection
+				const collectionValid = await verifyCollection(
+					universe[0].vectorNamespace
+				);
+
+				if (!collectionValid) {
+					console.log("Recreating collection...");
+					await createUniverseCollection(universe[0]);
+				}
+
+				const vectorId = await createEntityVectorDirect(entity, universe[0]);
+
+				await db
+					.update(entities)
+					.set({ vectorId })
+					.where(eq(entities.id, entity.id));
+
+				console.log(`Entity ${entity.id} updated with vectorId ${vectorId}`);
+			} catch (error) {
+				console.error(
+					"Error with vector storage, continuing with entity creation:",
+					error
+				);
+				// Set the entity ID as the vector ID as a fallback
+				const fallbackVectorId = entity.id.toString();
+				await db
+					.update(entities)
+					.set({ vectorId: fallbackVectorId })
+					.where(eq(entities.id, entity.id));
+			}
 		}
 
 		return NextResponse.json(entity, { status: 201 });
@@ -185,7 +234,13 @@ export async function POST(
 	}
 }
 
-// Import the missing funct
+// Function to reset the sequence (call this only when needed)
+async function resetEntitySequence() {
+	await db.execute(sql`
+	  SELECT setval('entities_id_seq', (SELECT MAX(id) FROM entities) + 1)
+	`);
+	console.log("Reset entities sequence to next available ID");
+}
 
 // PUT/PATCH to update a universe
 export async function PUT(

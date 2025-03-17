@@ -51,6 +51,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { TYPES_OF_ENTITIES } from "@/lib/db/schema";
 import {
 	ArrowDown,
 	ArrowLeft,
@@ -93,16 +94,6 @@ interface PaginationInfo {
 	offset: number;
 	hasMore: boolean;
 }
-
-// Pre-defined entity types and statuses
-const ENTITY_TYPES = [
-	"character",
-	"location",
-	"item",
-	"event",
-	"concept",
-	"default",
-];
 
 const ENTITY_STATUSES = ["active", "inactive", "draft", "archived"];
 
@@ -148,7 +139,7 @@ export default function EntitiesPage() {
 	const [newEntity, setNewEntity] = useState({
 		name: "",
 		description: "",
-		type: "default",
+		type: "character",
 		status: "active",
 	});
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -355,7 +346,7 @@ export default function EntitiesPage() {
 			setNewEntity({
 				name: "",
 				description: "",
-				type: "default",
+				type: "character",
 				status: "active",
 			});
 			setCustomType("");
@@ -509,30 +500,22 @@ export default function EntitiesPage() {
 									<Label htmlFor="type">Type</Label>
 									<Select
 										value={newEntity.type}
+										defaultValue="character"
 										onValueChange={(value) =>
 											setNewEntity({ ...newEntity, type: value })
 										}
 									>
 										<SelectTrigger>
-											<SelectValue placeholder="Select type" />
+											<SelectValue placeholder="character" />
 										</SelectTrigger>
 										<SelectContent>
-											{ENTITY_TYPES.map((type) => (
+											{TYPES_OF_ENTITIES.map((type) => (
 												<SelectItem key={type} value={type}>
-													{/* {getEntityTypeDisplay(type)} */}
+													{type}
 												</SelectItem>
 											))}
-											<SelectItem value="custom">Custom...</SelectItem>
 										</SelectContent>
 									</Select>
-									{newEntity.type === "custom" && (
-										<Input
-											className="mt-2"
-											placeholder="Enter custom type"
-											value={customType}
-											onChange={(e) => setCustomType(e.target.value)}
-										/>
-									)}
 								</div>
 								<div className="grid gap-2">
 									<Label htmlFor="status">Status</Label>
@@ -638,9 +621,9 @@ export default function EntitiesPage() {
 												</SelectTrigger>
 												<SelectContent>
 													<SelectItem value="">All types</SelectItem>
-													{ENTITY_TYPES.map((type) => (
+													{TYPES_OF_ENTITIES.map((type) => (
 														<SelectItem key={type} value={type}>
-															{/* {getEntityTypeDisplay(type)} */}
+															{type}
 														</SelectItem>
 													))}
 												</SelectContent>
@@ -754,9 +737,9 @@ export default function EntitiesPage() {
 												</SelectTrigger>
 												<SelectContent>
 													<SelectItem value="">All types</SelectItem>
-													{ENTITY_TYPES.map((type) => (
+													{TYPES_OF_ENTITIES.map((type) => (
 														<SelectItem key={type} value={type}>
-															{/* {getEntityTypeDisplay(type)} */}
+															{type}
 														</SelectItem>
 													))}
 												</SelectContent>
@@ -1001,7 +984,7 @@ export default function EntitiesPage() {
 												<Badge
 													variant={
 														entity.status === "active"
-															? "default"
+															? "character"
 															: entity.status === "draft"
 															? "secondary"
 															: entity.status === "archived"

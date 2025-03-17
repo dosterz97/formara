@@ -431,7 +431,6 @@ export default function EntityEditPage() {
 											{type.charAt(0).toUpperCase() + type.slice(1)}
 										</SelectItem>
 									))}
-									<SelectItem value="custom">Custom...</SelectItem>
 								</SelectContent>
 							</Select>
 							{formData.type === "custom" && (

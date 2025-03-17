@@ -1,487 +1,522 @@
 import { QdrantClient } from "@qdrant/js-client-rest";
-import dotenv from "dotenv";
+import OpenAI from "openai";
 import { Entity, Universe } from "./schema";
 
-dotenv.config();
-
-// Initialize Qdrant client
-const qdrantClient = new QdrantClient({
-	url: process.env.QDRANT_URL,
-	apiKey: process.env.QDRANT_API_KEY,
-	https: true,
+// Initialize OpenAI client for embeddings
+const openai = new OpenAI({
+	apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Display environment variables (sanitized)
-console.log("Environment variables check:");
-console.log(`QDRANT_URL exists: ${process.env.QDRANT_URL ? "Yes" : "No"}`);
-console.log(
-	`QDRANT_API_KEY exists: ${process.env.QDRANT_API_KEY ? "Yes" : "No"}`
-);
+// Initialize Qdrant client for vector storage
+const qdrantClient = new QdrantClient({
+	url: process.env.QDRANT_URL || "http://localhost:6333",
+	apiKey: process.env.QDRANT_API_KEY,
+});
 
-// Define additional types for Qdrant metadata
-export type EntityWithMetadata = Entity & {
-	tags?: string[];
-	relationships?: Array<{
-		type: string;
-		targetId: string;
-		targetName: string;
-		description?: string;
-	}>;
-};
-
-export type KnowledgeFact = {
-	id: string;
-	title: string;
-	content: string;
-	category?: string;
-	tags?: string[];
-};
-
-export type Relationship = {
-	type: string;
-	description?: string;
-	properties?: Record<string, any>;
-};
-
-// Utility function to create a collection for a universe
+/**
+ * Creates a new Qdrant collection for a universe
+ * @param universe The universe object
+ */
 export async function createUniverseCollection(
 	universe: Universe
 ): Promise<void> {
-	const collectionName = `universe_${universe.slug}`;
-
 	try {
-		console.log("Getting collections...");
-		// Check if collection exists
+		const collectionName = universe.vectorNamespace;
+
+		// Check if collection already exists
 		const collections = await qdrantClient.getCollections();
-		if (collections.collections?.some((c) => c.name === collectionName)) {
+		if (collections.collections.some((c) => c.name === collectionName)) {
 			console.log(`Collection ${collectionName} already exists`);
 			return;
 		}
 
-		console.log("Got collections...");
-
-		// Create collection with appropriate schema
+		// Create the collection
 		await qdrantClient.createCollection(collectionName, {
 			vectors: {
-				size: 1536, // Size for OpenAI embeddings
+				size: 1536, // OpenAI embeddings size (text-embedding-ada-002)
 				distance: "Cosine",
 			},
 			optimizers_config: {
 				default_segment_number: 2,
 			},
 			replication_factor: 1,
-			write_consistency_factor: 1,
-			on_disk_payload: true,
-		});
-
-		console.log("Created collections...");
-
-		// Create payload indexes for faster filtering
-		await Promise.all([
-			qdrantClient.createPayloadIndex(collectionName, {
-				field_name: "content_type",
-				field_schema: "keyword",
-			}),
-			qdrantClient.createPayloadIndex(collectionName, {
-				field_name: "entity_type",
-				field_schema: "keyword",
-			}),
-			qdrantClient.createPayloadIndex(collectionName, {
-				field_name: "status",
-				field_schema: "keyword",
-			}),
-			qdrantClient.createPayloadIndex(collectionName, {
-				field_name: "tags",
-				field_schema: "keyword",
-			}),
-		]);
-
-		console.log(`Created collection ${collectionName}`);
-	} catch (error) {
-		console.error(`Error creating collection ${collectionName}:`, error);
-		throw error;
-	}
-}
-
-// Function to generate text representation of an entity for embedding
-function generateEntityText(entity: EntityWithMetadata): string {
-	const parts = [];
-
-	// Basic information
-	parts.push(`Name: ${entity.name}`);
-	parts.push(`Type: ${entity.entityType}`);
-	if (entity.description) {
-		parts.push(`Description: ${entity.description}`);
-	}
-
-	// Add attributes if available
-	const attributes = entity.basicAttributes || {};
-	Object.entries(attributes).forEach(([key, value]) => {
-		if (Array.isArray(value)) {
-			parts.push(`${key}: ${value.join(", ")}`);
-		} else {
-			parts.push(`${key}: ${value}`);
-		}
-	});
-
-	// Add tags if available
-	if (entity.tags && entity.tags.length > 0) {
-		parts.push(`Tags: ${entity.tags.join(", ")}`);
-	}
-
-	// Add relationships if available
-	if (entity.relationships && entity.relationships.length > 0) {
-		entity.relationships.forEach((rel) => {
-			parts.push(`Relationship: ${rel.type} ${rel.targetName}`);
-			if (rel.description) {
-				parts.push(`  Description: ${rel.description}`);
-			}
-		});
-	}
-
-	return parts.join("\n");
-}
-
-// Function to get embeddings from OpenAI
-async function getEmbedding(text: string): Promise<number[]> {
-	try {
-		// For simplicity, this example uses fake embeddings in the right dimension
-		// In a real implementation, you would call the OpenAI API here
-		// Or use a local model like @xenova/transformers
-
-		// Creating a dummy embedding of the right size (1536 for OpenAI)
-		const dummyEmbedding = Array(1536)
-			.fill(0)
-			.map(() => Math.random() * 2 - 1);
-
-		// Normalize the embedding (important for cosine similarity)
-		const magnitude = Math.sqrt(
-			dummyEmbedding.reduce((sum, val) => sum + val * val, 0)
-		);
-		return dummyEmbedding.map((val) => val / magnitude);
-
-		// In a real implementation, you would use something like:
-		/*
-    const response = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: 'text-embedding-ada-002',
-        input: text
-      })
-    });
-    
-    const data = await response.json();
-    return data.data[0].embedding;
-    */
-	} catch (error) {
-		console.error("Error generating embedding:", error);
-		throw error;
-	}
-}
-
-// Function to create embeddings for an entity and store in Qdrant
-export async function createEntityEmbedding(
-	universe: Universe,
-	entity: EntityWithMetadata
-): Promise<string> {
-	const collectionName = `universe_${universe.slug}`;
-
-	try {
-		// Generate text representation of the entity
-		const textRepresentation = generateEntityText(entity);
-
-		// Generate embedding
-		const embedding = await getEmbedding(textRepresentation);
-
-		// Prepare the point
-		const point = {
-			id: entity.id.toString(),
-			vector: embedding,
-			payload: {
-				name: entity.name,
-				slug: entity.slug,
-				description: entity.description || "",
-				content_type: "entity",
-				entity_type: entity.entityType,
-				status: entity.status,
-				attributes: entity.basicAttributes || {},
-				tags: entity.tags || [],
-				created_at: entity.createdAt.toISOString(),
-				universe_id: entity.universeId,
-			},
-		};
-
-		// Upsert the point
-		await qdrantClient.upsert(collectionName, {
-			points: [point],
-		});
-
-		console.log(`Created embedding for ${entity.name} with ID ${entity.id}`);
-		return entity.id.toString();
-	} catch (error) {
-		console.error(`Error creating embedding for entity ${entity.name}:`, error);
-		throw error;
-	}
-}
-
-// Function to add knowledge fact to a universe collection
-export async function addKnowledgeFact(
-	universe: Universe,
-	fact: KnowledgeFact
-): Promise<string> {
-	const collectionName = `universe_${universe.slug}`;
-
-	try {
-		// Generate text representation for embedding
-		const textRepresentation = `${fact.title}\n${fact.content}`;
-
-		// Generate embedding
-		const embedding = await getEmbedding(textRepresentation);
-
-		// Prepare the point
-		const point = {
-			id: `knowledge_${fact.id}`,
-			vector: embedding,
-			payload: {
-				name: fact.title,
-				description: fact.content,
-				content_type: "knowledge",
-				entity_type: "knowledge",
-				category: fact.category || "general",
-				tags: fact.tags || [],
-				// Removed entity_relevance field - will rely on vector similarity
-				universe_id: universe.id,
-				created_at: new Date().toISOString(),
-			},
-		};
-
-		// Upsert the point
-		await qdrantClient.upsert(collectionName, {
-			points: [point],
-		});
-
-		console.log(`Added knowledge fact: ${fact.title}`);
-		return `knowledge_${fact.id}`;
-	} catch (error) {
-		console.error(`Error adding knowledge fact:`, error);
-		throw error;
-	}
-}
-
-// Function to add a relationship as a vector point
-export async function addRelationship(
-	universe: Universe,
-	sourceId: number,
-	targetId: number,
-	relationship: Relationship
-): Promise<string> {
-	const collectionName = `universe_${universe.slug}`;
-
-	try {
-		// Get the source and target entities to use their names
-		const [sourcePoint, targetPoint] = await Promise.all([
-			qdrantClient.retrieve(collectionName, { ids: [sourceId.toString()] }),
-			qdrantClient.retrieve(collectionName, { ids: [targetId.toString()] }),
-		]);
-
-		if (!sourcePoint.length || !targetPoint.length) {
-			throw new Error("Source or target entity not found");
-		}
-
-		const sourceName = sourcePoint[0].payload?.name;
-		const targetName = targetPoint[0].payload?.name;
-
-		// Generate text representation
-		const textRepresentation = `Relationship: ${sourceName} ${
-			relationship.type
-		} ${targetName}. ${relationship.description || ""}`;
-
-		// Generate embedding
-		const embedding = await getEmbedding(textRepresentation);
-
-		// Generate a unique ID for the relationship
-		const relationshipId = `rel_${sourceId}_${relationship.type}_${targetId}`;
-
-		// Prepare the point
-		const point = {
-			id: relationshipId,
-			vector: embedding,
-			payload: {
-				name: `${sourceName} ${relationship.type} ${targetName}`,
-				description: relationship.description || "",
-				content_type: "relationship",
-				entity_type: "relationship",
-				relationship_type: relationship.type,
-				source_id: sourceId.toString(),
-				source_name: sourceName,
-				target_id: targetId.toString(),
-				target_name: targetName,
-				properties: relationship.properties || {},
-				universe_id: universe.id,
-				created_at: new Date().toISOString(),
-			},
-		};
-
-		// Upsert the point
-		await qdrantClient.upsert(collectionName, {
-			points: [point],
 		});
 
 		console.log(
-			`Added relationship: ${sourceName} ${relationship.type} ${targetName}`
+			`Created collection ${collectionName} for universe ${universe.name}`
 		);
-		return relationshipId;
 	} catch (error) {
-		console.error(`Error adding relationship:`, error);
+		console.error("Error creating Qdrant collection:", error);
 		throw error;
 	}
 }
 
-// Search function to find relevant entities and knowledge
-export async function searchUniverse(
-	universe: Universe,
-	query: string,
-	filters?: {
-		entityType?: string;
-		contentType?: string;
-		tags?: string[];
-	},
-	limit: number = 10
-): Promise<any[]> {
-	const collectionName = `universe_${universe.slug}`;
-
+/**
+ * Deletes a Qdrant collection for a universe
+ * @param universe The universe object
+ */
+export async function deleteUniverseCollection(
+	universe: Universe
+): Promise<void> {
 	try {
-		// Generate query embedding
-		const queryEmbedding = await getEmbedding(query);
+		const collectionName = universe.vectorNamespace;
 
-		// Build filter if needed
-		let filter = undefined;
-		if (filters) {
-			const filterConditions = [];
-
-			if (filters.entityType) {
-				filterConditions.push({
-					key: "entity_type",
-					match: { value: filters.entityType },
-				});
-			}
-
-			if (filters.contentType) {
-				filterConditions.push({
-					key: "content_type",
-					match: { value: filters.contentType },
-				});
-			}
-
-			if (filters.tags && filters.tags.length > 0) {
-				filterConditions.push({
-					key: "tags",
-					match: { any: filters.tags },
-				});
-			}
-
-			if (filterConditions.length > 0) {
-				filter = { must: filterConditions };
-			}
+		// Check if collection exists
+		const collections = await qdrantClient.getCollections();
+		if (!collections.collections.some((c) => c.name === collectionName)) {
+			console.log(`Collection ${collectionName} does not exist`);
+			return;
 		}
 
-		// Execute search
-		const searchResults = await qdrantClient.search(collectionName, {
-			vector: queryEmbedding,
-			limit,
-			filter,
-			with_payload: true,
-		});
+		// Delete the collection
+		await qdrantClient.deleteCollection(collectionName);
 
 		console.log(
-			`Search for "${query}" returned ${searchResults.length} results`
+			`Deleted collection ${collectionName} for universe ${universe.name}`
 		);
-		return searchResults;
 	} catch (error) {
-		console.error(`Error searching universe:`, error);
+		console.error("Error deleting Qdrant collection:", error);
 		throw error;
 	}
 }
 
-// Get entity knowledge - find knowledge relevant to a specific entity
-export async function getEntityKnowledge(
-	universe: Universe,
-	entityId: number,
-	query?: string,
-	limit: number = 10
-): Promise<any[]> {
-	const collectionName = `universe_${universe.slug}`;
+/**
+ * Formats entity data for embedding
+ * @param entity The entity object
+ * @returns Formatted text for embedding
+ */
+function formatEntityForEmbedding(entity: Entity): string {
+	// Format entity data into a structured text format for embedding
+	const formattedText = [
+		`Name: ${entity.name}`,
+		`Type: ${entity.entityType || "default"}`,
+		`Description: ${entity.description || ""}`,
+	].join("\n\n");
 
+	// Add formatted attributes if they exist
+	if (
+		entity.basicAttributes &&
+		Object.keys(entity.basicAttributes).length > 0
+	) {
+		try {
+			const attributesString = Object.entries(entity.basicAttributes)
+				.map(
+					([key, value]) =>
+						`${key}: ${
+							typeof value === "object" ? JSON.stringify(value) : value
+						}`
+				)
+				.join("\n");
+
+			return `${formattedText}\n\nAttributes:\n${attributesString}`;
+		} catch (e) {
+			// In case attributes are invalid or cause issues
+			console.warn("Error formatting attributes for entity:", entity.id, e);
+			return formattedText;
+		}
+	}
+
+	return formattedText;
+}
+/**
+ * Creates entity vector in Qdrant
+ * @param entity The entity object
+ * @param universe The universe object
+ * returns vector id
+ */
+export async function createEntityVector(
+	entity: Entity,
+	universe: Universe
+): Promise<string> {
 	try {
-		// Get the entity to use its embedding as the starting point
-		const entityPoints = await qdrantClient.retrieve(collectionName, {
-			ids: [entityId.toString()],
-			with_vector: true,
+		const collectionName = universe.vectorNamespace;
+
+		// Use a string ID for Qdrant (required for REST API)
+		const vectorId = `entity-${entity.id}`;
+
+		// Format the entity for embedding
+		const formattedEntity = formatEntityForEmbedding(entity);
+		console.log("Formatted entity for embedding:", formattedEntity);
+
+		// Generate embedding using OpenAI
+		const embeddingResponse = await openai.embeddings.create({
+			model: "text-embedding-ada-002",
+			input: formattedEntity,
 		});
 
-		if (!entityPoints.length) {
-			throw new Error(`Entity with ID ${entityId} not found`);
-		}
+		const embedding = embeddingResponse.data[0].embedding;
+		console.log("Got embedding with length:", embedding.length);
 
-		const entityVector = entityPoints[0].vector as number[];
+		// Log the request before sending (only show first few dimensions)
+		console.log(
+			"Upsert request to",
+			collectionName,
+			"with point ID:",
+			vectorId
+		);
 
-		// If query is provided, use a hybrid approach
-		let searchVector = entityVector;
-		if (query) {
-			const queryVector = await getEmbedding(query);
+		// Make sure all payload values are properly formatted
+		const payload = {
+			entity_id: entity.id,
+			universe_id: entity.universeId,
+			name: entity.name || "",
+			type: entity.entityType || "default",
+			description: entity.description || "",
+			created_at: new Date().toISOString(),
+			updated_at: new Date().toISOString(),
+		};
 
-			// Combine vectors (70% entity, 30% query)
-			searchVector = entityVector.map(
-				(val, i) => val * 0.7 + queryVector[i] * 0.3
+		// Verify embedding is the expected length for the collection
+		if (embedding.length !== 1536) {
+			throw new Error(
+				`Embedding has incorrect length: ${embedding.length}, expected 1536`
 			);
 		}
 
-		// Search for related content, excluding the entity itself
+		// Check if the point already exists and delete it if it does
+		try {
+			const pointExists = await qdrantClient.retrieve(collectionName, {
+				ids: [vectorId],
+				with_payload: false,
+				with_vector: false,
+			});
+
+			if (pointExists.length > 0) {
+				console.log(`Point ${vectorId} already exists, deleting it first`);
+				await qdrantClient.delete(collectionName, {
+					points: [vectorId],
+					wait: true,
+				});
+			}
+		} catch (e) {
+			// Ignore errors from retrieve - it could be that the point doesn't exist
+			console.log(
+				"Point retrieval error (likely doesn't exist yet):",
+				e.message
+			);
+		}
+
+		// Add a small delay to ensure any deletion completes
+		await new Promise((resolve) => setTimeout(resolve, 100));
+
+		// Store in Qdrant with careful validation of all data
+		await qdrantClient.upsert(collectionName, {
+			wait: true,
+			points: [
+				{
+					id: vectorId,
+					vector: embedding,
+					payload: payload,
+				},
+			],
+		});
+
+		console.log(
+			`Created vector for entity ${entity.name} (ID: ${entity.id}) in universe ${universe.name}`
+		);
+		return vectorId;
+	} catch (error) {
+		// Improved error handling with detailed logging
+		console.error("Error creating entity vector:", error.message);
+
+		if (error.response) {
+			console.error("Error details:", {
+				status: error.response.status,
+				statusText: error.response.statusText,
+			});
+
+			try {
+				// Try to parse and log the response data
+				if (typeof error.response.data === "object") {
+					console.error(
+						"Error response data:",
+						JSON.stringify(error.response.data, null, 2)
+					);
+				} else {
+					const errorData = JSON.parse(error.response.data);
+					console.error(
+						"Error response data:",
+						JSON.stringify(errorData, null, 2)
+					);
+				}
+			} catch (e) {
+				console.error("Raw error response:", error.response.data);
+			}
+		}
+
+		// Create a fallback vector ID if we have to return something
+		// (though it's better to handle this error at a higher level)
+		const fallbackId = `error-${entity.id}-${Date.now()}`;
+		throw new Error(
+			`Failed to create vector: ${error.message}, fallback ID: ${fallbackId}`
+		);
+	}
+}
+
+/**
+ * Verifies a Qdrant collection exists and has the correct configuration
+ */
+export async function verifyCollection(
+	collectionName: string
+): Promise<boolean> {
+	try {
+		console.log(`Verifying collection: ${collectionName}`);
+
+		// Check if the collection exists
+		const collections = await qdrantClient.getCollections();
+		if (!collections.collections.some((c) => c.name === collectionName)) {
+			console.log(`Collection ${collectionName} does not exist`);
+			return false;
+		}
+
+		// Get collection info to verify configuration
+		const collectionInfo = await qdrantClient.getCollection(collectionName);
+		console.log("Collection info:", JSON.stringify(collectionInfo, null, 2));
+
+		// Verify vector size is 1536 for OpenAI embeddings
+		const vectorSize = collectionInfo.config?.params?.vectors?.size;
+		if (vectorSize !== 1536) {
+			console.log(
+				`Collection has incorrect vector size: ${vectorSize}, expected 1536`
+			);
+			return false;
+		}
+
+		console.log(`Collection ${collectionName} verified successfully`);
+		return true;
+	} catch (error) {
+		console.error(`Error verifying collection ${collectionName}:`, error);
+		return false;
+	}
+}
+
+/**
+ * Creates entity vector using direct API with correct ID format
+ */
+export async function createEntityVectorDirect(
+	entity: Entity,
+	universe: Universe
+): Promise<string> {
+	try {
+		const collectionName = universe.vectorNamespace;
+
+		// Use a numeric ID - Qdrant requires either unsigned integers or UUIDs
+		const numericId = entity.id;
+
+		// Format the entity for embedding
+		const formattedEntity = formatEntityForEmbedding(entity);
+
+		// Generate embedding using OpenAI
+		const embeddingResponse = await openai.embeddings.create({
+			model: "text-embedding-ada-002",
+			input: formattedEntity,
+		});
+
+		const embedding = embeddingResponse.data[0].embedding;
+
+		// Build the request directly
+		const qdrantUrl = process.env.QDRANT_URL || "http://localhost:6333";
+		const apiKey = process.env.QDRANT_API_KEY || "";
+
+		// Log the URL and ID format
+		console.log(
+			`Sending direct API request to: ${qdrantUrl}/collections/${collectionName}/points`
+		);
+		console.log(`Using numeric ID: ${numericId}`);
+
+		// Prepare the request body with numeric ID
+		const requestBody = {
+			points: [
+				{
+					id: numericId, // Use the numeric ID directly
+					vector: embedding,
+					payload: {
+						entity_id: entity.id,
+						universe_id: entity.universeId,
+						name: entity.name || "",
+						type: entity.entityType || "default",
+						description: entity.description || "",
+					},
+				},
+			],
+		};
+
+		// Make the API call directly with fetch
+		const response = await fetch(
+			`${qdrantUrl}/collections/${collectionName}/points?wait=true`,
+			{
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+					"api-key": apiKey,
+				},
+				body: JSON.stringify(requestBody),
+			}
+		);
+
+		// Check if the request was successful
+		if (!response.ok) {
+			const errorText = await response.text();
+			console.error(
+				`Qdrant API error: ${response.status} ${response.statusText}`
+			);
+			console.error(`Error response: ${errorText}`);
+			throw new Error(
+				`Qdrant API error: ${response.status} ${response.statusText}`
+			);
+		}
+
+		// Return the vector ID as a string for storage in the database
+		const vectorId = numericId.toString();
+		console.log(
+			`Vector created successfully for entity ${entity.id} with vectorId ${vectorId}`
+		);
+		return vectorId;
+	} catch (error) {
+		console.error("Error with direct API approach:", error);
+		throw error;
+	}
+}
+
+/**
+ * Updates entity vector in Qdrant
+ * @param entity The updated entity object
+ * @param universe The universe object
+ */
+export async function updateEntityVector(
+	entity: Entity,
+	universe: Universe
+): Promise<void> {
+	try {
+		const collectionName = universe.vectorNamespace;
+
+		// If no vectorId exists, create a new vector
+		if (!entity.vectorId) {
+			return createEntityVector(entity, universe);
+		}
+
+		// Check if point exists
+		const pointExists = await qdrantClient.retrieve(collectionName, {
+			ids: [entity.vectorId],
+			with_payload: false,
+			with_vector: false,
+		});
+
+		if (pointExists.length === 0) {
+			// If point doesn't exist, create it
+			return createEntityVector(entity, universe);
+		}
+
+		// Format the entity for embedding
+		const formattedEntity = formatEntityForEmbedding(entity);
+
+		// Generate new embedding using OpenAI
+		const embeddingResponse = await openai.embeddings.create({
+			model: "text-embedding-ada-002",
+			input: formattedEntity,
+		});
+
+		const embedding = embeddingResponse.data[0].embedding;
+
+		// Update in Qdrant
+		await qdrantClient.upsert(collectionName, {
+			wait: true,
+			points: [
+				{
+					id: entity.vectorId,
+					vector: embedding,
+					payload: {
+						entity_id: entity.id,
+						universe_id: entity.universeId,
+						name: entity.name,
+						type: entity.entityType,
+						description: entity.description,
+						updated_at: new Date().toISOString(),
+					},
+				},
+			],
+		});
+
+		console.log(
+			`Updated vector for entity ${entity.name} (ID: ${entity.id}) in universe ${universe.name}`
+		);
+	} catch (error) {
+		console.error("Error updating entity vector:", error);
+		throw error;
+	}
+}
+
+/**
+ * Deletes entity vector from Qdrant
+ * @param entity The entity object
+ * @param universe The universe object
+ */
+export async function deleteEntityVector(
+	entity: Entity,
+	universe: Universe
+): Promise<void> {
+	try {
+		const collectionName = universe.vectorNamespace;
+
+		// If no vectorId, nothing to delete
+		if (!entity.vectorId) {
+			console.log(`No vectorId for entity ${entity.id}, nothing to delete`);
+			return;
+		}
+
+		// Delete point from Qdrant
+		await qdrantClient.delete(collectionName, {
+			wait: true,
+			points: [entity.vectorId],
+		});
+
+		console.log(
+			`Deleted vector for entity ${entity.name} (ID: ${entity.id}) from universe ${universe.name}`
+		);
+	} catch (error) {
+		console.error("Error deleting entity vector:", error);
+		throw error;
+	}
+}
+
+/**
+ * Search for similar entities in a universe
+ * @param query The search query text
+ * @param universe The universe object
+ * @param limit Maximum number of results to return
+ * @returns Array of search results with scores
+ */
+export async function searchEntities(
+	query: string,
+	universe: Universe,
+	limit: number = 10
+): Promise<Array<{ id: string; score: number; payload: any }>> {
+	try {
+		const collectionName = universe.vectorNamespace;
+
+		// Generate embedding for the query
+		const embeddingResponse = await openai.embeddings.create({
+			model: "text-embedding-ada-002",
+			input: query,
+		});
+
+		const queryEmbedding = embeddingResponse.data[0].embedding;
+
+		// Search in Qdrant
 		const searchResults = await qdrantClient.search(collectionName, {
-			vector: searchVector,
-			limit,
-			filter: {
-				must_not: [{ key: "id", match: { value: entityId.toString() } }],
-			},
+			vector: queryEmbedding,
+			limit: limit,
 			with_payload: true,
 		});
 
-		// Process results - now using vector similarity as the only relevance factor
-		const processedResults = searchResults.map((result) => {
-			if (!result.payload) {
-				return {
-					...result,
-					adjustedScore: result.score,
-				};
-			}
-
-			// For relationships, slightly boost if this entity is involved
-			let adjustedScore = result.score;
-			if (result.payload.content_type === "relationship") {
-				const entityIdStr = entityId.toString();
-				if (
-					result.payload.source_id === entityIdStr ||
-					result.payload.target_id === entityIdStr
-				) {
-					// Apply a small boost to relationships directly involving the entity
-					adjustedScore = Math.min(1.0, result.score * 1.1);
-				}
-			}
-
-			return {
-				...result,
-				adjustedScore,
-			};
-		});
-
-		// Sort by adjusted score
-		return processedResults.sort((a, b) => b.adjustedScore - a.adjustedScore);
+		// Format results
+		return searchResults.map((result) => ({
+			id: result.id as string,
+			score: result.score,
+			payload: result.payload,
+		}));
 	} catch (error) {
-		console.error(`Error getting entity knowledge:`, error);
+		console.error("Error searching entities:", error);
 		throw error;
 	}
 }

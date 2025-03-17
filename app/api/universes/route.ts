@@ -1,5 +1,6 @@
 // File: app/api/universes/route.ts
 import { db } from "@/lib/db/drizzle";
+import { createUniverseCollection } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
 import { entities, universes } from "@/lib/db/schema";
 import { count, eq } from "drizzle-orm";
@@ -99,7 +100,6 @@ export async function POST(request: NextRequest) {
 			.returning();
 
 		// Create Qdrant collection
-		const { createUniverseCollection } = await import("@/lib/db/qdrant-client");
 		await createUniverseCollection(universe);
 
 		return NextResponse.json(universe, { status: 201 });

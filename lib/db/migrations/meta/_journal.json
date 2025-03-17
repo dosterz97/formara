@@ -8,6 +8,20 @@
       "when": 1742104724557,
       "tag": "0000_perfect_firebrand",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1742196989671,
+      "tag": "0001_huge_frog_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1742197238747,
+      "tag": "0002_lowly_thunderbolt",
+      "breakpoints": true
     }
   ]
 }

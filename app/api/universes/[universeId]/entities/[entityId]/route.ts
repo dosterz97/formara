@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/drizzle";
+import { deleteEntityVector, updateEntityVector } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
 import { entities, universes } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
@@ -177,7 +178,6 @@ export async function PUT(
 
 		// If this universe uses vector embeddings, you might need to update the vector for this entity
 		if (universe[0].vectorNamespace) {
-			const { updateEntityVector } = await import("@/lib/db/qdrant-client");
 			await updateEntityVector(updatedEntity, universe[0]);
 		}
 
@@ -265,7 +265,6 @@ export async function DELETE(
 
 		// If this universe uses vector embeddings, delete the vector for this entity
 		if (universe[0].vectorNamespace) {
-			const { deleteEntityVector } = await import("@/lib/db/qdrant-client");
 			await deleteEntityVector(existingEntity[0], universe[0]);
 		}
 

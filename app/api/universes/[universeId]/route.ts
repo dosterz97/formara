@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/drizzle";
+import { deleteUniverseCollection } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
 import { entities, universes } from "@/lib/db/schema";
 import { count, eq } from "drizzle-orm";
@@ -206,7 +207,6 @@ export async function DELETE(
 		await db.delete(entities).where(eq(entities.universeId, parseInt(id, 10)));
 
 		// Delete the Qdrant collection
-		const { deleteUniverseCollection } = await import("@/lib/db/qdrant-client");
 		await deleteUniverseCollection(existingUniverse[0]);
 
 		return NextResponse.json({ success: true });
