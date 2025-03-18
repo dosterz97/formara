@@ -235,8 +235,8 @@ export default function EntitiesPage() {
 				}
 
 				const data = await response.json();
-				console.log(data);
-				setEntities(data.entities);
+				// console.log(data);
+				// setEntities(data.entities);
 				setPagination(data.pagination);
 			} catch (err) {
 				console.error("Error fetching entities:", err);

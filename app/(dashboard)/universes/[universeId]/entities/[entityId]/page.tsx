@@ -31,6 +31,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { ENTITY_STATUSES, TYPES_OF_ENTITIES } from "@/lib/db/schema";
 import { ArrowLeft, Loader2, Save, Trash } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -48,17 +49,6 @@ interface Entity {
 	createdAt: string;
 	updatedAt: string;
 }
-
-// Predefined entity types and statuses
-const ENTITY_TYPES = [
-	"character",
-	"location",
-	"item",
-	"event",
-	"concept",
-	"default",
-];
-const ENTITY_STATUSES = ["active", "inactive", "draft", "archived"];
 
 export default function EntityEditPage() {
 	const params = useParams();
@@ -111,7 +101,7 @@ export default function EntityEditPage() {
 				setEntity(data);
 
 				// Check if type is in predefined list
-				const isCustom = !ENTITY_TYPES.includes(data.type);
+				const isCustom = !TYPES_OF_ENTITIES.includes(data.type);
 				setIsTypeCustom(isCustom);
 
 				if (isCustom) {
@@ -491,7 +481,7 @@ export default function EntityEditPage() {
 									<SelectValue placeholder="Select type" />
 								</SelectTrigger>
 								<SelectContent>
-									{ENTITY_TYPES.map((type) => (
+									{TYPES_OF_ENTITIES.map((type) => (
 										<SelectItem key={type} value={type}>
 											{type.charAt(0).toUpperCase() + type.slice(1)}
 										</SelectItem>

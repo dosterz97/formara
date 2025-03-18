@@ -12,7 +12,6 @@ export async function GET(
 ) {
 	try {
 		// Await the params object before destructuring
-
 		const { universeId } = await params;
 
 		if (!universeId) {
@@ -152,62 +151,92 @@ export async function PUT(
 	}
 }
 
-// DELETE a universe
+// DELETE a universe by ID
 export async function DELETE(
 	request: NextRequest,
-	{ params }: { params: { id: string } }
+	{ params }: { params: { universeId: string } }
 ) {
 	try {
-		const { id } = params;
+		const { universeId } = await params;
 
-		if (!id) {
+		if (!universeId) {
 			return NextResponse.json(
 				{ error: "Universe ID is required" },
 				{ status: 400 }
 			);
 		}
 
+		const universeIdNumber = parseInt(universeId, 10);
+
+		// Validate universe ID
+		if (isNaN(universeIdNumber)) {
+			return NextResponse.json(
+				{ error: "Invalid universe ID" },
+				{ status: 400 }
+			);
+		}
+
+		// Authenticate user
 		const user = await getUser();
 		if (!user) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
+		// Get user's team
 		const teamData = await getTeamForUser(user.id);
 		if (!teamData) {
 			return NextResponse.json({ error: "No team for user" }, { status: 500 });
 		}
 
-		// Check if universe exists and belongs to user's team
-		const existingUniverse = await db
+		// Find universe to get its vector namespace (for Qdrant collection deletion)
+		const [universe] = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, parseInt(id, 10)))
+			.where(eq(universes.id, universeIdNumber))
 			.limit(1);
 
-		if (!existingUniverse || existingUniverse.length === 0) {
+		if (!universe) {
 			return NextResponse.json(
 				{ error: "Universe not found" },
 				{ status: 404 }
 			);
 		}
 
-		if (existingUniverse[0].teamId !== teamData.id) {
+		// Verify the universe belongs to the user's team
+		if (universe.teamId !== teamData.id) {
 			return NextResponse.json(
 				{ error: "Unauthorized access to universe" },
 				{ status: 403 }
 			);
 		}
 
-		// Delete the universe
-		await db.delete(universes).where(eq(universes.id, parseInt(id, 10)));
+		// Start transaction for database operations
+		const result = await db.transaction(async (tx) => {
+			// First, delete all entities belonging to this universe
+			await tx
+				.delete(entities)
+				.where(eq(entities.universeId, universeIdNumber));
 
-		// Delete related entities
-		await db.delete(entities).where(eq(entities.universeId, parseInt(id, 10)));
+			// Then delete the universe
+			await tx.delete(universes).where(eq(universes.id, universeIdNumber));
+
+			return { success: true };
+		});
 
 		// Delete the Qdrant collection
-		await deleteUniverseCollection(existingUniverse[0]);
+		if (universe.vectorNamespace) {
+			try {
+				await deleteUniverseCollection(universe);
+			} catch (error) {
+				console.error("Failed to delete vector collection:", error);
+				// Continue even if vector collection deletion fails
+			}
+		}
 
-		return NextResponse.json({ success: true });
+		return NextResponse.json(
+			{ message: "Universe and its entities successfully deleted" },
+			{ status: 200 }
+		);
 	} catch (error) {
 		console.error("Error deleting universe:", error);
 		return NextResponse.json(

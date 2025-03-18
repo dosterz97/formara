@@ -6,12 +6,20 @@ import { entities, universes } from "@/lib/db/schema";
 import { count, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
+// Function to reset the sequence (call this only when needed)
+// async function resetUniverseSequence() {
+// 	await db.execute(sql`
+//     SELECT setval('universes_id_seq', (SELECT MAX(id) FROM universes) + 1)
+//   `);
+// 	console.log("Reset universes sequence to next available ID");
+// }
+
 // GET all universes
 export async function GET(request: NextRequest) {
 	try {
 		const user = await getUser();
 
-		console.log(user);
+		// console.log(user);
 		if (!user) {
 			return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 		}

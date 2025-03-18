@@ -27,46 +27,18 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	Entity,
+	ENTITY_STATUSES,
+	TYPES_OF_ENTITIES,
+	Universe,
+} from "@/lib/db/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
-// Define types for entity data
-interface Universe {
-	id: number;
-	name: string;
-	description: string;
-	slug: string;
-	status: string;
-	vectorNamespace: string;
-	teamId: number;
-	rules: Record<string, any>;
-	createdAt: string;
-	updatedAt: string;
-	createdBy: number;
-}
-
-interface Entity {
-	id: number;
-	universeId: number;
-	name: string;
-	slug: string;
-	entityType: EntityType;
-	description: string;
-	status: EntityStatus;
-	basicAttributes: Record<string, any>;
-	vectorId: string;
-	tags: string[];
-	createdAt: string;
-	updatedAt: string;
-	createdBy: number;
-}
-
-type EntityType = "character" | "location" | "item" | "event" | "organization";
-type EntityStatus = "active" | "inactive" | "historical";
 
 // Define the schema for entity form validation
 const entitySchema = z.object({
@@ -81,22 +53,18 @@ const entitySchema = z.object({
 		.regex(/^[a-z0-9-]+$/, {
 			message: "Slug can only contain lowercase letters, numbers, and hyphens.",
 		}),
-	entityType: z.enum(
-		["character", "location", "item", "event", "organization"] as const,
-		{
-			message: "Please select a valid entity type.",
-		}
-	),
+	entityType: z.enum(TYPES_OF_ENTITIES, {
+		message: "Please select a valid entity type.",
+	}),
 	description: z.string().min(10, {
 		message: "Description must be at least 10 characters.",
 	}),
-	status: z.enum(["active", "inactive", "historical"] as const, {
+	status: z.enum(ENTITY_STATUSES, {
 		message: "Please select a valid status.",
 	}),
 	basicAttributes: z.string().min(2, {
 		message: "Basic attributes are required.",
 	}),
-	tags: z.string().optional(),
 });
 
 // Define type for form values
@@ -130,7 +98,6 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 			description: "",
 			status: "active",
 			basicAttributes: "{}",
-			tags: "",
 		},
 	});
 
@@ -158,15 +125,14 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 					form.reset({
 						name: entityData.name,
 						slug: entityData.slug,
-						entityType: entityData.entityType,
-						description: entityData.description,
-						status: entityData.status,
+						entityType: entityData.entityType ?? undefined,
+						description: entityData.description ?? undefined,
+						status: entityData.status ?? undefined,
 						basicAttributes: JSON.stringify(
 							entityData.basicAttributes,
 							null,
 							2
 						),
-						tags: entityData.tags?.join(", ") || "",
 					});
 				}
 			} catch (err) {
@@ -192,14 +158,6 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 				throw new Error("Basic attributes must be valid JSON");
 			}
 
-			// Parse tags
-			const tags = data.tags
-				? data.tags
-						.split(",")
-						.map((tag) => tag.trim())
-						.filter(Boolean)
-				: [];
-
 			// Prepare request data
 			const entityData = {
 				universeId: parseInt(universeId),
@@ -209,7 +167,6 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 				description: data.description,
 				status: data.status,
 				basicAttributes: parsedBasicAttributes,
-				tags,
 			};
 
 			// Determine if creating or updating
@@ -366,20 +323,6 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 												placeholder="Detailed description of the entity..."
 												rows={4}
 											/>
-										</FormControl>
-										<FormMessage />
-									</FormItem>
-								)}
-							/>
-
-							<FormField
-								control={form.control}
-								name="tags"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Tags (comma-separated)</FormLabel>
-										<FormControl>
-											<Input {...field} placeholder="hero, avenger, tech" />
 										</FormControl>
 										<FormMessage />
 									</FormItem>

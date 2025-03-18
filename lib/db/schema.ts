@@ -16,14 +16,14 @@ import {
 // === METAVERSE SYSTEM ===
 
 // Enums
-export const statusEnum = pgEnum("status", [
+export const ENTITY_STATUSES = [
 	"active",
 	"inactive",
 	"deceased",
 	"historical",
 	"conceptual",
 	"unknown",
-]);
+] as const;
 
 export const TYPES_OF_ENTITIES = [
 	"character",
@@ -36,7 +36,9 @@ export const TYPES_OF_ENTITIES = [
 ] as const;
 
 export const EntityTypes = typeof TYPES_OF_ENTITIES;
+export const EntityStatus = typeof ENTITY_STATUSES;
 export const pgEntityTypeEnum = pgEnum("entity_type", TYPES_OF_ENTITIES);
+export const pgEntityStatusEnum = pgEnum("entity_status", ENTITY_STATUSES);
 
 // Universes table - defines knowledge boundaries
 export const users = pgTable("users", {
@@ -110,9 +112,8 @@ export const universes = pgTable(
 		name: varchar("name", { length: 100 }).notNull(),
 		description: text("description"),
 		rules: json("rules").$type<Record<string, any>>(), // Universe-specific rules
-		status: statusEnum("status").default("active"),
+		status: pgEntityStatusEnum("entity_status").default("active"),
 
-		// Vector DB reference - collection name in Qdrant
 		vectorNamespace: varchar("vector_namespace", { length: 50 }).notNull(),
 
 		// Metadata
@@ -144,7 +145,7 @@ export const entities = pgTable(
 		name: varchar("name", { length: 255 }).notNull(),
 		entityType: pgEntityTypeEnum("entity_type").notNull(),
 		description: text("description"),
-		status: statusEnum("status").default("active"),
+		status: pgEntityStatusEnum("entity_status").default("active"),
 
 		// Basic attributes that may be useful for quick filtering
 		basicAttributes: json("basic_attributes").$type<Record<string, any>>(),
