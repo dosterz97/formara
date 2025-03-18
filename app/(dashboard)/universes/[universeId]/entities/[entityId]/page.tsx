@@ -31,24 +31,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ENTITY_STATUSES, TYPES_OF_ENTITIES } from "@/lib/db/schema";
+import { Entity, ENTITY_STATUSES, TYPES_OF_ENTITIES } from "@/lib/db/schema";
 import { ArrowLeft, Loader2, Save, Trash } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-// TypeScript interface for Entity
-interface Entity {
-	id: number;
-	name: string;
-	description: string;
-	type: string;
-	attributes: Record<string, any>;
-	status: string;
-	universeId: number;
-	createdBy: string;
-	createdAt: string;
-	updatedAt: string;
-}
 
 export default function EntityEditPage() {
 	const params = useParams();
@@ -65,17 +51,15 @@ export default function EntityEditPage() {
 	const [formData, setFormData] = useState({
 		name: "",
 		description: "",
-		type: "",
+		entityType: "",
 		status: "active",
-		attributes: "{}",
+		basicAttributes: "{}",
 	});
-	const [customType, setCustomType] = useState("");
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
 	const [deleting, setDeleting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [formError, setFormError] = useState<string | null>(null);
-	const [isTypeCustom, setIsTypeCustom] = useState(false);
 	const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 	const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 	const [navigationTarget, setNavigationTarget] = useState("");
@@ -97,24 +81,16 @@ export default function EntityEditPage() {
 					throw new Error(errorData.error || "Failed to fetch entity");
 				}
 
-				const data = await response.json();
+				const data = (await response.json()) as Entity;
 				setEntity(data);
-
-				// Check if type is in predefined list
-				const isCustom = !TYPES_OF_ENTITIES.includes(data.type);
-				setIsTypeCustom(isCustom);
-
-				if (isCustom) {
-					setCustomType(data.type);
-				}
 
 				// Initialize form data
 				setFormData({
 					name: data.name,
 					description: data.description || "",
-					type: isCustom ? "custom" : data.type,
+					entityType: data.entityType,
 					status: data.status || "active",
-					attributes: JSON.stringify(data.attributes || {}, null, 2),
+					attributes: JSON.stringify(data.basicAttributes || {}, null, 2),
 				});
 			} catch (err) {
 				console.error("Error fetching entity:", err);
@@ -138,28 +114,21 @@ export default function EntityEditPage() {
 		const originalData = {
 			name: entity.name,
 			description: entity.description || "",
-			type: isTypeCustom ? "custom" : entity.type,
+			entityType: entity.entityType,
 			status: entity.status,
-			attributes: JSON.stringify(entity.attributes || {}, null, 2),
-		};
-
-		const formDataWithType = {
-			...formData,
-			type: formData.type === "custom" ? customType : formData.type,
-		};
+			basicAttributes: JSON.stringify(entity.basicAttributes || {}, null, 2),
+		} satisfies Entity;
 
 		// Check if form data has changed
 		const hasChanges =
-			originalData.name !== formDataWithType.name ||
-			originalData.description !== formDataWithType.description ||
-			(originalData.type === "custom"
-				? entity.type !== customType
-				: originalData.type !== formDataWithType.type) ||
-			originalData.status !== formDataWithType.status ||
-			originalData.attributes !== formDataWithType.attributes;
+			originalData.name !== formData.name ||
+			originalData.description !== formData.description ||
+			originalData.entityType !== formData.entityType ||
+			originalData.status !== formData.status ||
+			originalData.basicAttributes !== formData.basicAttributes;
 
 		setHasUnsavedChanges(hasChanges);
-	}, [entity, formData, customType, isTypeCustom]);
+	}, [entity, formData]);
 
 	// Handle form submission
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -172,19 +141,9 @@ export default function EntityEditPage() {
 			// Validate JSON attributes
 			let parsedAttributes = {};
 			try {
-				parsedAttributes = JSON.parse(formData.attributes);
+				parsedAttributes = JSON.parse(formData.basicAttributes);
 			} catch (err) {
 				setFormError("Invalid JSON in attributes field");
-				setSaving(false);
-				return;
-			}
-
-			// Determine final type value
-			const finalType =
-				formData.type === "custom" ? customType.trim() : formData.type;
-
-			if (formData.type === "custom" && !customType.trim()) {
-				setFormError("Custom type cannot be empty");
 				setSaving(false);
 				return;
 			}
@@ -192,7 +151,7 @@ export default function EntityEditPage() {
 			const updatedEntity = {
 				name: formData.name.trim(),
 				description: formData.description.trim(),
-				type: finalType,
+				type: formData.entityType,
 				status: formData.status,
 				attributes: parsedAttributes,
 			};
@@ -424,9 +383,7 @@ export default function EntityEditPage() {
 			<div className="mb-6">
 				<Button
 					variant="ghost"
-					onClick={() =>
-						handleNavigation(`/universes/${universeId}/entities/${entityId}`)
-					}
+					onClick={() => handleNavigation(`/universes/${universeId}/entities`)}
 					className="pl-0 mb-2"
 				>
 					<ArrowLeft className="mr-2 h-4 w-4" /> Back to Entity Details
@@ -476,7 +433,10 @@ export default function EntityEditPage() {
 						{/* Type field */}
 						<div className="space-y-2">
 							<Label htmlFor="type">Type</Label>
-							<Select value={formData.type} onValueChange={handleTypeChange}>
+							<Select
+								value={formData.entityType}
+								onValueChange={handleTypeChange}
+							>
 								<SelectTrigger id="type">
 									<SelectValue placeholder="Select type" />
 								</SelectTrigger>
@@ -486,17 +446,8 @@ export default function EntityEditPage() {
 											{type.charAt(0).toUpperCase() + type.slice(1)}
 										</SelectItem>
 									))}
-									<SelectItem value="custom">Custom</SelectItem>
 								</SelectContent>
 							</Select>
-							{formData.type === "custom" && (
-								<Input
-									className="mt-2"
-									placeholder="Enter custom type"
-									value={customType}
-									onChange={(e) => setCustomType(e.target.value)}
-								/>
-							)}
 						</div>
 
 						{/* Status field */}
@@ -544,7 +495,7 @@ export default function EntityEditPage() {
 							<Textarea
 								id="attributes"
 								name="attributes"
-								value={formData.attributes}
+								value={formData.basicAttributes}
 								onChange={handleInputChange}
 								rows={8}
 								className="font-mono text-sm"
@@ -580,11 +531,7 @@ export default function EntityEditPage() {
 						</div>
 						<Button
 							type="submit"
-							disabled={
-								saving ||
-								deleting ||
-								(formData.type === "custom" && !customType?.trim())
-							}
+							disabled={saving || deleting}
 							className={!hasUnsavedChanges ? "opacity-50" : ""}
 						>
 							{saving ? (
