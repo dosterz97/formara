@@ -1,13 +1,12 @@
 import { relations } from "drizzle-orm";
 import {
-	integer,
 	json,
 	pgEnum,
 	pgTable,
-	serial,
 	text,
 	timestamp,
 	uniqueIndex,
+	uuid,
 	varchar,
 } from "drizzle-orm/pg-core";
 
@@ -42,7 +41,7 @@ export const pgEntityStatusEnum = pgEnum("entity_status", ENTITY_STATUSES);
 
 // Universes table - defines knowledge boundaries
 export const users = pgTable("users", {
-	id: serial("id").primaryKey(),
+	id: uuid("id").primaryKey().defaultRandom(),
 	name: varchar("name", { length: 100 }),
 	email: varchar("email", { length: 255 }).notNull().unique(),
 	passwordHash: text("password_hash").notNull(),
@@ -53,7 +52,7 @@ export const users = pgTable("users", {
 });
 
 export const teams = pgTable("teams", {
-	id: serial("id").primaryKey(),
+	id: uuid("id").primaryKey().defaultRandom(),
 	name: varchar("name", { length: 100 }).notNull(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
 	updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -65,11 +64,11 @@ export const teams = pgTable("teams", {
 });
 
 export const teamMembers = pgTable("team_members", {
-	id: serial("id").primaryKey(),
-	userId: integer("user_id")
+	id: uuid("id").primaryKey().defaultRandom(),
+	userId: uuid("user_id")
 		.notNull()
 		.references(() => users.id),
-	teamId: integer("team_id")
+	teamId: uuid("team_id")
 		.notNull()
 		.references(() => teams.id),
 	role: varchar("role", { length: 50 }).notNull(),
@@ -77,24 +76,24 @@ export const teamMembers = pgTable("team_members", {
 });
 
 export const activityLogs = pgTable("activity_logs", {
-	id: serial("id").primaryKey(),
-	teamId: integer("team_id")
+	id: uuid("id").primaryKey().defaultRandom(),
+	teamId: uuid("team_id")
 		.notNull()
 		.references(() => teams.id),
-	userId: integer("user_id").references(() => users.id),
+	userId: uuid("user_id").references(() => users.id),
 	action: text("action").notNull(),
 	timestamp: timestamp("timestamp").notNull().defaultNow(),
 	ipAddress: varchar("ip_address", { length: 45 }),
 });
 
 export const invitations = pgTable("invitations", {
-	id: serial("id").primaryKey(),
-	teamId: integer("team_id")
+	id: uuid("id").primaryKey().defaultRandom(),
+	teamId: uuid("team_id")
 		.notNull()
 		.references(() => teams.id),
 	email: varchar("email", { length: 255 }).notNull(),
 	role: varchar("role", { length: 50 }).notNull(),
-	invitedBy: integer("invited_by")
+	invitedBy: uuid("invited_by")
 		.notNull()
 		.references(() => users.id),
 	invitedAt: timestamp("invited_at").notNull().defaultNow(),
@@ -104,8 +103,8 @@ export const invitations = pgTable("invitations", {
 export const universes = pgTable(
 	"universes",
 	{
-		id: serial("id").primaryKey(),
-		teamId: integer("team_id")
+		id: uuid("id").primaryKey().defaultRandom(),
+		teamId: uuid("team_id")
 			.notNull()
 			.references(() => teams.id),
 		slug: varchar("slug", { length: 50 }).notNull(),
@@ -119,7 +118,7 @@ export const universes = pgTable(
 		// Metadata
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at").notNull().defaultNow(),
-		createdBy: integer("created_by").references(() => users.id),
+		createdBy: uuid("created_by").references(() => users.id),
 	},
 	(table) => {
 		return [
@@ -137,8 +136,8 @@ export const universes = pgTable(
 export const entities = pgTable(
 	"entities",
 	{
-		id: serial("id").primaryKey(),
-		universeId: integer("universe_id")
+		id: uuid("id").primaryKey().defaultRandom(),
+		universeId: uuid("universe_id")
 			.notNull()
 			.references(() => universes.id),
 		slug: varchar("slug", { length: 100 }).notNull(),
@@ -156,7 +155,7 @@ export const entities = pgTable(
 		// Metadata
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at").notNull().defaultNow(),
-		createdBy: integer("created_by").references(() => users.id),
+		createdBy: uuid("created_by").references(() => users.id),
 	},
 	(table) => {
 		return [
@@ -173,38 +172,38 @@ export const entities = pgTable(
 
 // Tags for categorization
 export const tags = pgTable("tags", {
-	id: serial("id").primaryKey(),
-	universeId: integer("universe_id")
+	id: uuid("id").primaryKey().defaultRandom(),
+	universeId: uuid("universe_id")
 		.notNull()
 		.references(() => universes.id),
 	name: varchar("name", { length: 100 }).notNull(),
 	category: varchar("category", { length: 50 }),
 	description: text("description"),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
-	createdBy: integer("created_by").references(() => users.id),
+	createdBy: uuid("created_by").references(() => users.id),
 });
 
 // Entity tags association
 export const entityTags = pgTable("entity_tags", {
-	id: serial("id").primaryKey(),
-	entityId: integer("entity_id")
+	id: uuid("id").primaryKey().defaultRandom(),
+	entityId: uuid("entity_id")
 		.notNull()
 		.references(() => entities.id),
-	tagId: integer("tag_id")
+	tagId: uuid("tag_id")
 		.notNull()
 		.references(() => tags.id),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
-	createdBy: integer("created_by").references(() => users.id),
+	createdBy: uuid("created_by").references(() => users.id),
 });
 
 // Metaverse activity logs
 export const metaverseActivityLogs = pgTable("metaverse_activity_logs", {
-	id: serial("id").primaryKey(),
-	universeId: integer("universe_id")
+	id: uuid("id").primaryKey().defaultRandom(),
+	universeId: uuid("universe_id")
 		.notNull()
 		.references(() => universes.id),
-	userId: integer("user_id").references(() => users.id),
-	entityId: integer("entity_id").references(() => entities.id),
+	userId: uuid("user_id").references(() => users.id),
+	entityId: uuid("entity_id").references(() => entities.id),
 	action: text("action").notNull(),
 	details: json("details").$type<Record<string, any>>(),
 	timestamp: timestamp("timestamp").notNull().defaultNow(),

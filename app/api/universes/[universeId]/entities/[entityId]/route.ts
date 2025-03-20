@@ -35,7 +35,7 @@ export async function GET(
 		const universe = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, parseInt(universeId, 10)))
+			.where(eq(universes.id, universeId))
 			.limit(1);
 
 		if (!universe || universe.length === 0) {
@@ -57,10 +57,7 @@ export async function GET(
 			.select()
 			.from(entities)
 			.where(
-				and(
-					eq(entities.id, parseInt(entityId, 10)),
-					eq(entities.universeId, parseInt(universeId, 10))
-				)
+				and(eq(entities.id, entityId), eq(entities.universeId, universeId))
 			)
 			.limit(1);
 
@@ -108,7 +105,7 @@ export async function PUT(
 		const universe = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, parseInt(universeId, 10)))
+			.where(eq(universes.id, universeId))
 			.limit(1);
 
 		if (!universe || universe.length === 0) {
@@ -130,10 +127,7 @@ export async function PUT(
 			.select()
 			.from(entities)
 			.where(
-				and(
-					eq(entities.id, parseInt(entityId, 10)),
-					eq(entities.universeId, parseInt(universeId, 10))
-				)
+				and(eq(entities.id, entityId), eq(entities.universeId, universeId))
 			)
 			.limit(1);
 
@@ -169,10 +163,7 @@ export async function PUT(
 			.update(entities)
 			.set(updateData)
 			.where(
-				and(
-					eq(entities.id, parseInt(entityId, 10)),
-					eq(entities.universeId, parseInt(universeId, 10))
-				)
+				and(eq(entities.id, entityId), eq(entities.universeId, universeId))
 			)
 			.returning();
 
@@ -220,7 +211,7 @@ export async function DELETE(
 		const universe = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, parseInt(universeId, 10)))
+			.where(eq(universes.id, universeId))
 			.limit(1);
 
 		if (!universe || universe.length === 0) {
@@ -242,10 +233,7 @@ export async function DELETE(
 			.select()
 			.from(entities)
 			.where(
-				and(
-					eq(entities.id, parseInt(entityId, 10)),
-					eq(entities.universeId, parseInt(universeId, 10))
-				)
+				and(eq(entities.id, entityId), eq(entities.universeId, universeId))
 			)
 			.limit(1);
 
@@ -257,10 +245,7 @@ export async function DELETE(
 		await db
 			.delete(entities)
 			.where(
-				and(
-					eq(entities.id, parseInt(entityId, 10)),
-					eq(entities.universeId, parseInt(universeId, 10))
-				)
+				and(eq(entities.id, entityId), eq(entities.universeId, universeId))
 			);
 
 		// If this universe uses vector embeddings, delete the vector for this entity

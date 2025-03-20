@@ -160,7 +160,7 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 
 			// Prepare request data
 			const entityData = {
-				universeId: parseInt(universeId),
+				universeId: universeId,
 				name: data.name,
 				slug: data.slug,
 				entityType: data.entityType,

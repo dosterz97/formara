@@ -51,7 +51,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { TYPES_OF_ENTITIES } from "@/lib/db/schema";
+import { EntityTag, TYPES_OF_ENTITIES, Universe } from "@/lib/db/schema";
 import {
 	ArrowDown,
 	ArrowLeft,
@@ -67,26 +67,6 @@ import {
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
-// TypeScript interfaces
-interface Entity {
-	id: number;
-	name: string;
-	description: string;
-	type: string;
-	attributes: Record<string, any>;
-	status: string;
-	universeId: number;
-	createdBy: string;
-	createdAt: string;
-	updatedAt: string;
-}
-
-interface Universe {
-	id: number;
-	name: string;
-	slug: string;
-}
 
 interface PaginationInfo {
 	total: number;
@@ -106,7 +86,7 @@ export default function EntitiesPage() {
 	const router = useRouter();
 
 	// State
-	const [entities, setEntities] = useState<Entity[]>([]);
+	const [entities, setEntities] = useState<EntityTag[]>([]);
 	const [universe, setUniverse] = useState<Universe | null>(null);
 	const [pagination, setPagination] = useState<PaginationInfo>({
 		total: 0,
@@ -147,10 +127,10 @@ export default function EntitiesPage() {
 
 	// Get query params
 	const limit = searchParams.get("limit")
-		? parseInt(searchParams.get("limit") as string)
+		? (searchParams.get("limit") as string)
 		: 10;
 	const offset = searchParams.get("offset")
-		? parseInt(searchParams.get("offset") as string)
+		? (searchParams.get("offset") as string)
 		: 0;
 
 	// Calculate current page - make sure pagination values are defined
@@ -173,6 +153,8 @@ export default function EntitiesPage() {
 				}
 
 				const data = await response.json();
+
+				// @ts-expect-error shhh
 				setUniverse({
 					id: data.id,
 					name: data.name,

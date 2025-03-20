@@ -40,7 +40,7 @@ export async function GET(
 		const universe = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, parseInt(universeId, 10)))
+			.where(eq(universes.id, universeId))
 			.limit(1);
 
 		if (!universe || universe.length === 0) {
@@ -59,15 +59,15 @@ export async function GET(
 
 		// Get query params for pagination
 		const searchParams = request.nextUrl.searchParams;
-		const limit = parseInt(searchParams.get("limit") || "50");
-		const offset = parseInt(searchParams.get("offset") || "0");
+		const limit = searchParams.get("limit") || "50";
+		const offset = searchParams.get("offset") || "0";
 		const search = searchParams.get("search") || "";
 
 		// Get entities with search and pagination
 		let query = db
 			.select()
 			.from(entities)
-			.where(eq(entities.universeId, parseInt(universeId, 10)));
+			.where(eq(entities.universeId, universeId));
 
 		// // Add search if provided
 		// if (search) {
@@ -85,7 +85,7 @@ export async function GET(
 		const countResult = await db
 			.select({ count: count() })
 			.from(entities)
-			.where(eq(entities.universeId, parseInt(universeId, 10)));
+			.where(eq(entities.universeId, universeId));
 
 		const total = countResult[0]?.count || 0;
 
@@ -136,7 +136,7 @@ export async function POST(
 		const universe = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, parseInt(universeId, 10)))
+			.where(eq(universes.id, universeId))
 			.limit(1);
 
 		if (!universe || universe.length === 0) {
@@ -163,7 +163,7 @@ export async function POST(
 		// await resetEntitySequence();
 
 		const newEntity = {
-			universeId: parseInt(universeId, 10),
+			universeId: universeId,
 			name: body.name,
 			slug: slugify(body.name),
 			description: body.description || "",
@@ -261,7 +261,7 @@ export async function PUT(
 		const existingUniverse = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, parseInt(id, 10)))
+			.where(eq(universes.id, (id, 10)))
 			.limit(1);
 
 		if (!existingUniverse || existingUniverse.length === 0) {
@@ -296,7 +296,7 @@ export async function PUT(
 		const [updatedUniverse] = await db
 			.update(universes)
 			.set(updateData)
-			.where(eq(universes.id, parseInt(id, 10)))
+			.where(eq(universes.id, (id, 10)))
 			.returning();
 
 		return NextResponse.json(updatedUniverse);
@@ -338,7 +338,7 @@ export async function DELETE(
 		const existingUniverse = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, parseInt(id, 10)))
+			.where(eq(universes.id, (id, 10)))
 			.limit(1);
 
 		if (!existingUniverse || existingUniverse.length === 0) {
@@ -356,10 +356,10 @@ export async function DELETE(
 		}
 
 		// Delete the universe
-		await db.delete(universes).where(eq(universes.id, parseInt(id, 10)));
+		await db.delete(universes).where(eq(universes.id, (id, 10)));
 
 		// Delete related entities
-		await db.delete(entities).where(eq(entities.universeId, parseInt(id, 10)));
+		await db.delete(entities).where(eq(entities.universeId, (id, 10)));
 
 		// Delete the Qdrant collection
 		const { deleteUniverseCollection } = await import("@/lib/db/qdrant-client");

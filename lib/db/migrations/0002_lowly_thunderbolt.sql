@@ -1,1 +1,0 @@
-ALTER TABLE "entities" ALTER COLUMN "vector_id" SET NOT NULL;

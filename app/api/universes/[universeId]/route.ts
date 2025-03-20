@@ -35,7 +35,7 @@ export async function GET(
 		const universe = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, parseInt(universeId, 10)))
+			.where(eq(universes.id, universeId))
 			.limit(1);
 
 		if (!universe || universe.length === 0) {
@@ -57,7 +57,7 @@ export async function GET(
 		const entityCount = await db
 			.select({ count: count() })
 			.from(entities)
-			.where(eq(entities.universeId, parseInt(universeId, 10)));
+			.where(eq(entities.universeId, universeId));
 
 		const universeData = {
 			...universe[0],
@@ -103,7 +103,7 @@ export async function PUT(
 		const existingUniverse = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, parseInt(universeId, 10)))
+			.where(eq(universes.id, universeId))
 			.limit(1);
 
 		if (!existingUniverse || existingUniverse.length === 0) {
@@ -138,7 +138,7 @@ export async function PUT(
 		const [updatedUniverse] = await db
 			.update(universes)
 			.set(updateData)
-			.where(eq(universes.id, parseInt(universeId, 10)))
+			.where(eq(universes.id, universeId))
 			.returning();
 
 		return NextResponse.json(updatedUniverse);
@@ -166,16 +166,6 @@ export async function DELETE(
 			);
 		}
 
-		const universeIdNumber = parseInt(universeId, 10);
-
-		// Validate universe ID
-		if (isNaN(universeIdNumber)) {
-			return NextResponse.json(
-				{ error: "Invalid universe ID" },
-				{ status: 400 }
-			);
-		}
-
 		// Authenticate user
 		const user = await getUser();
 		if (!user) {
@@ -192,7 +182,7 @@ export async function DELETE(
 		const [universe] = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, universeIdNumber))
+			.where(eq(universes.id, universeId))
 			.limit(1);
 
 		if (!universe) {
@@ -213,12 +203,10 @@ export async function DELETE(
 		// Start transaction for database operations
 		const result = await db.transaction(async (tx) => {
 			// First, delete all entities belonging to this universe
-			await tx
-				.delete(entities)
-				.where(eq(entities.universeId, universeIdNumber));
+			await tx.delete(entities).where(eq(entities.universeId, universeId));
 
 			// Then delete the universe
-			await tx.delete(universes).where(eq(universes.id, universeIdNumber));
+			await tx.delete(universes).where(eq(universes.id, universeId));
 
 			return { success: true };
 		});

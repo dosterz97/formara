@@ -288,7 +288,7 @@ export async function updateEntityVector(
 		// Convert to numeric ID for Qdrant
 		let numericId: number;
 		try {
-			numericId = parseInt(entity.vectorId, 10);
+			numericId = (entity.vectorId, 10);
 			if (isNaN(numericId)) {
 				// If not a valid number, fallback to entity ID
 				console.log(
@@ -381,7 +381,7 @@ export async function deleteEntityVector(
 		// Convert to numeric ID for Qdrant
 		let numericId: number;
 		try {
-			numericId = parseInt(entity.vectorId, 10);
+			numericId = (entity.vectorId, 10);
 			if (isNaN(numericId)) {
 				// If not a valid number, fallback to entity ID
 				console.log(

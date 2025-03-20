@@ -1,52 +1,52 @@
+CREATE TYPE "public"."entity_status" AS ENUM('active', 'inactive', 'deceased', 'historical', 'conceptual', 'unknown');--> statement-breakpoint
 CREATE TYPE "public"."entity_type" AS ENUM('character', 'location', 'item', 'event', 'concept', 'organization', 'other');--> statement-breakpoint
-CREATE TYPE "public"."status" AS ENUM('active', 'inactive', 'deceased', 'historical', 'conceptual', 'unknown');--> statement-breakpoint
 CREATE TABLE "activity_logs" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"team_id" integer NOT NULL,
-	"user_id" integer,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"team_id" uuid NOT NULL,
+	"user_id" uuid,
 	"action" text NOT NULL,
 	"timestamp" timestamp DEFAULT now() NOT NULL,
 	"ip_address" varchar(45)
 );
 --> statement-breakpoint
 CREATE TABLE "entities" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"universe_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"universe_id" uuid NOT NULL,
 	"slug" varchar(100) NOT NULL,
 	"name" varchar(255) NOT NULL,
 	"entity_type" "entity_type" NOT NULL,
 	"description" text,
-	"status" "status" DEFAULT 'active',
+	"entity_status" "entity_status" DEFAULT 'active',
 	"basic_attributes" json,
 	"vector_id" varchar(100) NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	"created_by" integer
+	"created_by" uuid
 );
 --> statement-breakpoint
 CREATE TABLE "entity_tags" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"entity_id" integer NOT NULL,
-	"tag_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"entity_id" uuid NOT NULL,
+	"tag_id" uuid NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"created_by" integer
+	"created_by" uuid
 );
 --> statement-breakpoint
 CREATE TABLE "invitations" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"team_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"team_id" uuid NOT NULL,
 	"email" varchar(255) NOT NULL,
 	"role" varchar(50) NOT NULL,
-	"invited_by" integer NOT NULL,
+	"invited_by" uuid NOT NULL,
 	"invited_at" timestamp DEFAULT now() NOT NULL,
 	"status" varchar(20) DEFAULT 'pending' NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "metaverse_activity_logs" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"universe_id" integer NOT NULL,
-	"user_id" integer,
-	"entity_id" integer,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"universe_id" uuid NOT NULL,
+	"user_id" uuid,
+	"entity_id" uuid,
 	"action" text NOT NULL,
 	"details" json,
 	"timestamp" timestamp DEFAULT now() NOT NULL,
@@ -54,25 +54,25 @@ CREATE TABLE "metaverse_activity_logs" (
 );
 --> statement-breakpoint
 CREATE TABLE "tags" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"universe_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"universe_id" uuid NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"category" varchar(50),
 	"description" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"created_by" integer
+	"created_by" uuid
 );
 --> statement-breakpoint
 CREATE TABLE "team_members" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
-	"team_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"team_id" uuid NOT NULL,
 	"role" varchar(50) NOT NULL,
 	"joined_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "teams" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
@@ -86,21 +86,21 @@ CREATE TABLE "teams" (
 );
 --> statement-breakpoint
 CREATE TABLE "universes" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"team_id" integer NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"team_id" uuid NOT NULL,
 	"slug" varchar(50) NOT NULL,
 	"name" varchar(100) NOT NULL,
 	"description" text,
 	"rules" json,
-	"status" "status" DEFAULT 'active',
+	"entity_status" "entity_status" DEFAULT 'active',
 	"vector_namespace" varchar(50) NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
-	"created_by" integer
+	"created_by" uuid
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"name" varchar(100),
 	"email" varchar(255) NOT NULL,
 	"password_hash" text NOT NULL,

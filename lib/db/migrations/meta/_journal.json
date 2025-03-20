@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1742104724557,
-      "tag": "0000_perfect_firebrand",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1742196989671,
-      "tag": "0001_huge_frog_thor",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1742197238747,
-      "tag": "0002_lowly_thunderbolt",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1742278677269,
-      "tag": "0003_typical_giant_man",
+      "when": 1742447858499,
+      "tag": "0000_keen_sentry",
       "breakpoints": true
     }
   ]
