@@ -38,12 +38,12 @@ import { useEffect, useState } from "react";
 
 export default function EntityEditPage() {
 	const params = useParams();
-	const universeId = Array.isArray(params.universeId)
-		? params.universeId[0]
-		: (params.universeId as string);
-	const entityId = Array.isArray(params.entityId)
-		? params.entityId[0]
-		: (params.entityId as string);
+	const universeSlug = Array.isArray(params.universeSlug)
+		? params.universeSlug[0]
+		: (params.universeSlug as string);
+	const entitySlug = Array.isArray(params.entitySlug)
+		? params.entitySlug[0]
+		: (params.entitySlug as string);
 	const router = useRouter();
 
 	// State
@@ -73,7 +73,7 @@ export default function EntityEditPage() {
 				setError(null);
 
 				const response = await fetch(
-					`/api/universes/${universeId}/entities/${entityId}`
+					`/api/universes/${universeSlug}/entities/${entitySlug}`
 				);
 
 				if (!response.ok) {
@@ -90,7 +90,7 @@ export default function EntityEditPage() {
 					description: data.description || "",
 					entityType: data.entityType,
 					status: data.status || "active",
-					attributes: JSON.stringify(data.basicAttributes || {}, null, 2),
+					basicAttributes: JSON.stringify(data.basicAttributes || {}, null, 2),
 				});
 			} catch (err) {
 				console.error("Error fetching entity:", err);
@@ -102,10 +102,10 @@ export default function EntityEditPage() {
 			}
 		};
 
-		if (universeId && entityId) {
+		if (universeSlug && entitySlug) {
 			fetchEntity();
 		}
-	}, [universeId, entityId]);
+	}, [universeSlug, entitySlug]);
 
 	// Track form changes
 	useEffect(() => {
@@ -116,8 +116,8 @@ export default function EntityEditPage() {
 			description: entity.description || "",
 			entityType: entity.entityType,
 			status: entity.status,
-			basicAttributes: JSON.stringify(entity.basicAttributes || {}, null, 2),
-		} satisfies Entity;
+			basicAttributes: {}, // JSON.stringify(entity.basicAttributes || {}, null, 2),
+		};
 
 		// Check if form data has changed
 		const hasChanges =
@@ -157,7 +157,7 @@ export default function EntityEditPage() {
 			};
 
 			const response = await fetch(
-				`/api/universes/${universeId}/entities/${entityId}`,
+				`/api/universes/${universeSlug}/entities/${entitySlug}`,
 				{
 					method: "PUT",
 					headers: {
@@ -175,7 +175,7 @@ export default function EntityEditPage() {
 			setHasUnsavedChanges(false);
 
 			// Navigate back to entity detail page
-			router.push(`/universes/${universeId}/entities/${entityId}`);
+			router.push(`/universes/${universeSlug}/entities/${entitySlug}`);
 		} catch (err) {
 			console.error("Error updating entity:", err);
 			setFormError(
@@ -193,7 +193,7 @@ export default function EntityEditPage() {
 			setFormError(null);
 
 			const response = await fetch(
-				`/api/universes/${universeId}/entities/${entityId}`,
+				`/api/universes/${universeSlug}/entities/${entitySlug}`,
 				{
 					method: "DELETE",
 				}
@@ -205,7 +205,7 @@ export default function EntityEditPage() {
 			}
 
 			// Navigate back to entities list
-			router.push(`/universes/${universeId}/entities`);
+			router.push(`/universes/${universeSlug}/entities`);
 		} catch (err) {
 			console.error("Error deleting entity:", err);
 			setFormError(
@@ -282,7 +282,7 @@ export default function EntityEditPage() {
 					<CardFooter>
 						<Button
 							variant="outline"
-							onClick={() => router.push(`/universes/${universeId}/entities`)}
+							onClick={() => router.push(`/universes/${universeSlug}/entities`)}
 						>
 							<ArrowLeft className="mr-2 h-4 w-4" /> Back to Entities
 						</Button>
@@ -309,7 +309,7 @@ export default function EntityEditPage() {
 					<CardFooter>
 						<Button
 							variant="outline"
-							onClick={() => router.push(`/universes/${universeId}/entities`)}
+							onClick={() => router.push(`/universes/${universeSlug}/entities`)}
 						>
 							<ArrowLeft className="mr-2 h-4 w-4" /> Back to Entities
 						</Button>
@@ -383,7 +383,9 @@ export default function EntityEditPage() {
 			<div className="mb-6">
 				<Button
 					variant="ghost"
-					onClick={() => handleNavigation(`/universes/${universeId}/entities`)}
+					onClick={() =>
+						handleNavigation(`/universes/${universeSlug}/entities`)
+					}
 					className="pl-0 mb-2"
 				>
 					<ArrowLeft className="mr-2 h-4 w-4" /> Back to Entity Details
@@ -514,7 +516,7 @@ export default function EntityEditPage() {
 								variant="outline"
 								onClick={() =>
 									handleNavigation(
-										`/universes/${universeId}/entities/${entityId}`
+										`/universes/${universeSlug}/entities/${entitySlug}`
 									)
 								}
 							>

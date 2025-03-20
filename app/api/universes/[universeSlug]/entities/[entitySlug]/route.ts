@@ -8,13 +8,12 @@ import { NextRequest, NextResponse } from "next/server";
 // GET a specific entity
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { universeId: string; entityId: string } }
+	{ params }: { params: { universeSlug: string; entitySlug: string } }
 ) {
-	console.log("GET");
 	try {
-		const { universeId, entityId } = await params;
-
-		if (!universeId || !entityId) {
+		const { universeSlug, entitySlug } = await params;
+		console.log("GET", universeSlug, entitySlug);
+		if (!universeSlug || !entitySlug) {
 			return NextResponse.json(
 				{ error: "Universe ID and Entity ID are required" },
 				{ status: 400 }
@@ -32,20 +31,22 @@ export async function GET(
 		}
 
 		// Verify the universe exists and belongs to the user's team
-		const universe = await db
+		const universeResult = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, universeId))
+			.where(eq(universes.slug, universeSlug))
 			.limit(1);
 
-		if (!universe || universe.length === 0) {
+		if (!universeResult || universeResult.length === 0) {
 			return NextResponse.json(
 				{ error: "Universe not found" },
 				{ status: 404 }
 			);
 		}
 
-		if (universe[0].teamId !== teamData.id) {
+		const universe = universeResult[0];
+
+		if (universe.teamId !== teamData.id) {
 			return NextResponse.json(
 				{ error: "Unauthorized access to universe" },
 				{ status: 403 }
@@ -57,7 +58,7 @@ export async function GET(
 			.select()
 			.from(entities)
 			.where(
-				and(eq(entities.id, entityId), eq(entities.universeId, universeId))
+				and(eq(entities.slug, entitySlug), eq(entities.universeId, universe.id))
 			)
 			.limit(1);
 
@@ -79,12 +80,12 @@ export async function GET(
 // PUT update a specific entity
 export async function PUT(
 	request: NextRequest,
-	{ params }: { params: { universeId: string; entityId: string } }
+	{ params }: { params: { universeSlug: string; entitySlug: string } }
 ) {
 	try {
-		const { universeId, entityId } = await params;
+		const { universeSlug, entitySlug } = await params;
 
-		if (!universeId || !entityId) {
+		if (!universeSlug || !entitySlug) {
 			return NextResponse.json(
 				{ error: "Universe ID and Entity ID are required" },
 				{ status: 400 }
@@ -102,20 +103,22 @@ export async function PUT(
 		}
 
 		// Verify the universe exists and belongs to the user's team
-		const universe = await db
+		const universeResult = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, universeId))
+			.where(eq(universes.slug, universeSlug))
 			.limit(1);
 
-		if (!universe || universe.length === 0) {
+		if (!universeResult || universeResult.length === 0) {
 			return NextResponse.json(
 				{ error: "Universe not found" },
 				{ status: 404 }
 			);
 		}
 
-		if (universe[0].teamId !== teamData.id) {
+		const universe = universeResult[0];
+
+		if (universe.teamId !== teamData.id) {
 			return NextResponse.json(
 				{ error: "Unauthorized access to universe" },
 				{ status: 403 }
@@ -127,7 +130,7 @@ export async function PUT(
 			.select()
 			.from(entities)
 			.where(
-				and(eq(entities.id, entityId), eq(entities.universeId, universeId))
+				and(eq(entities.id, entitySlug), eq(entities.universeId, universe.id))
 			)
 			.limit(1);
 
@@ -163,13 +166,13 @@ export async function PUT(
 			.update(entities)
 			.set(updateData)
 			.where(
-				and(eq(entities.id, entityId), eq(entities.universeId, universeId))
+				and(eq(entities.id, entitySlug), eq(entities.universeId, universe.id))
 			)
 			.returning();
 
 		// If this universe uses vector embeddings, you might need to update the vector for this entity
-		if (universe[0].vectorNamespace) {
-			await updateEntityVector(updatedEntity, universe[0]);
+		if (universe.vectorNamespace) {
+			await updateEntityVector(updatedEntity, universe);
 		}
 
 		return NextResponse.json(updatedEntity);
@@ -185,12 +188,14 @@ export async function PUT(
 // DELETE a specific entity
 export async function DELETE(
 	request: NextRequest,
-	{ params }: { params: { universeId: string; entityId: string } }
+	{ params }: { params: { universeSlug: string; entitySlug: string } }
 ) {
 	try {
-		const { universeId, entityId } = await params;
+		const { universeSlug, entitySlug } = await params;
 
-		if (!universeId || !entityId) {
+		console.log("DELETE: ", universeSlug, entitySlug);
+
+		if (!universeSlug || !entitySlug) {
 			return NextResponse.json(
 				{ error: "Universe ID and Entity ID are required" },
 				{ status: 400 }
@@ -208,20 +213,22 @@ export async function DELETE(
 		}
 
 		// Verify the universe exists and belongs to the user's team
-		const universe = await db
+		const universeResult = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, universeId))
+			.where(eq(universes.slug, universeSlug))
 			.limit(1);
 
-		if (!universe || universe.length === 0) {
+		if (!universeResult || universeResult.length === 0) {
 			return NextResponse.json(
 				{ error: "Universe not found" },
 				{ status: 404 }
 			);
 		}
 
-		if (universe[0].teamId !== teamData.id) {
+		const universe = universeResult[0];
+
+		if (universe.teamId !== teamData.id) {
 			return NextResponse.json(
 				{ error: "Unauthorized access to universe" },
 				{ status: 403 }
@@ -233,9 +240,11 @@ export async function DELETE(
 			.select()
 			.from(entities)
 			.where(
-				and(eq(entities.id, entityId), eq(entities.universeId, universeId))
+				and(eq(entities.slug, entitySlug), eq(entities.universeId, universe.id))
 			)
 			.limit(1);
+
+		console.log("UNIVERSE: ", universe.id, "ENTITY: ", existingEntity[0]);
 
 		if (!existingEntity || existingEntity.length === 0) {
 			return NextResponse.json({ error: "Entity not found" }, { status: 404 });
@@ -245,12 +254,15 @@ export async function DELETE(
 		await db
 			.delete(entities)
 			.where(
-				and(eq(entities.id, entityId), eq(entities.universeId, universeId))
+				and(
+					eq(entities.id, existingEntity[0].id),
+					eq(entities.universeId, universe.id)
+				)
 			);
 
 		// If this universe uses vector embeddings, delete the vector for this entity
-		if (universe[0].vectorNamespace) {
-			await deleteEntityVector(existingEntity[0], universe[0]);
+		if (universe.vectorNamespace) {
+			await deleteEntityVector(existingEntity[0], universe);
 		}
 
 		return NextResponse.json({ success: true });

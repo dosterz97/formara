@@ -5,13 +5,13 @@ import { UniverseDetails } from "./universe-details";
 
 export default function UniversePage() {
 	const params = useParams();
-	const id = Array.isArray(params.universeId)
-		? params.universeId[0]
-		: (params.universeId as string);
+	const universeSlug = Array.isArray(params.universeSlug)
+		? params.universeSlug[0]
+		: (params.universeSlug as string);
 
 	return (
 		<div className="container mx-auto py-8">
-			<UniverseDetails id={id} />
+			<UniverseDetails universeSlug={universeSlug} />
 		</div>
 	);
 }

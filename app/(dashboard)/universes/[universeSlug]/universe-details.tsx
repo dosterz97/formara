@@ -44,10 +44,10 @@ interface Universe {
 }
 
 interface UniverseDetailsProps {
-	id: string;
+	universeSlug: string;
 }
 
-export function UniverseDetails({ id }: UniverseDetailsProps) {
+export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 	const [universe, setUniverse] = useState<Universe | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export function UniverseDetails({ id }: UniverseDetailsProps) {
 				setLoading(true);
 				setError(null);
 
-				const response = await fetch(`/api/universes/${id}`);
+				const response = await fetch(`/api/universes/${universeSlug}`);
 
 				if (!response.ok) {
 					const errorData = await response.json();
@@ -80,10 +80,10 @@ export function UniverseDetails({ id }: UniverseDetailsProps) {
 			}
 		};
 
-		if (id) {
+		if (universeSlug) {
 			fetchUniverse();
 		}
-	}, [id]);
+	}, [universeSlug]);
 
 	// Handle universe deletion
 	const handleDeleteUniverse = async () => {
@@ -290,7 +290,7 @@ export function UniverseDetails({ id }: UniverseDetailsProps) {
 					<div className="text-sm text-muted-foreground">
 						Last updated: {formatDate(universe.updatedAt)}
 					</div>
-					<Link href={`/universes/${universe.id}/entities`}>
+					<Link href={`/universes/${universe.slug}/entities`}>
 						<Button>View Entities</Button>
 					</Link>
 				</CardFooter>

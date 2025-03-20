@@ -51,7 +51,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { EntityTag, TYPES_OF_ENTITIES, Universe } from "@/lib/db/schema";
+import { Entity, TYPES_OF_ENTITIES, Universe } from "@/lib/db/schema";
 import {
 	ArrowDown,
 	ArrowLeft,
@@ -80,13 +80,13 @@ const ENTITY_STATUSES = ["active", "inactive", "draft", "archived"];
 export default function EntitiesPage() {
 	const params = useParams();
 	const searchParams = useSearchParams();
-	const universeId = Array.isArray(params.universeId)
-		? params.universeId[0]
-		: (params.universeId as string);
+	const universeSlug = Array.isArray(params.universeSlug)
+		? params.universeSlug[0]
+		: (params.universeSlug as string);
 	const router = useRouter();
 
 	// State
-	const [entities, setEntities] = useState<EntityTag[]>([]);
+	const [entities, setEntities] = useState<Entity[]>([]);
 	const [universe, setUniverse] = useState<Universe | null>(null);
 	const [pagination, setPagination] = useState<PaginationInfo>({
 		total: 0,
@@ -145,7 +145,7 @@ export default function EntitiesPage() {
 	useEffect(() => {
 		const fetchUniverse = async () => {
 			try {
-				const response = await fetch(`/api/universes/${universeId}`);
+				const response = await fetch(`/api/universes/${universeSlug}`);
 
 				if (!response.ok) {
 					const errorData = await response.json();
@@ -168,10 +168,10 @@ export default function EntitiesPage() {
 			}
 		};
 
-		if (universeId) {
+		if (universeSlug) {
 			fetchUniverse();
 		}
-	}, [universeId]);
+	}, [universeSlug]);
 
 	// Fetch entities data
 	useEffect(() => {
@@ -208,7 +208,7 @@ export default function EntitiesPage() {
 				}
 
 				const response = await fetch(
-					`/api/universes/${universeId}/entities?${queryParams}`
+					`/api/universes/${universeSlug}/entities?${queryParams}`
 				);
 
 				if (!response.ok) {
@@ -230,11 +230,11 @@ export default function EntitiesPage() {
 			}
 		};
 
-		console.log("universeId", universeId);
-		if (universeId) {
+		console.log("universeSlug", universeSlug);
+		if (universeSlug) {
 			fetchEntities();
 		}
-	}, [universeId, searchParams]);
+	}, [universeSlug, searchParams]);
 
 	// Apply filters and sorting
 	const applyFilters = () => {
@@ -248,7 +248,7 @@ export default function EntitiesPage() {
 		params.set("offset", "0"); // Reset pagination when filtering
 		params.set("limit", String(pagination?.limit || 10));
 
-		router.push(`/universes/${universeId}/entities?${params.toString()}`);
+		router.push(`/universes/${universeSlug}/entities?${params.toString()}`);
 	};
 
 	// Clear all filters
@@ -259,7 +259,7 @@ export default function EntitiesPage() {
 		setSortField("createdAt");
 		setSortOrder("desc");
 
-		router.push(`/universes/${universeId}/entities`);
+		router.push(`/universes/${universeSlug}/entities`);
 	};
 
 	// Handle pagination
@@ -271,7 +271,7 @@ export default function EntitiesPage() {
 		params.set("offset", String(newOffset));
 		params.set("limit", String(pagination.limit));
 
-		router.push(`/universes/${universeId}/entities?${params.toString()}`);
+		router.push(`/universes/${universeSlug}/entities?${params.toString()}`);
 	};
 
 	// Handle sorting
@@ -290,7 +290,7 @@ export default function EntitiesPage() {
 		params.set("sortOrder", newOrder);
 		params.set("offset", "0"); // Reset pagination when sorting
 
-		router.push(`/universes/${universeId}/entities?${params.toString()}`);
+		router.push(`/universes/${universeSlug}/entities?${params.toString()}`);
 	};
 
 	// Handle entity creation
@@ -310,7 +310,7 @@ export default function EntitiesPage() {
 		try {
 			setIsSubmitting(true);
 
-			const response = await fetch(`/api/universes/${universeId}/entities`, {
+			const response = await fetch(`/api/universes/${universeSlug}/entities`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -408,7 +408,7 @@ export default function EntitiesPage() {
 					<CardFooter>
 						<Button
 							variant="outline"
-							onClick={() => router.push(`/universes/${universeId}`)}
+							onClick={() => router.push(`/universes/${universeSlug}`)}
 						>
 							<ArrowLeft className="mr-2 h-4 w-4" /> Back to Universe
 						</Button>
@@ -425,7 +425,7 @@ export default function EntitiesPage() {
 				<div>
 					<Button
 						variant="ghost"
-						onClick={() => router.push(`/universes/${universeId}`)}
+						onClick={() => router.push(`/universes/${universeSlug}`)}
 						className="pl-0 mb-2"
 					>
 						<ArrowLeft className="mr-2 h-4 w-4" /> Back to{" "}
@@ -784,7 +784,7 @@ export default function EntitiesPage() {
 									params.set("offset", "0");
 
 									router.push(
-										`/universes/${universeId}/entities?${params.toString()}`
+										`/universes/${universeSlug}/entities?${params.toString()}`
 									);
 								}}
 							>
@@ -825,7 +825,7 @@ export default function EntitiesPage() {
 											);
 											params.delete("search");
 											router.push(
-												`/universes/${universeId}/entities?${params.toString()}`
+												`/universes/${universeSlug}/entities?${params.toString()}`
 											);
 										}}
 									>
@@ -848,7 +848,7 @@ export default function EntitiesPage() {
 											);
 											params.delete("type");
 											router.push(
-												`/universes/${universeId}/entities?${params.toString()}`
+												`/universes/${universeSlug}/entities?${params.toString()}`
 											);
 										}}
 									>
@@ -873,7 +873,7 @@ export default function EntitiesPage() {
 											);
 											params.delete("status");
 											router.push(
-												`/universes/${universeId}/entities?${params.toString()}`
+												`/universes/${universeSlug}/entities?${params.toString()}`
 											);
 										}}
 									>
@@ -946,7 +946,7 @@ export default function EntitiesPage() {
 										>
 											<TableCell className="font-medium">
 												<Link
-													href={`/universes/${universeId}/entities/${entity.id}`}
+													href={`/universes/${universeSlug}/entities/${entity.slug}`}
 													className="hover:underline text-blue-600 hover:text-blue-800"
 												>
 													{entity.name}
@@ -957,14 +957,15 @@ export default function EntitiesPage() {
 													</p>
 												)}
 											</TableCell>
-											<TableCell>{entity.type ?? "undefined"}</TableCell>
+											<TableCell>{entity.entityType ?? "undefined"}</TableCell>
 											<TableCell className="hidden md:table-cell">
-												{formatDate(entity.createdAt)}
+												{formatDate(entity.createdAt.toString())}
 											</TableCell>
 											<TableCell>
 												<Badge variant={"default"}>
-													{entity.status.charAt(0).toUpperCase() +
-														entity.status.slice(1)}
+													{entity.status &&
+														entity.status.charAt(0).toUpperCase() +
+															entity.status.slice(1)}
 												</Badge>
 											</TableCell>
 											<TableCell className="text-right">
@@ -974,7 +975,7 @@ export default function EntitiesPage() {
 														size="icon"
 														onClick={() =>
 															router.push(
-																`/universes/${universeId}/entities/${entity.id}`
+																`/universes/${universeSlug}/entities/${entity.slug}`
 															)
 														}
 													>

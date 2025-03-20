@@ -5,18 +5,18 @@ import { entities, universes } from "@/lib/db/schema";
 import { count, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
-// GET a specific universe by ID
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { universeId: string } }
+	{ params }: { params: { universeSlug: string } }
 ) {
 	try {
 		// Await the params object before destructuring
-		const { universeId } = await params;
+		const { universeSlug } = await params;
 
-		if (!universeId) {
+		console.log(universeSlug);
+		if (!universeSlug) {
 			return NextResponse.json(
-				{ error: "Universe ID is required" },
+				{ error: "Universe slug is required" },
 				{ status: 400 }
 			);
 		}
@@ -32,21 +32,23 @@ export async function GET(
 		}
 
 		// Get the specific universe by ID
-		const universe = await db
+		const universeResult = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, universeId))
+			.where(eq(universes.slug, universeSlug))
 			.limit(1);
 
-		if (!universe || universe.length === 0) {
+		if (!universeResult || universeResult.length === 0) {
 			return NextResponse.json(
 				{ error: "Universe not found" },
 				{ status: 404 }
 			);
 		}
 
+		const universe = universeResult[0];
+
 		// Verify the universe belongs to the user's team
-		if (universe[0].teamId !== teamData.id) {
+		if (universe.teamId !== teamData.id) {
 			return NextResponse.json(
 				{ error: "Unauthorized access to universe" },
 				{ status: 403 }
@@ -57,10 +59,10 @@ export async function GET(
 		const entityCount = await db
 			.select({ count: count() })
 			.from(entities)
-			.where(eq(entities.universeId, universeId));
+			.where(eq(entities.universeId, universe.id));
 
 		const universeData = {
-			...universe[0],
+			...universe,
 			entityCount: entityCount[0]?.count || 0,
 		};
 
@@ -77,14 +79,14 @@ export async function GET(
 // PUT/PATCH to update a universe
 export async function PUT(
 	request: NextRequest,
-	{ params }: { params: { universeId: string } }
+	{ params }: { params: { universeSlug: string } }
 ) {
 	try {
-		const { universeId } = params;
+		const { universeSlug } = params;
 
-		if (!universeId) {
+		if (!universeSlug) {
 			return NextResponse.json(
-				{ error: "Universe ID is required" },
+				{ error: "Universe slug is required" },
 				{ status: 400 }
 			);
 		}
@@ -100,20 +102,22 @@ export async function PUT(
 		}
 
 		// Check if universe exists and belongs to user's team
-		const existingUniverse = await db
+		const existingUniverseResult = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, universeId))
+			.where(eq(universes.slug, universeSlug))
 			.limit(1);
 
-		if (!existingUniverse || existingUniverse.length === 0) {
+		if (!existingUniverseResult || existingUniverseResult.length === 0) {
 			return NextResponse.json(
 				{ error: "Universe not found" },
 				{ status: 404 }
 			);
 		}
 
-		if (existingUniverse[0].teamId !== teamData.id) {
+		const existingUniverse = existingUniverseResult[0];
+
+		if (existingUniverse.teamId !== teamData.id) {
 			return NextResponse.json(
 				{ error: "Unauthorized access to universe" },
 				{ status: 403 }
@@ -124,21 +128,20 @@ export async function PUT(
 
 		// Update universe
 		const updateData = {
-			name: body.name !== undefined ? body.name : existingUniverse[0].name,
+			name: body.name !== undefined ? body.name : existingUniverse.name,
 			description:
 				body.description !== undefined
 					? body.description
-					: existingUniverse[0].description,
-			rules: body.rules !== undefined ? body.rules : existingUniverse[0].rules,
-			status:
-				body.status !== undefined ? body.status : existingUniverse[0].status,
+					: existingUniverse.description,
+			rules: body.rules !== undefined ? body.rules : existingUniverse.rules,
+			status: body.status !== undefined ? body.status : existingUniverse.status,
 			updatedAt: new Date(),
 		};
 
 		const [updatedUniverse] = await db
 			.update(universes)
 			.set(updateData)
-			.where(eq(universes.id, universeId))
+			.where(eq(universes.slug, universeSlug))
 			.returning();
 
 		return NextResponse.json(updatedUniverse);

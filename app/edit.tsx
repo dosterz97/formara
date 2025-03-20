@@ -73,14 +73,14 @@ type EntityFormValues = z.infer<typeof entitySchema>;
 // Define props for the page component
 interface EntityFormPageProps {
 	params: {
-		universeId: string;
+		universeSlug: string;
 		id: string;
 	};
 }
 
 export default function EntityFormPage({ params }: EntityFormPageProps) {
 	const router = useRouter();
-	const { universeId, id } = params;
+	const { universeSlug, id } = params;
 	const isEditMode = id !== "new";
 
 	const [loading, setLoading] = useState<boolean>(isEditMode);
@@ -106,7 +106,7 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 		async function fetchData() {
 			try {
 				// First fetch universe to ensure it exists
-				const universeResponse = await fetch(`/api/universes/${universeId}`);
+				const universeResponse = await fetch(`/api/universes/${universeSlug}`);
 				if (!universeResponse.ok) {
 					throw new Error("Failed to fetch universe");
 				}
@@ -143,7 +143,7 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 		}
 
 		fetchData();
-	}, [isEditMode, id, universeId, form]);
+	}, [isEditMode, id, universeSlug, form]);
 
 	async function onSubmit(data: EntityFormValues) {
 		setSubmitting(true);
@@ -160,7 +160,7 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 
 			// Prepare request data
 			const entityData = {
-				universeId: universeId,
+				universeSlug: universeSlug,
 				name: data.name,
 				slug: data.slug,
 				entityType: data.entityType,
@@ -187,7 +187,7 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 			}
 
 			// Navigate back to universe page
-			router.push(`/universes/${universeId}`);
+			router.push(`/universes/${universeSlug}`);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "An error occurred");
 		} finally {
@@ -352,7 +352,7 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 								<Button
 									type="button"
 									variant="outline"
-									onClick={() => router.push(`/universes/${universeId}`)}
+									onClick={() => router.push(`/universes/${universeSlug}`)}
 								>
 									Cancel
 								</Button>

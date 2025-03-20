@@ -58,7 +58,9 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function HomePage() {
-	const [universes, setUniverses] = useState<Universe[]>([]);
+	const [universes, setUniverses] = useState<
+		(Universe & { entityCount: number })[]
+	>([]);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -312,7 +314,7 @@ export default function HomePage() {
 									<span className="text-sm text-gray-500">
 										{universe.entityCount || 0} entities
 									</span>
-									<Link href={`/universes/${universe.id}`}>
+									<Link href={`/universes/${universe.slug}`}>
 										<Button variant="outline" size="sm">
 											View
 										</Button>
