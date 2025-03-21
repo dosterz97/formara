@@ -52,6 +52,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Entity, TYPES_OF_ENTITIES, Universe } from "@/lib/db/schema";
+import { ChatBubbleIcon } from "@radix-ui/react-icons";
 import {
 	ArrowDown,
 	ArrowLeft,
@@ -970,6 +971,15 @@ export default function EntitiesPage() {
 											</TableCell>
 											<TableCell className="text-right">
 												<div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+													<Button
+														variant="ghost"
+														size="icon"
+														onClick={() => router.push(`/chat/${entity.id}`)}
+													>
+														<ChatBubbleIcon className="h-4 w-4" />
+														<span className="sr-only">Chat</span>
+													</Button>
+
 													<Button
 														variant="ghost"
 														size="icon"
