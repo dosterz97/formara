@@ -75,6 +75,7 @@ export default function Page() {
 							method: "POST",
 							body: JSON.stringify({
 								messages: [...messages, { role: "user", content: input }],
+								entity,
 							}),
 						});
 
