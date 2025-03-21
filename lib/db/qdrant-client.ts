@@ -1,4 +1,5 @@
 import { QdrantClient } from "@qdrant/js-client-rest";
+import { createHash } from "crypto";
 import OpenAI from "openai";
 import { Entity, Universe } from "./schema";
 
@@ -12,6 +13,20 @@ const qdrantClient = new QdrantClient({
 	url: process.env.QDRANT_URL || "http://localhost:6333",
 	apiKey: process.env.QDRANT_API_KEY,
 });
+
+/**
+ * Converts a UUID string to a numeric ID suitable for Qdrant
+ * @param uuid The UUID string to convert
+ * @returns A numeric ID derived from the UUID
+ */
+function uuidToNumericId(uuid: string): number {
+	// Create a consistent hash of the UUID
+	const hash = createHash("md5").update(uuid).digest("hex");
+
+	// Take the first 8 characters of the hash and convert to a number
+	// This gives us a 32-bit integer, which should be sufficient for most cases
+	return parseInt(hash.substring(0, 8), 16);
+}
 
 /**
  * Creates a new Qdrant collection for a universe
@@ -172,8 +187,9 @@ export async function createEntityVector(
 	try {
 		const collectionName = universe.vectorNamespace;
 
-		// Use a numeric ID for Qdrant (required for this Qdrant instance)
-		const numericId = entity.id;
+		// Convert UUID to numeric ID for Qdrant
+		const numericId = uuidToNumericId(entity.id);
+		console.log(`Converting UUID ${entity.id} to numeric ID: ${numericId}`);
 
 		// Format the entity for embedding
 		const formattedEntity = formatEntityForEmbedding(entity);
@@ -194,7 +210,7 @@ export async function createEntityVector(
 
 		// Make sure all payload values are properly formatted
 		const payload = {
-			entity_id: entity.id,
+			entity_id: entity.id, // Store the original UUID in the payload
 			universe_id: entity.universeId,
 			name: entity.name || "",
 			type: entity.entityType || "default",
@@ -222,10 +238,10 @@ export async function createEntityVector(
 			],
 		});
 
-		// Return the ID as a string for storage in database
+		// Return the numeric ID as a string for storage in database
 		const vectorId = numericId.toString();
 		console.log(
-			`Created vector for entity ${entity.name} (ID: ${entity.id}) in universe ${universe.name}`
+			`Created vector for entity ${entity.name} (UUID: ${entity.id}) in universe ${universe.name}`
 		);
 		return vectorId;
 	} catch (error: any) {
@@ -257,8 +273,8 @@ export async function createEntityVector(
 			}
 		}
 
-		// Return a fallback ID based on the entity ID
-		const fallbackId = entity.id.toString();
+		// Create a fallback ID based on the entity UUID
+		const fallbackId = uuidToNumericId(entity.id).toString();
 		throw new Error(
 			`Failed to create vector: ${
 				error?.message || "Unknown error"
@@ -288,17 +304,19 @@ export async function updateEntityVector(
 		// Convert to numeric ID for Qdrant
 		let numericId: number;
 		try {
-			numericId = (entity.vectorId, 10);
+			// First try to parse the existing vectorId as a number
+			numericId = parseInt(entity.vectorId, 10);
+
+			// If it's not a valid number, generate a new numeric ID from the UUID
 			if (isNaN(numericId)) {
-				// If not a valid number, fallback to entity ID
 				console.log(
-					`Invalid vectorId ${entity.vectorId}, using entity ID instead`
+					`Invalid vectorId ${entity.vectorId}, generating from UUID instead`
 				);
-				numericId = entity.id;
+				numericId = uuidToNumericId(entity.id);
 			}
 		} catch {
-			// If conversion fails, use entity ID
-			numericId = entity.id;
+			// If conversion fails, generate from UUID
+			numericId = uuidToNumericId(entity.id);
 		}
 
 		// Check if point exists
@@ -340,7 +358,7 @@ export async function updateEntityVector(
 					id: numericId,
 					vector: embedding,
 					payload: {
-						entity_id: entity.id,
+						entity_id: entity.id, // Store the original UUID
 						universe_id: entity.universeId,
 						name: entity.name || "",
 						type: entity.entityType || "default",
@@ -352,7 +370,7 @@ export async function updateEntityVector(
 		});
 
 		console.log(
-			`Updated vector for entity ${entity.name} (ID: ${entity.id}) in universe ${universe.name}`
+			`Updated vector for entity ${entity.name} (UUID: ${entity.id}) in universe ${universe.name}`
 		);
 	} catch (error: any) {
 		console.error("Error updating entity vector:", error?.message || error);
@@ -381,17 +399,19 @@ export async function deleteEntityVector(
 		// Convert to numeric ID for Qdrant
 		let numericId: number;
 		try {
-			numericId = (entity.vectorId, 10);
+			// First try to parse the existing vectorId as a number
+			numericId = parseInt(entity.vectorId, 10);
+
+			// If it's not a valid number, generate from UUID
 			if (isNaN(numericId)) {
-				// If not a valid number, fallback to entity ID
 				console.log(
-					`Invalid vectorId ${entity.vectorId}, using entity ID instead`
+					`Invalid vectorId ${entity.vectorId}, generating from UUID instead`
 				);
-				numericId = entity.id;
+				numericId = uuidToNumericId(entity.id);
 			}
 		} catch {
-			// If conversion fails, use entity ID
-			numericId = entity.id;
+			// If conversion fails, generate from UUID
+			numericId = uuidToNumericId(entity.id);
 		}
 
 		// Delete point from Qdrant using numeric ID
@@ -401,7 +421,7 @@ export async function deleteEntityVector(
 		});
 
 		console.log(
-			`Deleted vector for entity ${entity.name} (ID: ${entity.id}) from universe ${universe.name}`
+			`Deleted vector for entity ${entity.name} (UUID: ${entity.id}) from universe ${universe.name}`
 		);
 	} catch (error: any) {
 		console.error("Error deleting entity vector:", error?.message || error);
@@ -439,12 +459,19 @@ export async function searchEntities(
 			with_payload: true,
 		});
 
-		// Format results - converting numeric IDs to strings for consistency
-		return searchResults.map((result) => ({
-			id: result.id.toString(),
-			score: result.score,
-			payload: result.payload,
-		}));
+		// Format results - returning the original UUID from the payload
+		const filtered = searchResults
+			.filter((r) => !!r.payload)
+			.map((result) => {
+				return {
+					// @ts-expect-error filtering them out above...
+					id: result.payload.entity_id as string, // Use the UUID stored in the payload
+					score: result.score,
+					payload: result.payload,
+				};
+			});
+
+		return filtered;
 	} catch (error: any) {
 		console.error("Error searching entities:", error?.message || error);
 		throw error;

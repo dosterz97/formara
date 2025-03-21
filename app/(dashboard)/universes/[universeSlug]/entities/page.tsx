@@ -120,7 +120,7 @@ export default function EntitiesPage() {
 	const [newEntity, setNewEntity] = useState({
 		name: "",
 		description: "",
-		type: "character",
+		entityType: "character",
 		status: "active",
 	});
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -305,7 +305,8 @@ export default function EntitiesPage() {
 		// If using custom type, update the entity type
 		const entityToCreate = {
 			...newEntity,
-			type: newEntity.type === "custom" ? customType : newEntity.type,
+			entityType:
+				newEntity.entityType === "custom" ? customType : newEntity.entityType,
 		};
 
 		try {
@@ -328,7 +329,7 @@ export default function EntitiesPage() {
 			setNewEntity({
 				name: "",
 				description: "",
-				type: "character",
+				entityType: "character",
 				status: "active",
 			});
 			setCustomType("");
@@ -481,10 +482,10 @@ export default function EntitiesPage() {
 								<div className="grid gap-2">
 									<Label htmlFor="type">Type</Label>
 									<Select
-										value={newEntity.type}
+										value={newEntity.entityType}
 										defaultValue="character"
 										onValueChange={(value) =>
-											setNewEntity({ ...newEntity, type: value })
+											setNewEntity({ ...newEntity, entityType: value })
 										}
 									>
 										<SelectTrigger>
@@ -530,11 +531,7 @@ export default function EntitiesPage() {
 								</Button>
 								<Button
 									type="submit"
-									disabled={
-										isSubmitting ||
-										!newEntity.name.trim() ||
-										(newEntity.type === "custom" && !customType.trim())
-									}
+									disabled={isSubmitting || !newEntity.name.trim()}
 								>
 									{isSubmitting ? (
 										<>

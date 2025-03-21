@@ -151,7 +151,7 @@ export default function EntityEditPage() {
 			const updatedEntity = {
 				name: formData.name.trim(),
 				description: formData.description.trim(),
-				type: formData.entityType,
+				entityType: formData.entityType,
 				status: formData.status,
 				attributes: parsedAttributes,
 			};
@@ -216,7 +216,6 @@ export default function EntityEditPage() {
 		}
 	};
 
-	// Handle form input changes
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
 	) => {
@@ -224,9 +223,8 @@ export default function EntityEditPage() {
 		setFormData((prev) => ({ ...prev, [name]: value }));
 	};
 
-	// Handle type selection
 	const handleTypeChange = (value: string) => {
-		setFormData((prev) => ({ ...prev, type: value }));
+		setFormData((prev) => ({ ...prev, entityType: value }));
 	};
 
 	// Handle navigation with unsaved changes check

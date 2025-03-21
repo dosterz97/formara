@@ -82,7 +82,7 @@ export async function PUT(
 	{ params }: { params: { universeSlug: string } }
 ) {
 	try {
-		const { universeSlug } = params;
+		const { universeSlug } = await params;
 
 		if (!universeSlug) {
 			return NextResponse.json(
@@ -154,17 +154,17 @@ export async function PUT(
 	}
 }
 
-// DELETE a universe by ID
+// DELETE a universe by slug
 export async function DELETE(
 	request: NextRequest,
-	{ params }: { params: { universeId: string } }
+	{ params }: { params: { universeSlug: string } }
 ) {
 	try {
-		const { universeId } = await params;
+		const { universeSlug } = await params;
 
-		if (!universeId) {
+		if (!universeSlug) {
 			return NextResponse.json(
-				{ error: "Universe ID is required" },
+				{ error: "Universe slug is required" },
 				{ status: 400 }
 			);
 		}
@@ -181,19 +181,21 @@ export async function DELETE(
 			return NextResponse.json({ error: "No team for user" }, { status: 500 });
 		}
 
-		// Find universe to get its vector namespace (for Qdrant collection deletion)
-		const [universe] = await db
+		// Find universe by slug to get its vector namespace and ID
+		const universeResult = await db
 			.select()
 			.from(universes)
-			.where(eq(universes.id, universeId))
+			.where(eq(universes.slug, universeSlug))
 			.limit(1);
 
-		if (!universe) {
+		if (!universeResult || universeResult.length === 0) {
 			return NextResponse.json(
 				{ error: "Universe not found" },
 				{ status: 404 }
 			);
 		}
+
+		const universe = universeResult[0];
 
 		// Verify the universe belongs to the user's team
 		if (universe.teamId !== teamData.id) {
@@ -206,10 +208,10 @@ export async function DELETE(
 		// Start transaction for database operations
 		const result = await db.transaction(async (tx) => {
 			// First, delete all entities belonging to this universe
-			await tx.delete(entities).where(eq(entities.universeId, universeId));
+			await tx.delete(entities).where(eq(entities.universeId, universe.id));
 
 			// Then delete the universe
-			await tx.delete(universes).where(eq(universes.id, universeId));
+			await tx.delete(universes).where(eq(universes.id, universe.id));
 
 			return { success: true };
 		});

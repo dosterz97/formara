@@ -11,7 +11,7 @@ export async function GET(
 	{ params }: { params: { entityId: string } }
 ) {
 	try {
-		const { entityId } = params;
+		const { entityId } = await params;
 
 		if (!entityId) {
 			return NextResponse.json(
@@ -69,7 +69,7 @@ export async function PUT(
 	{ params }: { params: { entityId: string } }
 ) {
 	try {
-		const { entityId } = params;
+		const { entityId } = await params;
 
 		if (!entityId) {
 			return NextResponse.json(
@@ -128,7 +128,10 @@ export async function PUT(
 				body.description !== undefined
 					? body.description
 					: existingEntity.description,
-			type: body.type !== undefined ? body.type : existingEntity.entityType,
+			type:
+				body.entityType !== undefined
+					? body.entityType
+					: existingEntity.entityType,
 			attributes:
 				body.attributes !== undefined
 					? body.attributes
@@ -164,7 +167,7 @@ export async function DELETE(
 	{ params }: { params: { entityId: string } }
 ) {
 	try {
-		const { entityId } = params;
+		const { entityId } = await params;
 
 		if (!entityId) {
 			return NextResponse.json(

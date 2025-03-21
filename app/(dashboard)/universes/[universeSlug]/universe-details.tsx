@@ -92,7 +92,7 @@ export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 		try {
 			setDeleteLoading(true);
 
-			const response = await fetch(`/api/universes/${universe.id}`, {
+			const response = await fetch(`/api/universes/${universe.slug}`, {
 				method: "DELETE",
 			});
 

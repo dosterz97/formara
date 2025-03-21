@@ -130,7 +130,7 @@ export async function PUT(
 			.select()
 			.from(entities)
 			.where(
-				and(eq(entities.id, entitySlug), eq(entities.universeId, universe.id))
+				and(eq(entities.slug, entitySlug), eq(entities.universeId, universe.id))
 			)
 			.limit(1);
 
@@ -152,7 +152,10 @@ export async function PUT(
 				body.description !== undefined
 					? body.description
 					: existingEntity[0].description,
-			type: body.type !== undefined ? body.type : existingEntity[0].entityType,
+			entityType:
+				body.entityType !== undefined
+					? body.entityType
+					: existingEntity[0].entityType,
 			attributes:
 				body.attributes !== undefined
 					? body.attributes
@@ -166,7 +169,7 @@ export async function PUT(
 			.update(entities)
 			.set(updateData)
 			.where(
-				and(eq(entities.id, entitySlug), eq(entities.universeId, universe.id))
+				and(eq(entities.slug, entitySlug), eq(entities.universeId, universe.id))
 			)
 			.returning();
 

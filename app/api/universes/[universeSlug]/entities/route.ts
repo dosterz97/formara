@@ -171,7 +171,7 @@ export async function POST(
 			name: body.name,
 			slug: slugify(body.name, { lower: true, strict: true }),
 			description: body.description || "",
-			entityType: body.type || "default", // Make sure this matches your enum values
+			entityType: body.entityType || "character", // Make sure this matches your enum values
 			basicAttributes: body.attributes || {},
 			status: body.status || "active",
 			vectorId: "pending", // Temporary placeholder that satisfies the NOT NULL constraint
