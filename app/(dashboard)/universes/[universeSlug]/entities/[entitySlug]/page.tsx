@@ -32,9 +32,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Entity, ENTITY_STATUSES, TYPES_OF_ENTITIES } from "@/lib/db/schema";
-import { ArrowLeft, Loader2, Save, Trash } from "lucide-react";
+import { ArrowLeft, Loader2, Save, Trash, Volume2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+// Define voice interface
+interface Voice {
+	voice_id: string;
+	name: string;
+	preview_url?: string;
+	category?: string;
+}
 
 export default function EntityEditPage() {
 	const params = useParams();
@@ -54,6 +62,7 @@ export default function EntityEditPage() {
 		entityType: "",
 		status: "active",
 		basicAttributes: "{}",
+		voiceId: "",
 	});
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -64,6 +73,10 @@ export default function EntityEditPage() {
 	const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 	const [navigationTarget, setNavigationTarget] = useState("");
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [voices, setVoices] = useState<Voice[]>([]);
+	const [loadingVoices, setLoadingVoices] = useState(false);
+	const [audioPreview, setAudioPreview] = useState<string | null>(null);
+	const [playingPreview, setPlayingPreview] = useState(false);
 
 	// Fetch entity data
 	useEffect(() => {
@@ -91,6 +104,7 @@ export default function EntityEditPage() {
 					entityType: data.entityType,
 					status: data.status || "active",
 					basicAttributes: JSON.stringify(data.basicAttributes || {}, null, 2),
+					voiceId: data.voiceId || "", // Add voice ID field
 				});
 			} catch (err) {
 				console.error("Error fetching entity:", err);
@@ -107,6 +121,31 @@ export default function EntityEditPage() {
 		}
 	}, [universeSlug, entitySlug]);
 
+	// Fetch available voices
+	useEffect(() => {
+		const fetchVoices = async () => {
+			if (formData.entityType !== "character") return;
+
+			try {
+				setLoadingVoices(true);
+				const response = await fetch("/api/voices");
+
+				if (!response.ok) {
+					throw new Error("Failed to fetch voices");
+				}
+
+				const data = await response.json();
+				setVoices(data);
+			} catch (err) {
+				console.error("Error fetching voices:", err);
+			} finally {
+				setLoadingVoices(false);
+			}
+		};
+
+		fetchVoices();
+	}, [formData.entityType]);
+
 	// Track form changes
 	useEffect(() => {
 		if (!entity) return;
@@ -117,6 +156,7 @@ export default function EntityEditPage() {
 			entityType: entity.entityType,
 			status: entity.status,
 			basicAttributes: {}, // JSON.stringify(entity.basicAttributes || {}, null, 2),
+			voiceId: entity.voiceId || "", // Add voice ID to track changes
 		};
 
 		// Check if form data has changed
@@ -125,10 +165,27 @@ export default function EntityEditPage() {
 			originalData.description !== formData.description ||
 			originalData.entityType !== formData.entityType ||
 			originalData.status !== formData.status ||
-			originalData.basicAttributes !== formData.basicAttributes;
+			originalData.basicAttributes !== formData.basicAttributes ||
+			originalData.voiceId !== formData.voiceId; // Check voice ID changes
 
 		setHasUnsavedChanges(hasChanges);
 	}, [entity, formData]);
+
+	// Handle playing voice preview
+	const playVoicePreview = async (voiceId: string) => {
+		const voice = voices.find((v) => v.voice_id === voiceId);
+		if (!voice || !voice.preview_url) return;
+
+		setPlayingPreview(true);
+		setAudioPreview(voice.preview_url);
+
+		const audio = new Audio(voice.preview_url);
+		audio.onended = () => setPlayingPreview(false);
+		audio.play().catch((err) => {
+			console.error("Error playing preview:", err);
+			setPlayingPreview(false);
+		});
+	};
 
 	// Handle form submission
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -154,7 +211,10 @@ export default function EntityEditPage() {
 				entityType: formData.entityType,
 				status: formData.status,
 				attributes: parsedAttributes,
+				voiceId: formData.entityType === "character" ? formData.voiceId : null, // Only set voice for characters
 			};
+
+			console.log(updatedEntity);
 
 			const response = await fetch(
 				`/api/universes/${universeSlug}/entities/${entitySlug}`,
@@ -224,7 +284,16 @@ export default function EntityEditPage() {
 	};
 
 	const handleTypeChange = (value: string) => {
-		setFormData((prev) => ({ ...prev, entityType: value }));
+		setFormData((prev) => ({
+			...prev,
+			entityType: value,
+			// Clear voice ID if changing away from character type
+			voiceId: value === "character" ? prev.voiceId : "",
+		}));
+	};
+
+	const handleVoiceChange = (voiceId: string) => {
+		setFormData((prev) => ({ ...prev, voiceId }));
 	};
 
 	// Handle navigation with unsaved changes check
@@ -319,6 +388,9 @@ export default function EntityEditPage() {
 
 	return (
 		<div className="container mx-auto py-8">
+			{/* Audio element for previews */}
+			{audioPreview && <audio src={audioPreview} className="hidden" />}
+
 			{/* Unsaved changes dialog */}
 			<AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
 				<AlertDialogContent>
@@ -450,6 +522,59 @@ export default function EntityEditPage() {
 							</Select>
 						</div>
 
+						{/* Voice selection (only for character type) */}
+						{formData.entityType === "character" && (
+							<div className="space-y-2">
+								<Label htmlFor="voice">Voice</Label>
+								<div className="flex space-x-2">
+									<Select
+										value={formData.voiceId || "none"}
+										onValueChange={(value) => {
+											// Convert "none" to null/undefined when storing in state
+											handleVoiceChange(value === "none" ? "" : value);
+										}}
+										disabled={loadingVoices}
+									>
+										<SelectTrigger id="voice" className="flex-1">
+											<SelectValue
+												placeholder={
+													loadingVoices ? "Loading voices..." : "Select a voice"
+												}
+											/>
+										</SelectTrigger>
+										<SelectContent>
+											<SelectItem value="none">No voice</SelectItem>
+											{voices.map((voice) => (
+												<SelectItem key={voice.voice_id} value={voice.voice_id}>
+													{voice.name}
+												</SelectItem>
+											))}
+										</SelectContent>
+									</Select>
+
+									{formData.voiceId && (
+										<Button
+											type="button"
+											variant="outline"
+											size="icon"
+											disabled={playingPreview || !formData.voiceId}
+											onClick={() => playVoicePreview(formData.voiceId)}
+											title="Preview voice"
+										>
+											{playingPreview ? (
+												<Loader2 className="h-4 w-4 animate-spin" />
+											) : (
+												<Volume2 className="h-4 w-4" />
+											)}
+										</Button>
+									)}
+								</div>
+								<p className="text-xs text-muted-foreground">
+									Select a voice for this character to enable audio responses.
+								</p>
+							</div>
+						)}
+
 						{/* Status field */}
 						<div className="space-y-2">
 							<div className="flex items-center justify-between">
@@ -491,10 +616,10 @@ export default function EntityEditPage() {
 
 						{/* Attributes field */}
 						<div className="space-y-2">
-							<Label htmlFor="attributes">Attributes (JSON)</Label>
+							<Label htmlFor="basicAttributes">Attributes (JSON)</Label>
 							<Textarea
-								id="attributes"
-								name="attributes"
+								id="basicAttributes"
+								name="basicAttributes"
 								value={formData.basicAttributes}
 								onChange={handleInputChange}
 								rows={8}

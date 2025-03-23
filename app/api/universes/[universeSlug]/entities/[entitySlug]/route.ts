@@ -1,7 +1,7 @@
 import { db } from "@/lib/db/drizzle";
 import { deleteEntityVector, updateEntityVector } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
-import { entities, universes } from "@/lib/db/schema";
+import { entities, Entity, universes } from "@/lib/db/schema";
 import { and, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -126,7 +126,7 @@ export async function PUT(
 		}
 
 		// Check if entity exists
-		const existingEntity = await db
+		const entityResult = await db
 			.select()
 			.from(entities)
 			.where(
@@ -134,9 +134,11 @@ export async function PUT(
 			)
 			.limit(1);
 
-		if (!existingEntity || existingEntity.length === 0) {
+		if (!entityResult || entityResult.length === 0) {
 			return NextResponse.json({ error: "Entity not found" }, { status: 404 });
 		}
+
+		const existingEntity = entityResult[0];
 
 		const body = await request.json();
 
@@ -145,23 +147,26 @@ export async function PUT(
 			return NextResponse.json({ error: "Name is required" }, { status: 400 });
 		}
 
+		console.log(body);
+
 		// Update the entity
-		const updateData = {
+		const updateData: Partial<Entity> = {
 			name: body.name,
 			description:
 				body.description !== undefined
 					? body.description
-					: existingEntity[0].description,
+					: existingEntity.description,
 			entityType:
 				body.entityType !== undefined
 					? body.entityType
-					: existingEntity[0].entityType,
-			attributes:
-				body.attributes !== undefined
-					? body.attributes
-					: existingEntity[0].basicAttributes,
-			status:
-				body.status !== undefined ? body.status : existingEntity[0].status,
+					: existingEntity.entityType,
+			basicAttributes:
+				body.basicAttributes !== undefined
+					? body.basicAttributes
+					: existingEntity.basicAttributes,
+			status: body.status !== undefined ? body.status : existingEntity.status,
+			voiceId:
+				body.voiceId !== undefined ? body.voiceId : existingEntity.voiceId,
 			updatedAt: new Date(),
 		};
 
@@ -172,6 +177,8 @@ export async function PUT(
 				and(eq(entities.slug, entitySlug), eq(entities.universeId, universe.id))
 			)
 			.returning();
+
+		console.log(updateData, updatedEntity);
 
 		// If this universe uses vector embeddings, you might need to update the vector for this entity
 		if (universe.vectorNamespace) {

@@ -1,8 +1,9 @@
 import { db } from "@/lib/db/drizzle";
 import { searchEntities } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
-import { Entity, universes } from "@/lib/db/schema";
-import { CoreMessage } from "ai";
+import { Entity, entities, universes } from "@/lib/db/schema";
+import { openai } from "@ai-sdk/openai";
+import { CoreMessage, generateText } from "ai";
 import dedent from "dedent";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -59,7 +60,7 @@ function wrapText(text: string, maxWidth: number): string {
  */
 async function generateAudio(
 	text: string,
-	voiceId: string = DEFAULT_VOICE_ID
+	voiceId: string
 ): Promise<ArrayBuffer> {
 	if (!ELEVEN_LABS_API_KEY) {
 		throw new Error("Eleven Labs API key is not configured");
@@ -134,6 +135,20 @@ export async function POST(req: Request) {
 
 	const universe = universeResult[0];
 
+	// Fetch the latest entity data to get the most up-to-date voice ID
+	const latestEntityData = await db
+		.select()
+		.from(entities)
+		.where(eq(entities.id, entity.id))
+		.limit(1);
+
+	if (!latestEntityData || latestEntityData.length === 0) {
+		return NextResponse.json({ error: "Entity not found" }, { status: 404 });
+	}
+
+	// Use the freshly fetched entity data
+	const updatedEntity = latestEntityData[0];
+
 	console.log("universe", universe);
 	const results = await searchEntities("Who is darth vader", universe, 3);
 
@@ -146,9 +161,9 @@ export async function POST(req: Request) {
 	});
 
 	const system = dedent`
-    You are ${entity.name}.
+    You are ${updatedEntity.name}.
 
-    ${entity.description}
+    ${updatedEntity.description}
 
     You are chatting with someone from your universe.
     Do not refer to your self as an AI, stay in character.
@@ -162,13 +177,13 @@ export async function POST(req: Request) {
 
 	console.log(system);
 
-	// const { response } = await generateText({
-	// 	model: openai("gpt-4"),
-	// 	system,
-	// 	messages,
-	// });
+	const { response } = await generateText({
+		model: openai("gpt-4"),
+		system,
+		messages,
+	});
 
-	const { response } = mockGenerateText();
+	// const { response } = mockGenerateText();
 
 	// Extract the response text from the latest AI message
 	let responseText = "";
@@ -219,11 +234,17 @@ export async function POST(req: Request) {
 		responseText = "I'm sorry, but I couldn't generate a proper response.";
 	}
 
-	// If audio option is enabled, generate TTS
-	if (options?.audio) {
+	// If audio option is enabled and entity is a character, generate TTS
+	if (options?.audio && updatedEntity.entityType === "character") {
 		try {
-			// Use the provided voiceId or fall back to default
-			const voiceId = options.voiceId || DEFAULT_VOICE_ID;
+			// Use voice priority:
+			// 1. Voice specified in request options
+			// 2. Entity's assigned voice
+			// 3. Default voice
+			const voiceId =
+				options.voiceId || updatedEntity.voiceId || DEFAULT_VOICE_ID;
+
+			console.log(`Generating audio with voice ID: ${voiceId}`);
 			const audioBuffer = await generateAudio(responseText, voiceId);
 
 			// Convert ArrayBuffer to Base64 string for transmission

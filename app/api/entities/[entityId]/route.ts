@@ -1,7 +1,7 @@
 import { db } from "@/lib/db/drizzle";
 import { deleteEntityVector, updateEntityVector } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
-import { entities, universes } from "@/lib/db/schema";
+import { entities, Entity, universes } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -122,21 +122,22 @@ export async function PUT(
 		}
 
 		// Update the entity
-		const updateData = {
+		const updateData: Partial<Entity> = {
 			name: body.name,
 			description:
 				body.description !== undefined
 					? body.description
 					: existingEntity.description,
-			type:
+			entityType:
 				body.entityType !== undefined
 					? body.entityType
 					: existingEntity.entityType,
-			attributes:
-				body.attributes !== undefined
-					? body.attributes
+			basicAttributes:
+				body.basicAttributes !== undefined
+					? body.basicAttributes
 					: existingEntity.basicAttributes,
 			status: body.status !== undefined ? body.status : existingEntity.status,
+			voiceId: body.voice !== undefined ? body.voiceId : existingEntity.voiceId,
 			updatedAt: new Date(),
 		};
 

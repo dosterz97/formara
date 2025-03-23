@@ -152,6 +152,9 @@ export const entities = pgTable(
 		// Vector DB references
 		vectorId: varchar("vector_id", { length: 100 }).notNull(), // ID in vector DB
 
+		// Voice ID for character entities
+		voiceId: varchar("voice_id", { length: 100 }),
+
 		// Metadata
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at").notNull().defaultNow(),
