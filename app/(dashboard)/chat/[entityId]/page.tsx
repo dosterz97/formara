@@ -14,14 +14,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Entity } from "@/lib/db/schema";
-import { Bot, Loader2, Pause, Play, Send, User } from "lucide-react";
-import { useParams, useSearchParams } from "next/navigation";
+import { Bot, Download, Loader2, Play, Send, User } from "lucide-react";
+import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-// Extended message type to include audio data
-interface MessageWithAudio {
-	role: "user" | "assistant" | "system" | "tool";
-	content: string | { type: string; text: string }[];
+// Simple message type that includes audio data
+interface ChatMessage {
+	role: "user" | "assistant" | "system";
+	content: string | any[]; // Support for text parts
 	audio?: {
 		data: string;
 		format: string;
@@ -30,18 +30,17 @@ interface MessageWithAudio {
 
 export default function Page() {
 	const params = useParams();
-	const searchParams = useSearchParams();
 	const entityId = Array.isArray(params.entityId)
 		? params.entityId[0]
 		: (params.entityId as string);
 
 	const [input, setInput] = useState("");
-	const [messages, setMessages] = useState<MessageWithAudio[]>([]);
+	const [messages, setMessages] = useState<ChatMessage[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [sending, setSending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [entity, setEntity] = useState<Entity | undefined>();
-	const [currentlyPlaying, setCurrentlyPlaying] = useState<number | null>(null);
+	const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
@@ -91,45 +90,73 @@ export default function Page() {
 		}
 	}, [loading]);
 
-	// Add audio ended event listener
-	useEffect(() => {
-		const audioElement = audioRef.current;
-
-		const handleAudioEnded = () => {
-			setCurrentlyPlaying(null);
-		};
-
-		if (audioElement) {
-			audioElement.addEventListener("ended", handleAudioEnded);
-		}
-
-		return () => {
-			if (audioElement) {
-				audioElement.removeEventListener("ended", handleAudioEnded);
+	// Play audio for a specific message
+	const handlePlayAudio = (audioData: string) => {
+		if (audioRef.current) {
+			// Clean up previous audio URL if it exists
+			if (audioUrl) {
+				URL.revokeObjectURL(audioUrl);
 			}
-		};
-	}, []);
 
-	const handlePlayAudio = (index: number, audioData: string) => {
-		const audioElement = audioRef.current;
+			try {
+				// Create a blob from the base64 data
+				const byteCharacters = atob(audioData);
+				const byteNumbers = new Array(byteCharacters.length);
 
-		if (!audioElement) return;
+				for (let i = 0; i < byteCharacters.length; i++) {
+					byteNumbers[i] = byteCharacters.charCodeAt(i);
+				}
 
-		// If already playing this audio, pause it
-		if (currentlyPlaying === index) {
-			audioElement.pause();
-			setCurrentlyPlaying(null);
-			return;
+				const byteArray = new Uint8Array(byteNumbers);
+				const blob = new Blob([byteArray], { type: "audio/mp3" });
+
+				// Create a URL for the blob
+				const url = URL.createObjectURL(blob);
+				setAudioUrl(url);
+
+				// Set the audio source and play
+				audioRef.current.src = url;
+				audioRef.current.play().catch((err) => {
+					console.error("Error playing audio:", err);
+				});
+			} catch (error) {
+				console.error("Error processing audio data:", error);
+			}
 		}
+	};
 
-		// Convert base64 to audio source
-		const audioSrc = `data:audio/mp3;base64,${audioData}`;
-		audioElement.src = audioSrc;
-		audioElement.play().catch((err) => {
-			console.error("Error playing audio:", err);
-		});
+	// Download audio for a specific message
+	const handleDownloadAudio = (audioData: string) => {
+		try {
+			// Create a blob from the base64 data
+			const byteCharacters = atob(audioData);
+			const byteNumbers = new Array(byteCharacters.length);
 
-		setCurrentlyPlaying(index);
+			for (let i = 0; i < byteCharacters.length; i++) {
+				byteNumbers[i] = byteCharacters.charCodeAt(i);
+			}
+
+			const byteArray = new Uint8Array(byteNumbers);
+			const blob = new Blob([byteArray], { type: "audio/mp3" });
+
+			// Create a URL for the blob
+			const url = URL.createObjectURL(blob);
+
+			// Create and click a download link
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `${entity?.name || "assistant"}-message.mp3`;
+			document.body.appendChild(a);
+			a.click();
+
+			// Clean up
+			setTimeout(() => {
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			}, 100);
+		} catch (error) {
+			console.error("Error downloading audio:", error);
+		}
 	};
 
 	const handleSendMessage = async () => {
@@ -138,7 +165,7 @@ export default function Page() {
 		try {
 			setSending(true);
 
-			const userMessage: MessageWithAudio = { role: "user", content: input };
+			const userMessage: ChatMessage = { role: "user", content: input };
 			setMessages((currentMessages) => [...currentMessages, userMessage]);
 			setInput("");
 
@@ -164,18 +191,20 @@ export default function Page() {
 			const json = await response.json();
 			console.log("API response:", json);
 
-			// Check for audio data in the response
-			const assistantMessages = json.messages
-				.filter((msg: any) => msg.role === "assistant")
-				.map((msg: any) => ({
-					...msg,
-					audio: json.audio, // Attach audio data from response to the message
-				})) as MessageWithAudio[];
+			// Process assistant message and attach audio data
+			if (json.messages && Array.isArray(json.messages)) {
+				const assistantMessages = json.messages
+					.filter((msg: any) => msg.role === "assistant")
+					.map((msg: any) => ({
+						...msg,
+						audio: json.audio, // Attach audio data from response
+					})) as ChatMessage[];
 
-			setMessages((currentMessages) => [
-				...currentMessages,
-				...assistantMessages,
-			]);
+				setMessages((currentMessages) => [
+					...currentMessages,
+					...assistantMessages,
+				]);
+			}
 		} catch (err) {
 			console.error("Error sending message:", err);
 			setError(err instanceof Error ? err.message : "Failed to send message");
@@ -225,7 +254,7 @@ export default function Page() {
 	return (
 		<div className="max-w-4xl mx-auto p-4">
 			{/* Hidden audio element for playing audio */}
-			<audio ref={audioRef} className="hidden" />
+			<audio ref={audioRef} className="hidden" controls />
 
 			<Card className="border shadow-lg">
 				<CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
@@ -234,9 +263,6 @@ export default function Page() {
 							<AvatarFallback className="bg-white text-blue-500 font-bold">
 								{entity.name.charAt(0)}
 							</AvatarFallback>
-							{/* {entity.imageUrl && (
-								<AvatarImage src={entity.imageUrl} alt={entity.name} />
-							)} */}
 						</Avatar>
 						<div>
 							<CardTitle className="flex items-center gap-2">
@@ -278,12 +304,6 @@ export default function Page() {
 												<AvatarFallback className="bg-purple-100 text-purple-500">
 													{entity.name.charAt(0)}
 												</AvatarFallback>
-												{/* {entity.imageUrl && (
-													<AvatarImage
-														src={entity.imageUrl}
-														alt={entity.name}
-													/>
-												)} */}
 											</Avatar>
 										)}
 										<div
@@ -296,28 +316,38 @@ export default function Page() {
 											{typeof message.content === "string"
 												? message.content
 												: message.content
-														.filter((part) => part.type === "text")
-														.map((part, partIndex) => (
+														.filter((part: any) => part.type === "text")
+														.map((part: any, partIndex: number) => (
 															<div key={partIndex}>{part.text}</div>
 														))}
 										</div>
 
-										{/* Add play button for assistant messages with audio */}
+										{/* Audio controls for assistant messages */}
 										{message.role === "assistant" && message.audio?.data && (
-											<Button
-												variant="ghost"
-												size="icon"
-												className="h-8 w-8 rounded-full"
-												onClick={() =>
-													handlePlayAudio(index, message.audio?.data || "")
-												}
-											>
-												{currentlyPlaying === index ? (
-													<Pause className="h-4 w-4" />
-												) : (
+											<div className="flex flex-col gap-1">
+												<Button
+													variant="ghost"
+													size="icon"
+													className="h-8 w-8 rounded-full"
+													onClick={() =>
+														handlePlayAudio(message.audio?.data || "")
+													}
+													title="Play audio"
+												>
 													<Play className="h-4 w-4" />
-												)}
-											</Button>
+												</Button>
+												<Button
+													variant="ghost"
+													size="icon"
+													className="h-8 w-8 rounded-full"
+													onClick={() =>
+														handleDownloadAudio(message.audio?.data || "")
+													}
+													title="Download audio"
+												>
+													<Download className="h-4 w-4" />
+												</Button>
+											</div>
 										)}
 
 										{message.role === "user" && (
