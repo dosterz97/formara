@@ -14,10 +14,19 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Entity } from "@/lib/db/schema";
-import { CoreMessage } from "ai";
-import { Bot, Loader2, Send, User } from "lucide-react";
+import { Bot, Loader2, Pause, Play, Send, User } from "lucide-react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+
+// Extended message type to include audio data
+interface MessageWithAudio {
+	role: "user" | "assistant" | "system" | "tool";
+	content: string | { type: string; text: string }[];
+	audio?: {
+		data: string;
+		format: string;
+	};
+}
 
 export default function Page() {
 	const params = useParams();
@@ -27,14 +36,16 @@ export default function Page() {
 		: (params.entityId as string);
 
 	const [input, setInput] = useState("");
-	const [messages, setMessages] = useState<CoreMessage[]>([]);
+	const [messages, setMessages] = useState<MessageWithAudio[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [sending, setSending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [entity, setEntity] = useState<Entity | undefined>();
+	const [currentlyPlaying, setCurrentlyPlaying] = useState<number | null>(null);
 
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
+	const audioRef = useRef<HTMLAudioElement>(null);
 
 	// Fetch entity data
 	useEffect(() => {
@@ -51,6 +62,7 @@ export default function Page() {
 				}
 
 				const data = (await response.json()) as Entity;
+
 				setEntity(data);
 			} catch (err) {
 				console.error("Error fetching entity:", err);
@@ -79,13 +91,54 @@ export default function Page() {
 		}
 	}, [loading]);
 
+	// Add audio ended event listener
+	useEffect(() => {
+		const audioElement = audioRef.current;
+
+		const handleAudioEnded = () => {
+			setCurrentlyPlaying(null);
+		};
+
+		if (audioElement) {
+			audioElement.addEventListener("ended", handleAudioEnded);
+		}
+
+		return () => {
+			if (audioElement) {
+				audioElement.removeEventListener("ended", handleAudioEnded);
+			}
+		};
+	}, []);
+
+	const handlePlayAudio = (index: number, audioData: string) => {
+		const audioElement = audioRef.current;
+
+		if (!audioElement) return;
+
+		// If already playing this audio, pause it
+		if (currentlyPlaying === index) {
+			audioElement.pause();
+			setCurrentlyPlaying(null);
+			return;
+		}
+
+		// Convert base64 to audio source
+		const audioSrc = `data:audio/mp3;base64,${audioData}`;
+		audioElement.src = audioSrc;
+		audioElement.play().catch((err) => {
+			console.error("Error playing audio:", err);
+		});
+
+		setCurrentlyPlaying(index);
+	};
+
 	const handleSendMessage = async () => {
 		if (!input.trim() || sending) return;
 
 		try {
 			setSending(true);
 
-			const userMessage = { role: "user", content: input };
+			const userMessage: MessageWithAudio = { role: "user", content: input };
 			setMessages((currentMessages) => [...currentMessages, userMessage]);
 			setInput("");
 
@@ -97,6 +150,9 @@ export default function Page() {
 				body: JSON.stringify({
 					messages: [...messages, userMessage],
 					entity,
+					options: {
+						audio: true,
+					},
 				}),
 			});
 
@@ -105,11 +161,20 @@ export default function Page() {
 				throw new Error(errorData.error || "Failed to send message");
 			}
 
-			const { messages: newMessages } = await response.json();
+			const json = await response.json();
+			console.log("API response:", json);
+
+			// Check for audio data in the response
+			const assistantMessages = json.messages
+				.filter((msg: any) => msg.role === "assistant")
+				.map((msg: any) => ({
+					...msg,
+					audio: json.audio, // Attach audio data from response to the message
+				})) as MessageWithAudio[];
 
 			setMessages((currentMessages) => [
 				...currentMessages,
-				...newMessages.filter((msg) => msg.role === "assistant"),
+				...assistantMessages,
 			]);
 		} catch (err) {
 			console.error("Error sending message:", err);
@@ -159,6 +224,9 @@ export default function Page() {
 
 	return (
 		<div className="max-w-4xl mx-auto p-4">
+			{/* Hidden audio element for playing audio */}
+			<audio ref={audioRef} className="hidden" />
+
 			<Card className="border shadow-lg">
 				<CardHeader className="bg-gradient-to-r from-blue-500 to-purple-500 text-white">
 					<div className="flex items-center gap-3">
@@ -233,6 +301,25 @@ export default function Page() {
 															<div key={partIndex}>{part.text}</div>
 														))}
 										</div>
+
+										{/* Add play button for assistant messages with audio */}
+										{message.role === "assistant" && message.audio?.data && (
+											<Button
+												variant="ghost"
+												size="icon"
+												className="h-8 w-8 rounded-full"
+												onClick={() =>
+													handlePlayAudio(index, message.audio?.data || "")
+												}
+											>
+												{currentlyPlaying === index ? (
+													<Pause className="h-4 w-4" />
+												) : (
+													<Play className="h-4 w-4" />
+												)}
+											</Button>
+										)}
+
 										{message.role === "user" && (
 											<Avatar className="h-8 w-8">
 												<AvatarFallback className="bg-blue-500 text-white">

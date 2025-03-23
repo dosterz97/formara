@@ -2,11 +2,30 @@ import { db } from "@/lib/db/drizzle";
 import { searchEntities } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
 import { Entity, universes } from "@/lib/db/schema";
-import { openai } from "@ai-sdk/openai";
-import { CoreMessage, generateText } from "ai";
+import { CoreMessage } from "ai";
 import dedent from "dedent";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+
+// Eleven Labs API client
+const ELEVEN_LABS_API_KEY = process.env.ELEVEN_LABS_API_KEY;
+const ELEVEN_LABS_API_URL = "https://api.elevenlabs.io/v1/text-to-speech";
+// Default voice ID - you can replace with your preferred voice
+const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel voice
+
+const mockGenerateText = () => {
+	return {
+		response: {
+			messages: [
+				{
+					type: "text",
+					content: "This is a mock response.",
+					role: "assistant",
+				},
+			],
+		},
+	};
+};
 
 /**
  * Helper function to wrap text at specified character width
@@ -35,8 +54,52 @@ function wrapText(text: string, maxWidth: number): string {
 	return lines.join("\n");
 }
 
+/**
+ * Generate audio from text using Eleven Labs API
+ */
+async function generateAudio(
+	text: string,
+	voiceId: string = DEFAULT_VOICE_ID
+): Promise<ArrayBuffer> {
+	if (!ELEVEN_LABS_API_KEY) {
+		throw new Error("Eleven Labs API key is not configured");
+	}
+
+	const response = await fetch(`${ELEVEN_LABS_API_URL}/${voiceId}`, {
+		method: "POST",
+		headers: {
+			"Content-Type": "application/json",
+			"xi-api-key": ELEVEN_LABS_API_KEY,
+		},
+		body: JSON.stringify({
+			text: text,
+			model_id: "eleven_monolingual_v1",
+			voice_settings: {
+				stability: 0.5,
+				similarity_boost: 0.75,
+			},
+		}),
+	});
+
+	if (!response.ok) {
+		const errorText = await response.text();
+		throw new Error(`Eleven Labs API error: ${response.status} ${errorText}`);
+	}
+
+	return await response.arrayBuffer();
+}
+
+export type FormoraChatOptions = {
+	audio?: boolean;
+	voiceId?: string;
+};
+
 export async function POST(req: Request) {
-	const { messages, entity }: { messages: CoreMessage[]; entity: Entity } =
+	const {
+		messages,
+		entity,
+		options,
+	}: { messages: CoreMessage[]; entity: Entity; options?: FormoraChatOptions } =
 		await req.json();
 
 	const universeId = entity.universeId;
@@ -83,27 +146,106 @@ export async function POST(req: Request) {
 	});
 
 	const system = dedent`
-		You are ${entity.name}.
+    You are ${entity.name}.
 
-		${entity.description}
+    ${entity.description}
 
-		You are chatting with someone from your universe.
-		Do not refer to your self as an AI, stay in character.
+    You are chatting with someone from your universe.
+    Do not refer to your self as an AI, stay in character.
 
-		======================================================== 
-		Context - Here is some information that will be helpful.
-		======================================================== 
-	
-		${contextItems.join("\n\n")}
-	`;
+    ======================================================== 
+    Context - Here is some information that will be helpful.
+    ======================================================== 
+  
+    ${contextItems.join("\n\n")}
+  `;
 
 	console.log(system);
 
-	const { response } = await generateText({
-		model: openai("gpt-4"),
-		system,
-		messages,
-	});
+	// const { response } = await generateText({
+	// 	model: openai("gpt-4"),
+	// 	system,
+	// 	messages,
+	// });
 
+	const { response } = mockGenerateText();
+
+	// Extract the response text from the latest AI message
+	let responseText = "";
+
+	// Based on the error, we know response has a messages array
+	// Get the last assistant message from the array
+	if (response.messages && response.messages.length > 0) {
+		// Get the last message (assuming it's from the assistant)
+		const latestMessage = response.messages[response.messages.length - 1];
+
+		// Check if it has a content property (CoreAssistantMessage should have this)
+		if (
+			latestMessage &&
+			typeof latestMessage === "object" &&
+			"content" in latestMessage
+		) {
+			const content = latestMessage.content;
+
+			// Handle different content types
+			if (typeof content === "string") {
+				// If content is directly a string
+				responseText = content;
+			} else if (Array.isArray(content)) {
+				// If content is an array of parts (TextPart | ToolCallPart)
+				// Extract and concatenate all text parts
+				responseText = content
+					.filter((part) => part.type === "text" || "text" in part)
+					.map((part) => {
+						// Check if it's a TextPart or has a text property
+						if (part.type === "text" && "text" in part) {
+							return part.text;
+						} else if ("text" in part) {
+							return part.text;
+						}
+						return "";
+					})
+					.join(" ");
+			}
+		}
+	}
+
+	// If no text was found, use a default message
+	if (!responseText) {
+		console.error(
+			"Could not extract response text from AI response:",
+			JSON.stringify(response, null, 2)
+		);
+		responseText = "I'm sorry, but I couldn't generate a proper response.";
+	}
+
+	// If audio option is enabled, generate TTS
+	if (options?.audio) {
+		try {
+			// Use the provided voiceId or fall back to default
+			const voiceId = options.voiceId || DEFAULT_VOICE_ID;
+			const audioBuffer = await generateAudio(responseText, voiceId);
+
+			// Convert ArrayBuffer to Base64 string for transmission
+			const audioBase64 = Buffer.from(audioBuffer).toString("base64");
+
+			return Response.json({
+				messages: response.messages,
+				audio: {
+					data: audioBase64,
+					format: "mp3",
+				},
+			});
+		} catch (error) {
+			console.error("TTS generation error:", error);
+			// Fall back to text-only response on error
+			return Response.json({
+				messages: response.messages,
+				error: "Failed to generate audio",
+			});
+		}
+	}
+
+	// Default text-only response
 	return Response.json({ messages: response.messages });
 }
