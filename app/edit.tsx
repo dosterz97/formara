@@ -1,5 +1,3 @@
-// File: app/universes/[universeId]/entities/[id]/page.tsx
-// This can be reused for both new entities (/new) and editing existing ones (/[id]/edit)
 "use client";
 
 import { Button } from "@/components/ui/button";

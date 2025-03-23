@@ -26,6 +26,7 @@ import { ArrowLeft, Loader2, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // TypeScript interface for Universe
 interface Universe {
@@ -87,12 +88,12 @@ export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 
 	// Handle universe deletion
 	const handleDeleteUniverse = async () => {
-		if (!universe) return;
+		if (!universe) return toast.error("Universe does not exist!");
 
 		try {
 			setDeleteLoading(true);
 
-			const response = await fetch(`/api/universes/${universe.slug}`, {
+			const response = await fetch(`/api/universe/${universe.id}`, {
 				method: "DELETE",
 			});
 
