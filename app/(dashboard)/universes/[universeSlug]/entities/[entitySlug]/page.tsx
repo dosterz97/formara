@@ -35,6 +35,7 @@ import { Entity, ENTITY_STATUSES, TYPES_OF_ENTITIES } from "@/lib/db/schema";
 import { ArrowLeft, Loader2, Save, Trash, Volume2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 // Define voice interface
 interface Voice {
@@ -192,6 +193,8 @@ export default function EntityEditPage() {
 		e.preventDefault();
 		setFormError(null);
 
+		if (!entity) return toast.error("Missing entity! Unable to update.");
+
 		try {
 			setSaving(true);
 
@@ -216,16 +219,13 @@ export default function EntityEditPage() {
 
 			console.log(updatedEntity);
 
-			const response = await fetch(
-				`/api/universes/${universeSlug}/entities/${entitySlug}`,
-				{
-					method: "PUT",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify(updatedEntity),
-				}
-			);
+			const response = await fetch(`/api/entities/${entity.id}`, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(updatedEntity),
+			});
 
 			if (!response.ok) {
 				const errorData = await response.json();
@@ -248,16 +248,15 @@ export default function EntityEditPage() {
 
 	// Handle entity deletion
 	const handleDelete = async () => {
+		if (!entity) return toast.error("Entity is missing! Unable to delete.");
+
 		try {
 			setDeleting(true);
 			setFormError(null);
 
-			const response = await fetch(
-				`/api/universes/${universeSlug}/entities/${entitySlug}`,
-				{
-					method: "DELETE",
-				}
-			);
+			const response = await fetch(`/api/entities/${entity.id}`, {
+				method: "DELETE",
+			});
 
 			if (!response.ok) {
 				const errorData = await response.json();

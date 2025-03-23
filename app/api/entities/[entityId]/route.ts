@@ -137,7 +137,8 @@ export async function PUT(
 					? body.basicAttributes
 					: existingEntity.basicAttributes,
 			status: body.status !== undefined ? body.status : existingEntity.status,
-			voiceId: body.voice !== undefined ? body.voiceId : existingEntity.voiceId,
+			voiceId:
+				body.voiceId !== undefined ? body.voiceId : existingEntity.voiceId,
 			updatedAt: new Date(),
 		};
 
