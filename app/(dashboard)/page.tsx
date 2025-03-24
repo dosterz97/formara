@@ -10,7 +10,7 @@ export default function HomePage() {
 			<h1>Home</h1>
 			<Button
 				onClick={() => {
-					router.push("/universes");
+					router.push("/dashboard/universes");
 				}}
 			>
 				My Universes
