@@ -32,7 +32,7 @@ export default function RootLayout({
 		>
 			<body className="min-h-[100dvh] bg-gray-50">
 				<UserProvider userPromise={userPromise}>{children}</UserProvider>
-				<Toaster />
+				<Toaster richColors />
 			</body>
 		</html>
 	);

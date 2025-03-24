@@ -103,7 +103,7 @@ export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 			}
 
 			// Redirect to universes page after successful deletion
-			router.push("/universes");
+			router.push("/dashboard/universes");
 		} catch (err) {
 			console.error("Error deleting universe:", err);
 			setError(
