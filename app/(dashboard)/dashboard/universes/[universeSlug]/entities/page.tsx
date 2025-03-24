@@ -1,5 +1,6 @@
 "use client";
 
+import { EntityCSVUploader } from "@/components/csv-uploader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,6 +69,7 @@ import {
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
 interface PaginationInfo {
 	total: number;
@@ -444,116 +446,130 @@ export default function EntitiesPage() {
 					<h1 className="text-2xl font-bold">Entities</h1>
 				</div>
 
-				{/* Create entity button */}
-				<Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-					<DialogTrigger asChild>
-						<Button>
-							<Plus className="mr-2 h-4 w-4" /> Create Entity
-						</Button>
-					</DialogTrigger>
-					<DialogContent>
-						<form onSubmit={handleCreateEntity}>
-							<DialogHeader>
-								<DialogTitle>Create New Entity</DialogTitle>
-								<DialogDescription>
-									Add a new entity to your {universe?.name} universe.
-								</DialogDescription>
-							</DialogHeader>
-							<div className="grid gap-4 py-4">
-								<div className="grid gap-2">
-									<Label htmlFor="name">Name *</Label>
-									<Input
-										id="name"
-										value={newEntity.name}
-										onChange={(e) =>
-											setNewEntity({ ...newEntity, name: e.target.value })
-										}
-										placeholder="Entity name"
-										required
-									/>
+				<div className="flex gap-2 justify-end">
+					{/* Create entity button */}
+					<Dialog
+						open={isCreateDialogOpen}
+						onOpenChange={setIsCreateDialogOpen}
+					>
+						<DialogTrigger asChild>
+							<Button>
+								<Plus className="mr-2 h-4 w-4" /> Create Entity
+							</Button>
+						</DialogTrigger>
+						<DialogContent>
+							<form onSubmit={handleCreateEntity}>
+								<DialogHeader>
+									<DialogTitle>Create New Entity</DialogTitle>
+									<DialogDescription>
+										Add a new entity to your {universe?.name} universe.
+									</DialogDescription>
+								</DialogHeader>
+								<div className="grid gap-4 py-4">
+									<div className="grid gap-2">
+										<Label htmlFor="name">Name *</Label>
+										<Input
+											id="name"
+											value={newEntity.name}
+											onChange={(e) =>
+												setNewEntity({ ...newEntity, name: e.target.value })
+											}
+											placeholder="Entity name"
+											required
+										/>
+									</div>
+									<div className="grid gap-2">
+										<Label htmlFor="description">Description</Label>
+										<Textarea
+											id="description"
+											value={newEntity.description}
+											onChange={(e) =>
+												setNewEntity({
+													...newEntity,
+													description: e.target.value,
+												})
+											}
+											placeholder="Entity description"
+											rows={3}
+										/>
+									</div>
+									<div className="grid gap-2">
+										<Label htmlFor="type">Type</Label>
+										<Select
+											value={newEntity.entityType}
+											defaultValue="character"
+											onValueChange={(value) =>
+												setNewEntity({ ...newEntity, entityType: value })
+											}
+										>
+											<SelectTrigger>
+												<SelectValue placeholder="character" />
+											</SelectTrigger>
+											<SelectContent>
+												{TYPES_OF_ENTITIES.map((type) => (
+													<SelectItem key={type} value={type}>
+														{type}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
+									<div className="grid gap-2">
+										<Label htmlFor="status">Status</Label>
+										<Select
+											value={newEntity.status}
+											onValueChange={(value) =>
+												setNewEntity({ ...newEntity, status: value })
+											}
+										>
+											<SelectTrigger>
+												<SelectValue placeholder="Select status" />
+											</SelectTrigger>
+											<SelectContent>
+												{ENTITY_STATUSES.map((status) => (
+													<SelectItem key={status} value={status}>
+														{status.charAt(0).toUpperCase() + status.slice(1)}
+													</SelectItem>
+												))}
+											</SelectContent>
+										</Select>
+									</div>
 								</div>
-								<div className="grid gap-2">
-									<Label htmlFor="description">Description</Label>
-									<Textarea
-										id="description"
-										value={newEntity.description}
-										onChange={(e) =>
-											setNewEntity({
-												...newEntity,
-												description: e.target.value,
-											})
-										}
-										placeholder="Entity description"
-										rows={3}
-									/>
-								</div>
-								<div className="grid gap-2">
-									<Label htmlFor="type">Type</Label>
-									<Select
-										value={newEntity.entityType}
-										defaultValue="character"
-										onValueChange={(value) =>
-											setNewEntity({ ...newEntity, entityType: value })
-										}
+								<DialogFooter>
+									<Button
+										type="button"
+										variant="outline"
+										onClick={() => setIsCreateDialogOpen(false)}
 									>
-										<SelectTrigger>
-											<SelectValue placeholder="character" />
-										</SelectTrigger>
-										<SelectContent>
-											{TYPES_OF_ENTITIES.map((type) => (
-												<SelectItem key={type} value={type}>
-													{type}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-								<div className="grid gap-2">
-									<Label htmlFor="status">Status</Label>
-									<Select
-										value={newEntity.status}
-										onValueChange={(value) =>
-											setNewEntity({ ...newEntity, status: value })
-										}
+										Cancel
+									</Button>
+									<Button
+										type="submit"
+										disabled={isSubmitting || !newEntity.name.trim()}
 									>
-										<SelectTrigger>
-											<SelectValue placeholder="Select status" />
-										</SelectTrigger>
-										<SelectContent>
-											{ENTITY_STATUSES.map((status) => (
-												<SelectItem key={status} value={status}>
-													{status.charAt(0).toUpperCase() + status.slice(1)}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-							</div>
-							<DialogFooter>
-								<Button
-									type="button"
-									variant="outline"
-									onClick={() => setIsCreateDialogOpen(false)}
-								>
-									Cancel
-								</Button>
-								<Button
-									type="submit"
-									disabled={isSubmitting || !newEntity.name.trim()}
-								>
-									{isSubmitting ? (
-										<>
-											<Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
-											Creating...
-										</>
-									) : (
-										"Create Entity"
-									)}
-								</Button>
-							</DialogFooter>
-						</form>
-					</DialogContent>
-				</Dialog>
+										{isSubmitting ? (
+											<>
+												<Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
+												Creating...
+											</>
+										) : (
+											"Create Entity"
+										)}
+									</Button>
+								</DialogFooter>
+							</form>
+						</DialogContent>
+					</Dialog>
+
+					{universe && (
+						<EntityCSVUploader
+							universeId={universe.id}
+							onComplete={() => {
+								toast.success("Upload complete!");
+							}}
+						/>
+					)}
+				</div>
 			</div>
 
 			{/* Entities list */}
