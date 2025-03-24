@@ -185,7 +185,7 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 			}
 
 			// Navigate back to universe page
-			router.push(`/universes/${universeSlug}`);
+			router.push(`/dashboard/universes/${universeSlug}`);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "An error occurred");
 		} finally {
@@ -350,7 +350,9 @@ export default function EntityFormPage({ params }: EntityFormPageProps) {
 								<Button
 									type="button"
 									variant="outline"
-									onClick={() => router.push(`/universes/${universeSlug}`)}
+									onClick={() =>
+										router.push(`/dashboard/universes/${universeSlug}`)
+									}
 								>
 									Cancel
 								</Button>

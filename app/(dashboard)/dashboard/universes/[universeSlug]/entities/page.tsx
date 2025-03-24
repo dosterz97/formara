@@ -249,7 +249,9 @@ export default function EntitiesPage() {
 		params.set("offset", "0"); // Reset pagination when filtering
 		params.set("limit", String(pagination?.limit || 10));
 
-		router.push(`/universes/${universeSlug}/entities?${params.toString()}`);
+		router.push(
+			`/dashboard/universes/${universeSlug}/entities?${params.toString()}`
+		);
 	};
 
 	// Clear all filters
@@ -260,7 +262,7 @@ export default function EntitiesPage() {
 		setSortField("createdAt");
 		setSortOrder("desc");
 
-		router.push(`/universes/${universeSlug}/entities`);
+		router.push(`/dashboard/universes/${universeSlug}/entities`);
 	};
 
 	// Handle pagination
@@ -272,7 +274,9 @@ export default function EntitiesPage() {
 		params.set("offset", String(newOffset));
 		params.set("limit", String(pagination.limit));
 
-		router.push(`/universes/${universeSlug}/entities?${params.toString()}`);
+		router.push(
+			`/dashboard/universes/${universeSlug}/entities?${params.toString()}`
+		);
 	};
 
 	// Handle sorting
@@ -291,7 +295,9 @@ export default function EntitiesPage() {
 		params.set("sortOrder", newOrder);
 		params.set("offset", "0"); // Reset pagination when sorting
 
-		router.push(`/universes/${universeSlug}/entities?${params.toString()}`);
+		router.push(
+			`/dashboard/universes/${universeSlug}/entities?${params.toString()}`
+		);
 	};
 
 	// Handle entity creation
@@ -410,7 +416,9 @@ export default function EntitiesPage() {
 					<CardFooter>
 						<Button
 							variant="outline"
-							onClick={() => router.push(`/universes/${universeSlug}`)}
+							onClick={() =>
+								router.push(`/dashboard/universes/${universeSlug}`)
+							}
 						>
 							<ArrowLeft className="mr-2 h-4 w-4" /> Back to Universe
 						</Button>
@@ -427,7 +435,7 @@ export default function EntitiesPage() {
 				<div>
 					<Button
 						variant="ghost"
-						onClick={() => router.push(`/universes/${universeSlug}`)}
+						onClick={() => router.push(`/dashboard/universes/${universeSlug}`)}
 						className="pl-0 mb-2"
 					>
 						<ArrowLeft className="mr-2 h-4 w-4" /> Back to{" "}
@@ -782,7 +790,7 @@ export default function EntitiesPage() {
 									params.set("offset", "0");
 
 									router.push(
-										`/universes/${universeSlug}/entities?${params.toString()}`
+										`/dashboard/universes/${universeSlug}/entities?${params.toString()}`
 									);
 								}}
 							>
@@ -823,7 +831,7 @@ export default function EntitiesPage() {
 											);
 											params.delete("search");
 											router.push(
-												`/universes/${universeSlug}/entities?${params.toString()}`
+												`/dashboard/universes/${universeSlug}/entities?${params.toString()}`
 											);
 										}}
 									>
@@ -846,7 +854,7 @@ export default function EntitiesPage() {
 											);
 											params.delete("type");
 											router.push(
-												`/universes/${universeSlug}/entities?${params.toString()}`
+												`/dashboard/universes/${universeSlug}/entities?${params.toString()}`
 											);
 										}}
 									>
@@ -871,7 +879,7 @@ export default function EntitiesPage() {
 											);
 											params.delete("status");
 											router.push(
-												`/universes/${universeSlug}/entities?${params.toString()}`
+												`/dashboard/universes/${universeSlug}/entities?${params.toString()}`
 											);
 										}}
 									>
@@ -944,7 +952,7 @@ export default function EntitiesPage() {
 										>
 											<TableCell className="font-medium">
 												<Link
-													href={`/universes/${universeSlug}/entities/${entity.slug}`}
+													href={`/dashboard/universes/${universeSlug}/entities/${entity.slug}`}
 													className="hover:underline text-blue-600 hover:text-blue-800"
 												>
 													{entity.name}
@@ -982,7 +990,7 @@ export default function EntitiesPage() {
 														size="icon"
 														onClick={() =>
 															router.push(
-																`/universes/${universeSlug}/entities/${entity.slug}`
+																`/dashboard/universes/${universeSlug}/entities/${entity.slug}`
 															)
 														}
 													>

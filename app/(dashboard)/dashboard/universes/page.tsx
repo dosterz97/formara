@@ -314,7 +314,7 @@ export default function HomePage() {
 									<span className="text-sm text-gray-500">
 										{universe.entityCount || 0} entities
 									</span>
-									<Link href={`/universes/${universe.slug}`}>
+									<Link href={`/dashboard/universes/${universe.slug}`}>
 										<Button variant="outline" size="sm">
 											View
 										</Button>

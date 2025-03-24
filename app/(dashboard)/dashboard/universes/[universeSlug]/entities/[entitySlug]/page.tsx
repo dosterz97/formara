@@ -235,7 +235,9 @@ export default function EntityEditPage() {
 			setHasUnsavedChanges(false);
 
 			// Navigate back to entity detail page
-			router.push(`/universes/${universeSlug}/entities/${entitySlug}`);
+			router.push(
+				`/dashboard/universes/${universeSlug}/entities/${entitySlug}`
+			);
 		} catch (err) {
 			console.error("Error updating entity:", err);
 			setFormError(
@@ -264,7 +266,7 @@ export default function EntityEditPage() {
 			}
 
 			// Navigate back to entities list
-			router.push(`/universes/${universeSlug}/entities`);
+			router.push(`/dashboard/universes/${universeSlug}/entities`);
 		} catch (err) {
 			console.error("Error deleting entity:", err);
 			setFormError(
@@ -348,7 +350,9 @@ export default function EntityEditPage() {
 					<CardFooter>
 						<Button
 							variant="outline"
-							onClick={() => router.push(`/universes/${universeSlug}/entities`)}
+							onClick={() =>
+								router.push(`/dashboard/universes/${universeSlug}/entities`)
+							}
 						>
 							<ArrowLeft className="mr-2 h-4 w-4" /> Back to Entities
 						</Button>
@@ -375,7 +379,9 @@ export default function EntityEditPage() {
 					<CardFooter>
 						<Button
 							variant="outline"
-							onClick={() => router.push(`/universes/${universeSlug}/entities`)}
+							onClick={() =>
+								router.push(`/dashboard/universes/${universeSlug}/entities`)
+							}
 						>
 							<ArrowLeft className="mr-2 h-4 w-4" /> Back to Entities
 						</Button>
@@ -453,7 +459,7 @@ export default function EntityEditPage() {
 				<Button
 					variant="ghost"
 					onClick={() =>
-						handleNavigation(`/universes/${universeSlug}/entities`)
+						handleNavigation(`/dashboard/universes/${universeSlug}/entities`)
 					}
 					className="pl-0 mb-2"
 				>
@@ -638,7 +644,7 @@ export default function EntityEditPage() {
 								variant="outline"
 								onClick={() =>
 									handleNavigation(
-										`/universes/${universeSlug}/entities/${entitySlug}`
+										`/dashboard/universes/${universeSlug}/entities/${entitySlug}`
 									)
 								}
 							>

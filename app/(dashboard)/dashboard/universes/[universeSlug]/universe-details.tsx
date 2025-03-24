@@ -202,7 +202,9 @@ export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 					</Button>
 					<Button
 						variant="outline"
-						onClick={() => router.push(`/universes/${universe.id}/edit`)}
+						onClick={() =>
+							router.push(`/dashboard/universes/${universe.id}/edit`)
+						}
 					>
 						<Pencil className="mr-2 h-4 w-4" /> Edit
 					</Button>
@@ -291,7 +293,7 @@ export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 					<div className="text-sm text-muted-foreground">
 						Last updated: {formatDate(universe.updatedAt)}
 					</div>
-					<Link href={`/universes/${universe.slug}/entities`}>
+					<Link href={`/dashboard/universes/${universe.slug}/entities`}>
 						<Button>View Entities</Button>
 					</Link>
 				</CardFooter>
