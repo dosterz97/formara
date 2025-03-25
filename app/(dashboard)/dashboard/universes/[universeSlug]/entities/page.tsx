@@ -1,6 +1,7 @@
 "use client";
 
 import { EntityCSVUploader } from "@/components/csv-uploader";
+import { WebPageExtractor } from "@/components/page-extractor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -566,6 +567,14 @@ export default function EntitiesPage() {
 							universeId={universe.id}
 							onComplete={() => {
 								toast.success("Upload complete!");
+							}}
+						/>
+					)}
+					{universe && (
+						<WebPageExtractor
+							universeId={universe.id}
+							onComplete={() => {
+								toast.success("Page upload compelete");
 							}}
 						/>
 					)}

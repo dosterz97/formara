@@ -1,7 +1,7 @@
 "use client";
 
+import { UniverseDetails } from "@/components/universe-details";
 import { useParams } from "next/navigation";
-import { UniverseDetails } from "./universe-details";
 
 export default function UniversePage() {
 	const params = useParams();
