@@ -221,6 +221,7 @@ export function WebPageExtractor({
 
 			const data = await response.json();
 
+			console.log("response okay?: ", response.ok);
 			if (!response.ok) {
 				setUploadResult({
 					success: 0,
@@ -240,12 +241,22 @@ export function WebPageExtractor({
 					onEntitiesUpload(data.results);
 				}
 
-				// Clear selected entities if all uploaded successfully
+				// Close the dialog if all entities were uploaded successfully
 				if (
 					data.results.success === selectedEntities.length &&
 					data.results.failed === 0
 				) {
+					// Clear selected entities
 					setSelectedEntities([]);
+					// Close the dialog after a short delay to allow the user to see the success message
+					setTimeout(() => {
+						setIsDialogOpen(false);
+						// Reset the form state for the next time the dialog is opened
+						setUrl("");
+						setResult(null);
+						setUploadResult(null);
+						setShowUrlInput(true);
+					}, 1000);
 				}
 			}
 		} catch (error: any) {
