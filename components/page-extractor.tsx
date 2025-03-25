@@ -13,12 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
 	AlertCircle,
+	Check,
 	CheckCircle,
 	Globe,
 	Loader2,
-	Tag,
+	RefreshCw,
+	Square,
 	Upload,
-	X,
 } from "lucide-react";
 import React, { useState } from "react";
 
@@ -73,6 +74,7 @@ export function WebPageExtractor({
 		createdEntities?: any[];
 	} | null>(null);
 	const [isUploading, setIsUploading] = useState(false);
+	const [showUrlInput, setShowUrlInput] = useState(true);
 
 	const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setUrl(e.target.value);
@@ -121,6 +123,7 @@ export function WebPageExtractor({
 				// Auto-select all detected entities
 				if (data.entitySuggestions && data.entitySuggestions.length > 0) {
 					setSelectedEntities(data.entitySuggestions);
+					setShowUrlInput(false); // Hide URL input once entities are detected
 				}
 
 				if (onComplete) {
@@ -156,10 +159,38 @@ export function WebPageExtractor({
 		setSelectedEntities([]);
 		setUploadResult(null);
 		setIsDialogOpen(false);
+		setShowUrlInput(true);
 	};
 
-	const removeEntity = (index: number) => {
-		setSelectedEntities((prev) => prev.filter((_, i) => i !== index));
+	const handleRetry = () => {
+		setShowUrlInput(true);
+		setResult(null);
+		setSelectedEntities([]);
+		setUploadResult(null);
+	};
+
+	const toggleEntity = (entity: {
+		name: string;
+		entity_type: string;
+		description: string;
+		status: string;
+	}) => {
+		const isSelected = selectedEntities.some(
+			(e) => e.name === entity.name && e.entity_type === entity.entity_type
+		);
+
+		if (isSelected) {
+			// Remove entity if already selected
+			setSelectedEntities((prev) =>
+				prev.filter(
+					(e) =>
+						!(e.name === entity.name && e.entity_type === entity.entity_type)
+				)
+			);
+		} else {
+			// Add entity if not selected
+			setSelectedEntities((prev) => [...prev, entity]);
+		}
 	};
 
 	const handleUploadEntities = async () => {
@@ -241,7 +272,7 @@ export function WebPageExtractor({
 					<Globe className="mr-2 h-4 w-4" /> Extract from Web
 				</Button>
 			</DialogTrigger>
-			<DialogContent className="sm:max-w-md">
+			<DialogContent className="sm:max-w-3xl">
 				<DialogHeader>
 					<DialogTitle>Extract and Analyze Web Page</DialogTitle>
 					<DialogDescription>
@@ -250,72 +281,61 @@ export function WebPageExtractor({
 					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-4 py-4">
-					<div className="text-sm text-muted-foreground">
-						<p>
-							Enter a web page URL to extract content and analyze it for
-							potential entities. The system will identify characters,
-							locations, items, and other entities from the content.
-						</p>
-					</div>
+					{showUrlInput && (
+						<>
+							<div className="text-sm text-muted-foreground">
+								<p>
+									Enter a web page URL to extract content and analyze it for
+									potential entities. The system will identify characters,
+									locations, items, and other entities from the content.
+								</p>
+							</div>
+							<div className="space-y-2">
+								<Label htmlFor="webpage-url">Web Page URL</Label>
+								<Input
+									id="webpage-url"
+									type="url"
+									placeholder="https://example.com/page"
+									value={url}
+									onChange={handleUrlChange}
+									disabled={loading || isUploading}
+								/>
+								<p className="text-xs text-muted-foreground">
+									Enter the full URL including https://
+								</p>
+							</div>
+						</>
+					)}
 
-					<div className="space-y-2">
-						<Label htmlFor="webpage-url">Web Page URL</Label>
-						<Input
-							id="webpage-url"
-							type="url"
-							placeholder="https://example.com/page"
-							value={url}
-							onChange={handleUrlChange}
-							disabled={loading || isUploading}
-						/>
-						<p className="text-xs text-muted-foreground">
-							Enter the full URL including https://
-						</p>
-					</div>
-
-					{result && (
-						<Alert variant={result.success ? "default" : "destructive"}>
+					{result && !result.success && (
+						<Alert variant="destructive">
 							<div className="flex items-center gap-2">
-								{result.success ? (
-									<CheckCircle className="h-4 w-4" />
-								) : (
-									<AlertCircle className="h-4 w-4" />
-								)}
-								<AlertTitle>
-									{result.success
-										? "Extraction successful"
-										: "Extraction failed"}
-								</AlertTitle>
+								<AlertCircle className="h-4 w-4" />
+								<AlertTitle>Extraction failed</AlertTitle>
 							</div>
 							<AlertDescription>
-								{result.summary && (
-									<div className="mt-2 max-h-40 overflow-y-auto">
-										<p className="font-semibold">Summary:</p>
-										<p className="text-sm mt-1">{result.summary}</p>
-									</div>
-								)}
+								<p className="text-sm mt-1">{result.error}</p>
+							</AlertDescription>
+						</Alert>
+					)}
 
-								{result.jinaData?.description && (
-									<div className="mt-2">
-										<p className="font-semibold">Extracted Description:</p>
-										<p className="text-sm mt-1">
-											{result.jinaData.description}
-										</p>
-									</div>
-								)}
+					{result && result.success && (
+						<div className="rounded-lg border bg-card text-card-foreground shadow-sm">
+							<div className="flex items-center justify-between p-4 border-b">
+								<div className="flex items-center gap-2">
+									<CheckCircle className="h-5 w-5 text-green-500" />
+									<h3 className="text-lg font-medium">Extraction successful</h3>
 
+									<div className="text-sm bg-secondary/60 text-secondary-foreground px-3 py-1 rounded-full">
+										{selectedEntities.length} selected for import
+									</div>
+								</div>
+							</div>
+							<div className="p-4">
 								{result.entitySuggestions &&
 									result.entitySuggestions.length > 0 && (
-										<div className="mt-4">
-											<div className="flex items-center justify-between">
-												<p className="font-semibold flex items-center">
-													<Tag className="h-4 w-4 mr-1" /> Detected Entities:
-												</p>
-												<div className="text-xs text-muted-foreground">
-													{selectedEntities.length} selected
-												</div>
-											</div>
-											<div className="mt-2 max-h-60 overflow-y-auto">
+										<>
+											<div className="max-h-80 overflow-y-auto p-1 border rounded-md bg-background">
 												{result.entitySuggestions.map((entity, idx) => {
 													const isSelected = selectedEntities.some(
 														(e) =>
@@ -326,52 +346,50 @@ export function WebPageExtractor({
 													return (
 														<div
 															key={idx}
-															className={`mb-3 border-l-2 pl-2 group ${
-																isSelected ? "border-primary" : "border-muted"
+															className={`mb-2 border-l-2 px-8 py-2 group rounded-r hover:bg-muted/40 ${
+																isSelected
+																	? "border-primary/70 border-l-3 bg-primary/5"
+																	: "border-muted"
 															}`}
 														>
-															<div className="flex items-center justify-between">
-																<div className="flex items-center text-sm font-medium">
-																	{entity.name}
-																	<span className="ml-2 px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded text-xs">
-																		{entity.entity_type}
-																	</span>
-																	<span className="ml-1 px-1.5 py-0.5 bg-muted text-muted-foreground rounded text-xs">
-																		{entity.status}
-																	</span>
+															<div className="flex items-center gap-4">
+																<div className="flex-1 flex flex-col items-start justify-between">
+																	<div className="flex items-center text-md font-medium">
+																		{entity.name}
+																		<span className="ml-2 px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded text-xs">
+																			{entity.entity_type}
+																		</span>
+																	</div>
+																	<div className="text-sm">
+																		{entity.description}
+																	</div>
 																</div>
-																{isSelected && (
-																	<Button
-																		variant="ghost"
-																		size="sm"
-																		className="h-6 w-6 p-0 opacity-70 hover:opacity-100"
-																		onClick={() =>
-																			removeEntity(
-																				selectedEntities.findIndex(
-																					(e) =>
-																						e.name === entity.name &&
-																						e.entity_type === entity.entity_type
-																				)
-																			)
-																		}
-																	>
-																		<X className="h-4 w-4" />
-																	</Button>
-																)}
+
+																<Button
+																	variant={isSelected ? "secondary" : "outline"}
+																	size="sm"
+																	className={`h-6 w-6 p-0 rounded-md ${
+																		isSelected
+																			? "text-primary-foreground bg-primary/70 shadow-sm"
+																			: "text-muted-foreground border border-muted-foreground/30"
+																	} hover:bg-primary/30 hover:text-primary transition-colors`}
+																	onClick={() => toggleEntity(entity)}
+																>
+																	{isSelected ? (
+																		<Check className="h-4 w-4" />
+																	) : (
+																		<Square className="h-4 w-4" />
+																	)}
+																</Button>
 															</div>
-															<p className="text-xs text-muted-foreground mt-1">
-																{entity.description}
-															</p>
 														</div>
 													);
 												})}
 											</div>
-										</div>
+										</>
 									)}
-
-								{result.error && <p className="text-sm mt-1">{result.error}</p>}
-							</AlertDescription>
-						</Alert>
+							</div>
+						</div>
 					)}
 
 					{uploadResult && (
@@ -432,6 +450,17 @@ export function WebPageExtractor({
 							Cancel
 						</Button>
 
+						{!showUrlInput && result && result.success && (
+							<Button
+								variant="outline"
+								onClick={handleRetry}
+								disabled={loading || isUploading}
+								className="mr-auto ml-2"
+							>
+								<RefreshCw className="mr-2 h-4 w-4" /> Try Another URL
+							</Button>
+						)}
+
 						{result && result.success && selectedEntities.length > 0 && (
 							<Button
 								onClick={handleUploadEntities}
@@ -452,7 +481,7 @@ export function WebPageExtractor({
 							</Button>
 						)}
 
-						{(!result || !result.success) && (
+						{showUrlInput && (!result || !result.success) && (
 							<Button onClick={handleExtraction} disabled={!url || loading}>
 								{loading ? (
 									<span className="flex items-center">
