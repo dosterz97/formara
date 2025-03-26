@@ -5,12 +5,11 @@ import {
 	verifyCollection,
 } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
-import { entities, universes } from "@/lib/db/schema";
-import { count, eq, sql } from "drizzle-orm";
+import { entities, EntityTypeSchema, universes } from "@/lib/db/schema";
+import { and, count, eq, ilike, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import slugify from "slugify";
 
-// GET a specific universe by ID with its entities
 // GET all entities for a universe
 export async function GET(
 	request: NextRequest,
@@ -61,33 +60,53 @@ export async function GET(
 
 		// Get query params for pagination
 		const searchParams = request.nextUrl.searchParams;
+		const typeParam = searchParams.get("type");
 		const limit = parseInt(searchParams.get("limit") || "50");
 		const offset = parseInt(searchParams.get("offset") || "0");
 		const search = searchParams.get("search") || "";
 
-		// Get entities with search and pagination
-		let query = db
+		// Build an array of filters
+		const filters = [eq(entities.universeId, universe.id)]; // Always filter by universe ID
+
+		// Add optional type filter with Zod validation
+		if (typeParam) {
+			const result = EntityTypeSchema.safeParse(typeParam);
+
+			if (result.success) {
+				// Type is valid, add to filters with proper typing
+				filters.push(eq(entities.entityType, result.data));
+			} else {
+				return NextResponse.json(
+					{
+						error: "Invalid entity type",
+						validTypes: EntityTypeSchema.options,
+					},
+					{ status: 400 }
+				);
+			}
+		}
+
+		// Add search if provided
+		if (search) {
+			filters.push(ilike(entities.name, `%${search}%`));
+		}
+
+		// Apply all filters with a single where clause
+		const query = db
 			.select()
 			.from(entities)
-			.where(eq(entities.universeId, universe.id));
+			.where(and(...filters))
+			.limit(limit)
+			.offset(offset);
 
-		// // Add search if provided
-		// if (search) {
-		// 	// This is a basic implementation - you might want to use a more sophisticated
-		// 	// search method like full-text search depending on your database
-		// 	query = query.where(like(entities.name, `%${search}%`));
-		// }
+		// Execute the query
+		const allEntities = await query;
 
-		// Add pagination
-		const allEntities = await query.limit(limit).offset(offset);
-
-		// console.log(allEntities);
-
-		// Get total count for pagination
+		// Get total count for pagination with the same filters
 		const countResult = await db
 			.select({ count: count() })
 			.from(entities)
-			.where(eq(entities.universeId, universe.id));
+			.where(and(...filters));
 
 		const total = countResult[0]?.count || 0;
 

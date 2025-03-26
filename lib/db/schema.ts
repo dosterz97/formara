@@ -9,6 +9,7 @@ import {
 	uuid,
 	varchar,
 } from "drizzle-orm/pg-core";
+import { z } from "zod";
 
 // === EXISTING USER & TEAM SYSTEM ===
 
@@ -33,6 +34,8 @@ export const TYPES_OF_ENTITIES = [
 	"organization",
 	"other",
 ] as const;
+
+export const EntityTypeSchema = z.enum(TYPES_OF_ENTITIES);
 
 export const EntityTypes = typeof TYPES_OF_ENTITIES;
 export const EntityStatus = typeof ENTITY_STATUSES;
@@ -342,7 +345,6 @@ export const metaverseActivityLogsRelations = relations(
 );
 
 // === EXISTING TYPE EXPORTS ===
-
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Team = typeof teams.$inferSelect;

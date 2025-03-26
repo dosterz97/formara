@@ -245,7 +245,8 @@ export default function EntitiesPage() {
 		const params = new URLSearchParams();
 
 		if (searchTerm) params.set("search", searchTerm);
-		if (selectedType) params.set("type", selectedType);
+		if (selectedType && selectedType !== "all")
+			params.set("type", selectedType);
 		if (selectedStatus) params.set("status", selectedStatus);
 		params.set("sortField", sortField);
 		params.set("sortOrder", sortOrder);
@@ -632,7 +633,7 @@ export default function EntitiesPage() {
 													<SelectValue placeholder="All types" />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem value="">All types</SelectItem>
+													<SelectItem value="all">All types</SelectItem>
 													{TYPES_OF_ENTITIES.map((type) => (
 														<SelectItem key={type} value={type}>
 															{type}
@@ -651,7 +652,7 @@ export default function EntitiesPage() {
 													<SelectValue placeholder="All statuses" />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem value="">All statuses</SelectItem>
+													<SelectItem value="all">All statuses</SelectItem>
 													{ENTITY_STATUSES.map((status) => (
 														<SelectItem key={status} value={status}>
 															{status.charAt(0).toUpperCase() + status.slice(1)}
@@ -748,7 +749,7 @@ export default function EntitiesPage() {
 													<SelectValue placeholder="All types" />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem value="">All types</SelectItem>
+													<SelectItem value="all">All types</SelectItem>
 													{TYPES_OF_ENTITIES.map((type) => (
 														<SelectItem key={type} value={type}>
 															{type}
@@ -757,7 +758,7 @@ export default function EntitiesPage() {
 												</SelectContent>
 											</Select>
 										</div>
-										<div className="space-y-2">
+										{/* <div className="space-y-2">
 											<Label htmlFor="status">Status</Label>
 											<Select
 												value={selectedStatus}
@@ -767,7 +768,7 @@ export default function EntitiesPage() {
 													<SelectValue placeholder="All statuses" />
 												</SelectTrigger>
 												<SelectContent>
-													<SelectItem value="">All statuses</SelectItem>
+													<SelectItem value="all">All statuses</SelectItem>
 													{ENTITY_STATUSES.map((status) => (
 														<SelectItem key={status} value={status}>
 															{status.charAt(0).toUpperCase() + status.slice(1)}
@@ -775,7 +776,7 @@ export default function EntitiesPage() {
 													))}
 												</SelectContent>
 											</Select>
-										</div>
+										</div> */}
 										<div className="flex gap-2">
 											<Button
 												variant="outline"

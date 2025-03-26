@@ -12,7 +12,6 @@ export async function GET(
 		// Await the params object before destructuring
 		const { universeSlug } = await params;
 
-		console.log(universeSlug);
 		if (!universeSlug) {
 			return NextResponse.json(
 				{ error: "Universe slug is required" },
