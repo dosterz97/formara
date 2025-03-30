@@ -385,7 +385,7 @@ export default function EntitiesPage() {
 	// Loading state
 	if (loading && entities.length === 0) {
 		return (
-			<div className="container mx-auto py-8">
+			<div className="container mx-auto p-8">
 				<div className="flex items-center mb-6">
 					<Skeleton className="h-8 w-64" />
 				</div>
@@ -409,7 +409,7 @@ export default function EntitiesPage() {
 	// Error state
 	if (error) {
 		return (
-			<div className="container mx-auto py-8">
+			<div className="container mx-auto p-8">
 				<Card className="border-red-200 bg-red-50">
 					<CardHeader>
 						<CardTitle className="text-red-700">Error</CardTitle>
@@ -433,7 +433,7 @@ export default function EntitiesPage() {
 	}
 
 	return (
-		<div className="container mx-auto py-8">
+		<div className="container mx-auto p-8">
 			{/* Header with universe info */}
 			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
 				<div>

@@ -310,7 +310,7 @@ export default function EntityEditPage() {
 	// Loading state
 	if (loading) {
 		return (
-			<div className="container mx-auto py-8">
+			<div className="container mx-auto p-8">
 				<div className="mb-6">
 					<Skeleton className="h-8 w-64 mb-2" />
 				</div>
@@ -339,7 +339,7 @@ export default function EntityEditPage() {
 	// Error state
 	if (error) {
 		return (
-			<div className="container mx-auto py-8">
+			<div className="container mx-auto p-8">
 				<Card className="border-red-200 bg-red-50">
 					<CardHeader>
 						<CardTitle className="text-red-700">Error</CardTitle>
@@ -365,7 +365,7 @@ export default function EntityEditPage() {
 	// No entity found
 	if (!entity) {
 		return (
-			<div className="container mx-auto py-8">
+			<div className="container mx-auto p-8">
 				<Card>
 					<CardHeader>
 						<CardTitle>Entity Not Found</CardTitle>
@@ -392,7 +392,7 @@ export default function EntityEditPage() {
 	}
 
 	return (
-		<div className="container mx-auto py-8">
+		<div className="container mx-auto p-8">
 			{/* Audio element for previews */}
 			{audioPreview && <audio src={audioPreview} className="hidden" />}
 

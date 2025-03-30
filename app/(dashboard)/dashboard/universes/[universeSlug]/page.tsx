@@ -10,7 +10,7 @@ export default function UniversePage() {
 		: (params.universeSlug as string);
 
 	return (
-		<div className="container mx-auto py-8">
+		<div className="container mx-auto p-8">
 			<UniverseDetails universeSlug={universeSlug} />
 		</div>
 	);
