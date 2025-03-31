@@ -10,12 +10,16 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/lib/auth";
-import { Globe2, Home, LogOut } from "lucide-react";
+import { Globe, Home, LogOut } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Suspense, use, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { ReactNode, Suspense, use, useEffect, useState } from "react";
 
-function UserMenu() {
+interface UserMenuProps {
+	isLandingPage: boolean;
+}
+
+function UserMenu({ isLandingPage }: UserMenuProps) {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const { userPromise } = useUser();
 	const user = use(userPromise);
@@ -30,15 +34,31 @@ function UserMenu() {
 	if (!user) {
 		return (
 			<>
-				<Link
+				{isLandingPage && (
+					<Link
+						href="#pricing"
+						className="text-white hover:text-indigo-300 transition hidden md:block"
+					>
+						Pricing
+					</Link>
+				)}
+				{/* <Link
 					href="/pricing"
-					className="text-sm font-medium text-gray-700 hover:text-gray-900"
+					className={`${
+						isLandingPage
+							? "text-white hover:text-indigo-300"
+							: "text-gray-700 hover:text-gray-900"
+					} text-sm font-medium transition ${isLandingPage ? "" : "md:block"}`}
 				>
 					Pricing
-				</Link>
+				</Link> */}
 				<Button
 					asChild
-					className="bg-black hover:bg-gray-800 text-white text-sm px-4 py-2 rounded-full"
+					className={`${
+						isLandingPage
+							? "bg-indigo-600 hover:bg-indigo-700"
+							: "bg-black hover:bg-gray-800"
+					} text-white text-sm px-4 py-2 rounded-full`}
 				>
 					<Link href="/sign-up">Sign Up</Link>
 				</Button>
@@ -79,19 +99,118 @@ function UserMenu() {
 	);
 }
 
-function Header() {
+interface NavigationProps {
+	isLandingPage: boolean;
+}
+
+function Navigation({ isLandingPage }: NavigationProps) {
+	// Smooth scroll function for anchor links
+	useEffect(() => {
+		if (!isLandingPage) return;
+
+		const handleAnchorClick = (e: MouseEvent) => {
+			const target = e.currentTarget as HTMLAnchorElement;
+			const href = target.getAttribute("href");
+			// Check if the href is an anchor link
+			if (href && href.startsWith("#")) {
+				e.preventDefault();
+
+				const targetId = href.substring(1);
+				const targetElement = document.getElementById(targetId);
+
+				if (targetElement) {
+					window.scrollTo({
+						top: targetElement.offsetTop,
+						behavior: "smooth",
+					});
+				}
+			}
+		};
+
+		// Add click event listeners to all anchor links
+		const anchorLinks = document.querySelectorAll('a[href^="#"]');
+		anchorLinks.forEach((link) => {
+			link.addEventListener("click", handleAnchorClick as EventListener);
+		});
+
+		// Cleanup event listeners
+		return () => {
+			anchorLinks.forEach((link) => {
+				link.removeEventListener("click", handleAnchorClick as EventListener);
+			});
+		};
+	}, [isLandingPage]);
+
+	if (!isLandingPage) return null;
+
 	return (
-		<header className="border-b border-gray-200">
-			<div className="mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-				<Link href="/" className="flex items-center">
-					<Globe2 className="h-6 w-6 text-red-500" />
-					<span className="ml-2 text-xl font-semibold text-gray-900">
-						FORMORA
-					</span>
-				</Link>
-				<div className="flex items-center space-x-4">
+		<div className="hidden md:flex items-center justify-center gap-8">
+			<a
+				href="#features"
+				className="text-white hover:text-indigo-300 transition"
+			>
+				Features
+			</a>
+			<a
+				href="#how-it-works"
+				className="text-white hover:text-indigo-300 transition"
+			>
+				How It Works
+			</a>
+			<a
+				href="#pricing"
+				className="text-white hover:text-indigo-300 transition"
+			>
+				Pricing
+			</a>
+		</div>
+	);
+}
+
+function Header() {
+	const pathname = usePathname();
+	const isLandingPage = pathname === "/";
+
+	return (
+		<header
+			className={
+				isLandingPage
+					? "w-full border-b border-slate-800"
+					: "border-b border-gray-200"
+			}
+		>
+			<div
+				className={`max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center relative`}
+			>
+				{/* Logo positioned on the left */}
+				<div className="flex-none w-[250px]">
+					<Link href="/" className="flex items-center gap-2">
+						<Globe
+							className={`h-8 w-8 ${
+								isLandingPage ? "text-indigo-500" : "text-red-500"
+							}`}
+						/>
+						<span
+							className={
+								isLandingPage
+									? "text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600"
+									: "text-xl font-semibold text-gray-900"
+							}
+						>
+							Formora
+						</span>
+					</Link>
+				</div>
+
+				{/* Navigation centered in the middle */}
+				<div className="flex-1 flex justify-center">
+					<Navigation isLandingPage={isLandingPage} />
+				</div>
+
+				{/* User menu on the right */}
+				<div className="flex-none flex items-center space-x-4 w-[250px] justify-end">
 					<Suspense fallback={<div className="h-9" />}>
-						<UserMenu />
+						<UserMenu isLandingPage={isLandingPage} />
 					</Suspense>
 				</div>
 			</div>
@@ -99,9 +218,20 @@ function Header() {
 	);
 }
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+interface LayoutProps {
+	children: ReactNode;
+}
+
+export default function Layout({ children }: LayoutProps) {
+	const pathname = usePathname();
+	const isLandingPage = pathname === "/";
+
 	return (
-		<section className="flex flex-col min-h-screen">
+		<section
+			className={`flex flex-col min-h-screen ${
+				isLandingPage ? "bg-slate-950 text-slate-50" : ""
+			}`}
+		>
 			<Header />
 			{children}
 		</section>
