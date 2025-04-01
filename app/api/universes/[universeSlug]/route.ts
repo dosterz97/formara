@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { universeSlug: string } }
+	{ params }: { params: Promise<{ universeSlug: string }> }
 ) {
 	try {
 		// Await the params object before destructuring

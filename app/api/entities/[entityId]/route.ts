@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 // GET a specific entity
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { entityId: string } }
+	{ params }: { params: Promise<{ entityId: string }> }
 ) {
 	try {
 		const { entityId } = await params;
@@ -66,7 +66,7 @@ export async function GET(
 // PUT update a specific entity
 export async function PUT(
 	request: NextRequest,
-	{ params }: { params: { entityId: string } }
+	{ params }: { params: Promise<{ entityId: string }> }
 ) {
 	try {
 		const { entityId } = await params;
@@ -166,7 +166,7 @@ export async function PUT(
 // DELETE a specific entity
 export async function DELETE(
 	request: NextRequest,
-	{ params }: { params: { entityId: string } }
+	{ params }: { params: Promise<{ entityId: string }> }
 ) {
 	try {
 		const { entityId } = await params;

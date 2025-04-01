@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 // GET a specific entity
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { universeSlug: string; entitySlug: string } }
+	{ params }: { params: Promise<{ universeSlug: string; entitySlug: string }> }
 ) {
 	try {
 		const { universeSlug, entitySlug } = await params;

@@ -1,7 +1,7 @@
 // drop-tables.js
 import dotenv from "dotenv";
 import { sql } from "drizzle-orm";
-import { db } from "./lib/db/drizzle"; // Adjust this path to where your db connection is defined
+import { db } from "./drizzle";
 
 dotenv.config();
 
@@ -24,7 +24,7 @@ async function resetAllTables() {
 			console.log(`Dropping table: ${table}`);
 			// Use the sql identifier template for table names
 			const dropQuery = sql`DROP TABLE IF EXISTS ${sql.identifier(
-				table
+				table as string
 			)} CASCADE`;
 			await db.execute(dropQuery);
 		}

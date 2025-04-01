@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { universeId: string } }
+	{ params }: { params: Promise<{ universeId: string }> }
 ) {
 	try {
 		// Await the params object before destructuring
@@ -79,7 +79,7 @@ export async function GET(
 // PUT/PATCH to update a universe
 export async function PUT(
 	request: NextRequest,
-	{ params }: { params: { universeId: string } }
+	{ params }: { params: Promise<{ universeId: string }> }
 ) {
 	try {
 		const { universeId } = await params;
@@ -157,7 +157,7 @@ export async function PUT(
 // DELETE a universe by ID
 export async function DELETE(
 	request: NextRequest,
-	{ params }: { params: { universeId: string } }
+	{ params }: { params: Promise<{ universeId: string }> }
 ) {
 	try {
 		const { universeId } = await params;

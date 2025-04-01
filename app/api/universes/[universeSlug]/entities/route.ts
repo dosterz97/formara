@@ -13,7 +13,7 @@ import slugify from "slugify";
 // GET all entities for a universe
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { universeSlug: string } }
+	{ params }: { params: Promise<{ universeSlug: string }> }
 ) {
 	try {
 		const { universeSlug } = await params;
@@ -131,7 +131,7 @@ export async function GET(
 // POST create a new entity
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: { universeSlug: string } }
+	{ params }: { params: Promise<{ universeSlug: string }> }
 ) {
 	try {
 		const { universeSlug } = await params;

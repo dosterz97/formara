@@ -16,8 +16,9 @@ import { useEffect } from "react";
 export default function FormLandingPage() {
 	// Smooth scroll function for anchor links
 	useEffect(() => {
-		const handleAnchorClick = (e) => {
-			const href = e.currentTarget.getAttribute("href");
+		const handleAnchorClick = (e: MouseEvent) => {
+			const target = e.currentTarget as HTMLAnchorElement;
+			const href = target.getAttribute("href");
 			// Check if the href is an anchor link
 			if (href && href.startsWith("#")) {
 				e.preventDefault();
@@ -37,13 +38,13 @@ export default function FormLandingPage() {
 		// Add click event listeners to all anchor links
 		const anchorLinks = document.querySelectorAll('a[href^="#"]');
 		anchorLinks.forEach((link) => {
-			link.addEventListener("click", handleAnchorClick);
+			link.addEventListener("click", handleAnchorClick as EventListener);
 		});
 
 		// Cleanup event listeners
 		return () => {
 			anchorLinks.forEach((link) => {
-				link.removeEventListener("click", handleAnchorClick);
+				link.removeEventListener("click", handleAnchorClick as EventListener);
 			});
 		};
 	}, []);

@@ -39,7 +39,7 @@ const ENTITY_STATUSES = [
 // POST endpoint to handle web page extraction using Jina AI
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: { universeId: string } }
+	{ params }: { params: Promise<{ universeId: string }> }
 ) {
 	try {
 		const { universeId } = await params;

@@ -12,10 +12,10 @@ import slugify from "slugify";
 // POST endpoint to handle CSV upload for entities
 export async function POST(
 	request: NextRequest,
-	{ params }: { params: { universeId: string } }
+	{ params }: { params: Promise<{ universeId: string }> }
 ) {
 	try {
-		const { universeId } = params;
+		const { universeId } = await params;
 
 		if (!universeId) {
 			return NextResponse.json(
