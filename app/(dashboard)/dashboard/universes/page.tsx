@@ -201,7 +201,7 @@ export default function HomePage() {
 									>
 										Edit
 									</Button>
-									<Link href={`/dashboard/universes/${universe.slug}`}>
+									<Link href={`/dashboard/universes/${universe.slug}/entities`}>
 										<Button variant="outline" size="sm">
 											View
 										</Button>

@@ -439,11 +439,10 @@ export default function EntitiesPage() {
 				<div>
 					<Button
 						variant="ghost"
-						onClick={() => router.push(`/dashboard/universes/${universeSlug}`)}
+						onClick={() => router.push(`/dashboard/universes`)}
 						className="pl-0 mb-2"
 					>
-						<ArrowLeft className="mr-2 h-4 w-4" /> Back to{" "}
-						{universe?.name || "Universe"}
+						<ArrowLeft className="mr-2 h-4 w-4" /> Back to Universes
 					</Button>
 					<h1 className="text-2xl font-bold">Entities</h1>
 				</div>
