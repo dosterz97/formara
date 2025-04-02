@@ -113,7 +113,6 @@ export const universes = pgTable(
 		slug: varchar("slug", { length: 50 }).notNull(),
 		name: varchar("name", { length: 100 }).notNull(),
 		description: text("description"),
-		rules: json("rules").$type<Record<string, any>>(), // Universe-specific rules
 		status: pgEntityStatusEnum("entity_status").default("active"),
 
 		vectorNamespace: varchar("vector_namespace", { length: 50 }).notNull(),

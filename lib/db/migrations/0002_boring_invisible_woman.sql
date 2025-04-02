@@ -1,0 +1,1 @@
+ALTER TABLE "universes" DROP COLUMN "rules";

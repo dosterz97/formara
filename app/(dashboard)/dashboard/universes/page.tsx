@@ -1,61 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-	Form,
-	FormControl,
-	FormDescription,
-	FormField,
-	FormItem,
-	FormLabel,
-	FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { ENTITY_STATUSES, Universe } from "@/lib/db/schema";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { UniverseForm } from "@/components/universe-form";
+import { Universe } from "@/lib/db/schema";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import slugify from "slugify";
-import { toast, Toaster } from "sonner";
-import { z } from "zod";
-
-// Import enums from your schema
-const formSchema = z.object({
-	name: z
-		.string()
-		.min(2, {
-			message: "Universe name must be at least 2 characters.",
-		})
-		.max(100, {
-			message: "Universe name must not exceed 100 characters.",
-		}),
-	description: z.string().optional(),
-	status: z.enum(ENTITY_STATUSES).default("active"),
-	rules: z
-		.string()
-		.optional()
-		.transform((val) => (val ? JSON.parse(val) : {})),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+import { Toaster } from "sonner";
 
 export default function HomePage() {
 	const [universes, setUniverses] = useState<
@@ -63,103 +13,54 @@ export default function HomePage() {
 	>([]);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
-	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+	const [selectedUniverse, setSelectedUniverse] = useState<
+		Universe | undefined
+	>(undefined);
 
 	// Load universes from API when component mounts
 	useEffect(() => {
-		const fetchUniverses = async () => {
-			try {
-				setLoading(true);
-				const response = await fetch("/api/universes");
-
-				if (!response.ok) {
-					throw new Error("Failed to fetch universes");
-				}
-
-				const data = await response.json();
-				setUniverses(data);
-			} catch (err) {
-				console.error("Error fetching universes:", err);
-				setError("Failed to load universes");
-				toast.error("Error loading universes");
-			} finally {
-				setLoading(false);
-			}
-		};
-
 		fetchUniverses();
 	}, []);
 
-	// Initialize React Hook Form
-	const form = useForm<FormValues>({
-		resolver: zodResolver(formSchema),
-		defaultValues: {
-			name: "",
-			description: "",
-			status: "active",
-			rules: "",
-		},
-	});
-
-	async function onSubmit(values: FormValues) {
+	const fetchUniverses = async () => {
 		try {
-			// Generate slug from name
-			const slug = slugify(values.name, { lower: true, strict: true });
-
-			// Create the universe object with required fields
-			const universeData = {
-				name: values.name,
-				slug,
-				description: values.description || "",
-				status: values.status,
-				rules: values.rules,
-			};
-
-			// Set loading state
 			setLoading(true);
-
-			// Call the POST API endpoint
-			const response = await fetch("/api/universes", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(universeData),
-			});
+			const response = await fetch("/api/universes");
 
 			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(errorData.error || "Failed to create universe");
+				throw new Error("Failed to fetch universes");
 			}
 
-			// Get the created universe from the response
-			const newUniverse = await response.json();
-
-			// Add the new universe to the local state
-			setUniverses([...universes, newUniverse]);
-
-			// Reset form and close modal
-			form.reset();
-			setIsModalOpen(false);
-
-			// Show success message with Sonner
-			toast.success("Universe created", {
-				description: `${values.name} has been successfully created.`,
-			});
+			const data = await response.json();
+			setUniverses(data);
 		} catch (err) {
-			console.error("Failed to create universe:", err);
-			setError("Failed to create universe. Please try again.");
-
-			toast.error("Error", {
-				description:
-					err instanceof Error
-						? err.message
-						: "Failed to create universe. Please try again.",
-			});
+			console.error("Error fetching universes:", err);
+			setError("Failed to load universes");
 		} finally {
 			setLoading(false);
 		}
-	}
+	};
+
+	const handleCreateSuccess = (newUniverse: Universe) => {
+		// Add the new universe to the local state
+		setUniverses([...universes, newUniverse as any]);
+	};
+
+	const handleEditSuccess = (updatedUniverse: Universe) => {
+		// Update the universe in the local state
+		setUniverses(
+			universes.map((u) =>
+				u.id === updatedUniverse.id ? { ...u, ...updatedUniverse } : u
+			)
+		);
+	};
+
+	const handleEditClick = (universe: Universe) => {
+		setSelectedUniverse(universe);
+		setIsEditModalOpen(true);
+	};
 
 	return (
 		<div className="container mx-auto p-6">
@@ -169,126 +70,14 @@ export default function HomePage() {
 			<div className="flex justify-between items-center mb-6">
 				<h1 className="text-3xl font-bold">Home</h1>
 
-				<Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-					<DialogTrigger asChild>
-						<Button>Create New Universe</Button>
-					</DialogTrigger>
-					<DialogContent className="sm:max-w-[500px]">
-						<DialogHeader>
-							<DialogTitle>Create New Universe</DialogTitle>
-							<DialogDescription>
-								Create a new universe to organize your entities, characters, and
-								lore.
-							</DialogDescription>
-						</DialogHeader>
-
-						<Form {...form}>
-							<form
-								onSubmit={form.handleSubmit(onSubmit)}
-								className="space-y-4"
-							>
-								<FormField
-									control={form.control}
-									name="name"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Name</FormLabel>
-											<FormControl>
-												<Input placeholder="My Universe Name" {...field} />
-											</FormControl>
-											<FormDescription>
-												The name of your universe. A URL-friendly slug will be
-												automatically generated.
-											</FormDescription>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={form.control}
-									name="description"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Description</FormLabel>
-											<FormControl>
-												<Textarea
-													placeholder="Describe your universe..."
-													className="resize-none"
-													{...field}
-												/>
-											</FormControl>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={form.control}
-									name="status"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Status</FormLabel>
-											<Select
-												onValueChange={field.onChange}
-												defaultValue={field.value}
-											>
-												<FormControl>
-													<SelectTrigger>
-														<SelectValue placeholder="Select a status" />
-													</SelectTrigger>
-												</FormControl>
-												<SelectContent>
-													{ENTITY_STATUSES.map((status) => (
-														<SelectItem key={status} value={status}>
-															{status.charAt(0).toUpperCase() + status.slice(1)}
-														</SelectItem>
-													))}
-												</SelectContent>
-											</Select>
-											<FormDescription>
-												The current status of this universe.
-											</FormDescription>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
-								<FormField
-									control={form.control}
-									name="rules"
-									render={({ field }) => (
-										<FormItem>
-											<FormLabel>Rules (JSON)</FormLabel>
-											<FormControl>
-												<Textarea
-													placeholder='{"allowTimeTravel": true, "magicSystem": "elemental"}'
-													className="resize-none font-mono text-sm"
-													{...field}
-												/>
-											</FormControl>
-											<FormDescription>
-												Optional universe-specific rules in JSON format.
-											</FormDescription>
-											<FormMessage />
-										</FormItem>
-									)}
-								/>
-
-								<DialogFooter className="pt-4">
-									<Button
-										type="button"
-										variant="outline"
-										onClick={() => setIsModalOpen(false)}
-									>
-										Cancel
-									</Button>
-									<Button type="submit">Create Universe</Button>
-								</DialogFooter>
-							</form>
-						</Form>
-					</DialogContent>
-				</Dialog>
+				{/* Create Universe Form */}
+				<UniverseForm
+					isOpen={isCreateModalOpen}
+					onOpenChange={setIsCreateModalOpen}
+					onSuccess={handleCreateSuccess}
+					mode="create"
+					trigger={<Button>Create New Universe</Button>}
+				/>
 			</div>
 
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
@@ -314,6 +103,13 @@ export default function HomePage() {
 									<span className="text-sm text-gray-500">
 										{universe.entityCount || 0} entities
 									</span>
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => handleEditClick(universe)}
+									>
+										Edit
+									</Button>
 									<Link href={`/dashboard/universes/${universe.slug}`}>
 										<Button variant="outline" size="sm">
 											View
@@ -334,6 +130,15 @@ export default function HomePage() {
 					</div>
 				)}
 			</div>
+
+			{/* Edit Universe Form */}
+			<UniverseForm
+				isOpen={isEditModalOpen}
+				onOpenChange={setIsEditModalOpen}
+				onSuccess={handleEditSuccess}
+				universe={selectedUniverse}
+				mode="edit"
+			/>
 		</div>
 	);
 }

@@ -15,6 +15,13 @@
       "when": 1742762623749,
       "tag": "0001_far_lightspeed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1743574734534,
+      "tag": "0002_boring_invisible_woman",
+      "breakpoints": true
     }
   ]
 }

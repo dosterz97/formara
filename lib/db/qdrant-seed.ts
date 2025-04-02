@@ -679,7 +679,7 @@
 // 				id: "infinity-stones",
 // 				title: "The Infinity Stones",
 // 				content:
-// 					"The Infinity Stones are six immensely powerful objects tied to different aspects of the universe, created by the Cosmic Entities. Each stone possesses unique capabilities: Space Stone (blue), Reality Stone (red), Power Stone (purple), Mind Stone (yellow), Time Stone (green), and Soul Stone (orange). Together in the Infinity Gauntlet, they grant the user godlike powers including the ability to alter reality on a universal scale.",
+// 					"The Infinity Stones are six immensely powerful objects tied to different aspects of the universe, created by the Cosmic Entities. Each stone possesses unique capabilities: Space Stone (blue), Reality Stone (red), Power Stone (purple), Mind Stone (yellow), Time Stone (green), and Soul Stone (red). Together in the Infinity Gauntlet, they grant the user godlike powers including the ability to alter reality on a universal scale.",
 // 				category: "cosmic",
 // 				tags: ["cosmic", "artifact", "thanos", "power"],
 // 			},

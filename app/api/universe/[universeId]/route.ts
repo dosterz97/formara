@@ -10,10 +10,8 @@ export async function GET(
 	{ params }: { params: Promise<{ universeId: string }> }
 ) {
 	try {
-		// Await the params object before destructuring
 		const { universeId } = await params;
 
-		console.log(universeId);
 		if (!universeId) {
 			return NextResponse.json(
 				{ error: "Universe ID is required" },
@@ -133,7 +131,6 @@ export async function PUT(
 				body.description !== undefined
 					? body.description
 					: existingUniverse.description,
-			rules: body.rules !== undefined ? body.rules : existingUniverse.rules,
 			status: body.status !== undefined ? body.status : existingUniverse.status,
 			updatedAt: new Date(),
 		};

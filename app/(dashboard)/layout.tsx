@@ -190,7 +190,7 @@ function Header() {
 					<Link href="/" className="flex items-center gap-2">
 						<Globe
 							className={`h-8 w-8 ${
-								isLandingPage ? "text-indigo-500" : "text-red-500"
+								isLandingPage ? "text-indigo-500" : "text-indigo-500"
 							}`}
 						/>
 						<span

@@ -22,27 +22,13 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Universe } from "@/lib/db/schema";
 import { ArrowLeft, Loader2, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-
-// TypeScript interface for Universe
-interface Universe {
-	id: string;
-	name: string;
-	slug: string;
-	description: string;
-	status: string;
-	rules: Record<string, any>;
-	teamId: string;
-	createdBy: string;
-	createdAt: string;
-	updatedAt: string;
-	vectorNamespace: string;
-	entityCount: number;
-}
+import { UniverseForm } from "./universe-form";
 
 interface UniverseDetailsProps {
 	universeSlug: string;
@@ -50,10 +36,12 @@ interface UniverseDetailsProps {
 
 export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 	const [universe, setUniverse] = useState<Universe | null>(null);
+	const [entityCount, setEntityCount] = useState<number>(0);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [deleteLoading, setDeleteLoading] = useState(false);
 	const router = useRouter();
+	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
 	// Fetch universe data
 	useEffect(() => {
@@ -70,6 +58,8 @@ export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 				}
 
 				const data = await response.json();
+
+				setEntityCount(data.entityCount);
 				setUniverse(data);
 			} catch (err) {
 				console.error("Error fetching universe:", err);
@@ -111,6 +101,11 @@ export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 			);
 			setDeleteLoading(false);
 		}
+	};
+
+	const handleEditSuccess = (updatedUniverse: Universe) => {
+		// Update the universe in the local state
+		setUniverse(updatedUniverse);
 	};
 
 	// Loading state
@@ -193,17 +188,28 @@ export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 				<div>
 					<h1 className="text-2xl font-bold">{universe.name}</h1>
 					<p className="text-muted-foreground">
-						Created on {formatDate(universe.createdAt)}
+						Created on {formatDate(universe.createdAt.toString())}
 					</p>
 				</div>
 				<div className="mt-4 sm:mt-0 space-x-2 flex">
-					<Button variant="outline" onClick={() => router.push("/universes")}>
+					<Button
+						variant="outline"
+						onClick={() => router.push("/dashboard/universes")}
+					>
 						<ArrowLeft className="mr-2 h-4 w-4" /> Back
 					</Button>
+					<UniverseForm
+						isOpen={isEditModalOpen}
+						onOpenChange={setIsEditModalOpen}
+						onSuccess={handleEditSuccess}
+						universe={universe}
+						mode="edit"
+					/>
 					<Button
 						variant="outline"
 						onClick={() =>
-							router.push(`/dashboard/universes/${universe.id}/edit`)
+							// router.push(`/dashboard/universes/${universe.slug}/edit`)
+							setIsEditModalOpen(true)
 						}
 					>
 						<Pencil className="mr-2 h-4 w-4" /> Edit
@@ -256,8 +262,10 @@ export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 							variant={universe.status === "active" ? "default" : "secondary"}
 							className="ml-2"
 						>
-							{universe.status.charAt(0).toUpperCase() +
-								universe.status.slice(1)}
+							{universe.status
+								? universe.status.charAt(0).toUpperCase() +
+								  universe.status.slice(1)
+								: "n/a"}
 						</Badge>
 					</div>
 				</CardHeader>
@@ -275,23 +283,12 @@ export function UniverseDetails({ universeSlug }: UniverseDetailsProps) {
 						<h3 className="text-sm font-medium text-muted-foreground mb-1">
 							Entity Count
 						</h3>
-						<p className="text-2xl font-bold">{universe.entityCount}</p>
+						<p className="text-2xl font-bold">{entityCount}</p>
 					</div>
-
-					{universe.rules && Object.keys(universe.rules).length > 0 && (
-						<div>
-							<h3 className="text-sm font-medium text-muted-foreground mb-1">
-								Rules
-							</h3>
-							<pre className="bg-muted p-4 rounded-md text-sm overflow-auto">
-								{JSON.stringify(universe.rules, null, 2)}
-							</pre>
-						</div>
-					)}
 				</CardContent>
 				<CardFooter className="flex justify-between border-t p-6">
 					<div className="text-sm text-muted-foreground">
-						Last updated: {formatDate(universe.updatedAt)}
+						Last updated: {formatDate(universe.updatedAt.toString())}
 					</div>
 					<Link href={`/dashboard/universes/${universe.slug}/entities`}>
 						<Button>View Entities</Button>

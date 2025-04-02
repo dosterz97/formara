@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Activity, Globe2, Menu, Settings, Shield, Users } from "lucide-react";
+import { Globe2, Menu, Settings, Shield, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -15,10 +15,10 @@ export default function DashboardLayout({
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
 	const navItems = [
-		{ href: "/dashboard", icon: Users, label: "Team" },
-		{ href: "/dashboard/general", icon: Settings, label: "General" },
 		{ href: "/dashboard/universes", icon: Globe2, label: "Universes" },
-		{ href: "/dashboard/activity", icon: Activity, label: "Activity" },
+		{ href: "/dashboard/general", icon: Settings, label: "General" },
+		{ href: "/dashboard", icon: Users, label: "Team" },
+		// { href: "/dashboard/activity", icon: Activity, label: "Activity" },
 		{ href: "/dashboard/security", icon: Shield, label: "Security" },
 	];
 

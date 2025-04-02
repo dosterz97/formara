@@ -288,7 +288,6 @@ export function WebPageExtractor({
 					<DialogTitle>Extract and Analyze Web Page</DialogTitle>
 					<DialogDescription>
 						Enter a URL to extract content and analyze for potential entities
-						using Jina AI and OpenAI.
 					</DialogDescription>
 				</DialogHeader>
 				<div className="space-y-4 py-4">

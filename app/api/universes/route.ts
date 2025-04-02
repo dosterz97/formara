@@ -94,7 +94,6 @@ export async function POST(request: NextRequest) {
 			name: body.name,
 			slug: body.slug,
 			description: body.description || "",
-			rules: body.rules || {},
 			status: body.status || "active",
 			vectorNamespace,
 			createdBy: user.id,
