@@ -1,0 +1,669 @@
+// src/components/ChatInterface.tsx
+"use client";
+
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Entity } from "@/lib/db/schema";
+import { Bot, Download, Info, Loader2, Play, Send, User } from "lucide-react";
+import { useParams } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
+
+// Types
+interface ChatMessage {
+	role: "user" | "assistant" | "system";
+	content: string | any[]; // Support for text parts
+	id?: string;
+	timestamp?: Date;
+	audio?: {
+		data: string;
+		format: string;
+	};
+	relevantData?: RelevantData[];
+}
+
+interface Message extends ChatMessage {
+	id: string;
+	sender: "user" | "character";
+	timestamp: Date;
+}
+
+interface RelevantData {
+	id: string;
+	content: string;
+	source: string;
+	relevanceScore: number;
+	type: "text" | "image" | "audio" | "video";
+}
+
+export interface ChatInterfaceProps {
+	entity?: Entity;
+	initialMessages?: ChatMessage[];
+}
+
+export function ChatInterface({
+	entity,
+	initialMessages = [],
+}: ChatInterfaceProps) {
+	const params = useParams();
+	const entityId =
+		entity?.id ||
+		(Array.isArray(params.entityId)
+			? params.entityId[0]
+			: (params.entityId as string));
+
+	// Convert ChatMessage[] to Message[]
+	const convertMessages = (chatMessages: ChatMessage[]): Message[] => {
+		return chatMessages.map((msg, index) => ({
+			...msg,
+			id: msg.id || `msg-${index}-${Date.now()}`,
+			sender: msg.role === "user" ? "user" : "character",
+			timestamp: msg.timestamp || new Date(),
+			content:
+				typeof msg.content === "string"
+					? msg.content
+					: Array.isArray(msg.content)
+					? msg.content
+							.filter((part: any) => part.type === "text")
+							.map((part: any) => part.text)
+							.join("\n")
+					: String(msg.content),
+		}));
+	};
+
+	const [messages, setMessages] = useState<Message[]>(
+		convertMessages(initialMessages)
+	);
+	const [inputMessage, setInputMessage] = useState("");
+	const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
+	const [isTyping, setIsTyping] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const [sending, setSending] = useState(false);
+	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const inputRef = useRef<HTMLInputElement>(null);
+	const audioRef = useRef<HTMLAudioElement | null>(null);
+	const [audioUrl, setAudioUrl] = useState<string | null>(null);
+
+	// Scroll to bottom when messages change
+	useEffect(() => {
+		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+	}, [messages]);
+
+	// Focus input on load
+	useEffect(() => {
+		if (inputRef.current) {
+			inputRef.current.focus();
+		}
+	}, []);
+
+	// Play audio function
+	const handlePlayAudio = (audioData: string) => {
+		if (audioRef.current) {
+			// Clean up previous audio URL if it exists
+			if (audioUrl) {
+				URL.revokeObjectURL(audioUrl);
+			}
+
+			try {
+				// Create a blob from the base64 data
+				const byteCharacters = atob(audioData);
+				const byteNumbers = new Array(byteCharacters.length);
+
+				for (let i = 0; i < byteCharacters.length; i++) {
+					byteNumbers[i] = byteCharacters.charCodeAt(i);
+				}
+
+				const byteArray = new Uint8Array(byteNumbers);
+				const blob = new Blob([byteArray], { type: "audio/mp3" });
+
+				// Create a URL for the blob
+				const url = URL.createObjectURL(blob);
+				setAudioUrl(url);
+
+				// Set the audio source and play
+				audioRef.current.src = url;
+				audioRef.current.play().catch((err) => {
+					console.error("Error playing audio:", err);
+				});
+			} catch (error) {
+				console.error("Error processing audio data:", error);
+			}
+		}
+	};
+
+	// Download audio function
+	const handleDownloadAudio = (audioData: string) => {
+		try {
+			// Create a blob from the base64 data
+			const byteCharacters = atob(audioData);
+			const byteNumbers = new Array(byteCharacters.length);
+
+			for (let i = 0; i < byteCharacters.length; i++) {
+				byteNumbers[i] = byteCharacters.charCodeAt(i);
+			}
+
+			const byteArray = new Uint8Array(byteNumbers);
+			const blob = new Blob([byteArray], { type: "audio/mp3" });
+
+			// Create a URL for the blob
+			const url = URL.createObjectURL(blob);
+
+			// Create and click a download link
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = `${entity?.name || "assistant"}-message.mp3`;
+			document.body.appendChild(a);
+			a.click();
+
+			// Clean up
+			setTimeout(() => {
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			}, 100);
+		} catch (error) {
+			console.error("Error downloading audio:", error);
+		}
+	};
+
+	const handleSendMessage = async () => {
+		if (!inputMessage.trim() || sending) return;
+
+		try {
+			setSending(true);
+			setError(null);
+
+			// Add user message
+			const userMessage: ChatMessage = {
+				role: "user",
+				content: inputMessage,
+				id: Date.now().toString(),
+			};
+
+			const userMessageConverted: Message = {
+				...userMessage,
+				id: userMessage.id || `msg-${Date.now()}`,
+				sender: "user",
+				timestamp: new Date(),
+			};
+
+			setMessages((prevMessages) => [...prevMessages, userMessageConverted]);
+			setInputMessage("");
+			setIsTyping(true);
+
+			// Convert our internal messages back to ChatMessage format for API
+			const apiMessages = messages.map((msg) => ({
+				role: msg.sender === "user" ? "user" : "assistant",
+				content: msg.content,
+			}));
+
+			// Add the new user message
+			apiMessages.push({
+				role: "user",
+				content: userMessageConverted.content,
+			});
+
+			// Send to API
+			const response = await fetch(`/api/chat/${entityId}`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					messages: apiMessages,
+					entity,
+					options: {
+						audio: true,
+					},
+				}),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || "Failed to send message");
+			}
+
+			const json = await response.json();
+			console.log("API response:", json);
+
+			// Process assistant messages and add relevantData
+			if (json.messages && Array.isArray(json.messages)) {
+				const assistantMessages = json.messages
+					.filter((msg: any) => msg.role === "assistant")
+					.map((msg: any) => {
+						// Extract relevant data from Formora context if available
+						const relevantData = json.context
+							? json.context.map((ctx: any, idx: number) => ({
+									id: `rd-${Date.now()}-${idx}`,
+									content:
+										typeof ctx.content === "string"
+											? ctx.content
+											: JSON.stringify(ctx.content),
+									source: ctx.source || "universe_knowledge",
+									relevanceScore: ctx.relevance || 0.85,
+									type: "text",
+							  }))
+							: null;
+
+						// Create a message with both audio and relevantData
+						return {
+							role: "assistant",
+							content: msg.content,
+							id: `msg-${Date.now()}-${Math.random()
+								.toString(36)
+								.substring(2, 9)}`,
+							sender: "character",
+							timestamp: new Date(),
+							audio: json.audio,
+							relevantData,
+						} as Message;
+					});
+
+				// Add to messages
+				console.log(assistantMessages);
+				setMessages((prevMessages) => [...prevMessages, ...assistantMessages]);
+			}
+		} catch (err) {
+			console.error("Error sending message:", err);
+			setError(err instanceof Error ? err.message : "Failed to send message");
+		} finally {
+			setIsTyping(false);
+			setSending(false);
+			inputRef.current?.focus();
+		}
+	};
+
+	const handleKeyDown = (e: React.KeyboardEvent) => {
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			handleSendMessage();
+		}
+	};
+
+	const toggleMessageInfo = (messageId: string) => {
+		setSelectedMessage(selectedMessage === messageId ? null : messageId);
+	};
+
+	return (
+		<div className="flex flex-col h-screen max-h-screen">
+			{/* Hidden audio element for playing audio */}
+			<audio ref={audioRef} className="hidden" controls />
+
+			<header className="border-b border-border p-4">
+				<div className="flex items-center justify-between">
+					<div className="flex items-center space-x-4">
+						<Avatar className="h-10 w-10">
+							<AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold">
+								{entity?.name?.charAt(0) || "A"}
+							</AvatarFallback>
+						</Avatar>
+						<div>
+							<h2 className="text-xl font-bold">
+								{entity?.name || "AI Character"}
+							</h2>
+							<p className="text-muted-foreground text-sm">
+								{entity?.description || "AI Assistant"}
+							</p>
+						</div>
+					</div>
+					<div className="flex space-x-2">
+						<Button variant="outline" size="sm">
+							Character Settings
+						</Button>
+						<Button variant="outline" size="sm">
+							Universe Settings
+						</Button>
+					</div>
+				</div>
+			</header>
+
+			<div className="flex-1 flex overflow-hidden">
+				<div className="flex-1 flex flex-col overflow-hidden">
+					<ScrollArea className="flex-1 p-4">
+						<div className="space-y-4">
+							{messages.length === 0 ? (
+								<div className="flex flex-col items-center justify-center h-96 text-center p-4">
+									<Bot
+										size={48}
+										className="text-muted-foreground mb-4 opacity-50"
+									/>
+									<h3 className="text-lg font-medium mb-2">
+										Start a conversation
+									</h3>
+									<p className="text-muted-foreground text-sm">
+										Send a message to begin chatting with {entity?.name || "AI"}
+									</p>
+								</div>
+							) : (
+								messages.map((message) => (
+									<Collapsible
+										key={message.id}
+										open={selectedMessage === message.id}
+										className={`rounded-lg p-4 ${
+											message.sender === "user"
+												? "bg-primary-foreground ml-12"
+												: "bg-muted mr-12"
+										}`}
+									>
+										<div className="flex justify-between items-start">
+											<div className="flex items-start space-x-2">
+												{message.sender === "character" ? (
+													<Avatar className="h-8 w-8 mt-1">
+														<AvatarFallback className="bg-purple-100 text-purple-500">
+															{entity?.name?.charAt(0) || "A"}
+														</AvatarFallback>
+													</Avatar>
+												) : (
+													<Avatar className="h-8 w-8 mt-1">
+														<AvatarFallback className="bg-blue-500 text-white">
+															<User className="h-5 w-5" />
+														</AvatarFallback>
+													</Avatar>
+												)}
+												<div>
+													<div className="flex items-center space-x-2">
+														<span className="font-semibold">
+															{message.sender === "character"
+																? entity?.name || "AI"
+																: "You"}
+														</span>
+														<span className="text-xs text-muted-foreground">
+															{message.timestamp.toLocaleTimeString()}
+														</span>
+													</div>
+													<div className="mt-1 text-sm whitespace-pre-wrap">
+														{typeof message.content === "string"
+															? message.content
+															: Array.isArray(message.content)
+															? message.content
+																	.filter((part: any) => part.type === "text")
+																	.map((part: any, idx: number) => (
+																		<div key={`${message.id}-part-${idx}`}>
+																			{part.text}
+																		</div>
+																	))
+															: JSON.stringify(message.content)}
+													</div>
+												</div>
+											</div>
+
+											{message.sender === "character" && (
+												<div className="flex">
+													{/* Audio controls for assistant messages */}
+													{message.audio?.data && (
+														<div className="flex space-x-1 mr-2">
+															<Button
+																variant="ghost"
+																size="icon"
+																className="h-6 w-6 rounded-full"
+																onClick={() =>
+																	handlePlayAudio(message.audio?.data || "")
+																}
+																title="Play audio"
+															>
+																<Play className="h-3 w-3" />
+															</Button>
+															<Button
+																variant="ghost"
+																size="icon"
+																className="h-6 w-6 rounded-full"
+																onClick={() =>
+																	handleDownloadAudio(message.audio?.data || "")
+																}
+																title="Download audio"
+															>
+																<Download className="h-3 w-3" />
+															</Button>
+														</div>
+													)}
+
+													{/* Info button for relevantData */}
+													{message.relevantData && (
+														<CollapsibleTrigger asChild>
+															<Button
+																variant="ghost"
+																size="icon"
+																onClick={() => toggleMessageInfo(message.id)}
+																className="shrink-0"
+															>
+																<Info className="h-4 w-4" />
+																<span className="sr-only">
+																	Toggle message info
+																</span>
+															</Button>
+														</CollapsibleTrigger>
+													)}
+												</div>
+											)}
+										</div>
+
+										{message.sender === "character" && message.relevantData && (
+											<CollapsibleContent className="mt-4 space-y-3 border-t pt-3">
+												<div className="flex items-center justify-between">
+													<h4 className="text-sm font-medium">
+														Relevant Data Sources
+													</h4>
+													<Badge variant="outline" className="text-xs">
+														{message.relevantData.length} sources
+													</Badge>
+												</div>
+
+												<div className="space-y-2">
+													{message.relevantData.map((data) => (
+														<Card key={data.id} className="text-sm">
+															<CardContent className="p-3 space-y-2">
+																<div className="flex items-center justify-between">
+																	<Badge
+																		variant="secondary"
+																		className="text-xs"
+																	>
+																		{data.source}
+																	</Badge>
+																	<Badge variant="outline" className="text-xs">
+																		Score: {data.relevanceScore.toFixed(2)}
+																	</Badge>
+																</div>
+																<p className="text-xs">{data.content}</p>
+															</CardContent>
+														</Card>
+													))}
+												</div>
+											</CollapsibleContent>
+										)}
+									</Collapsible>
+								))
+							)}
+
+							{isTyping && (
+								<div className="bg-muted rounded-lg p-4 mr-12 animate-pulse flex items-center space-x-2">
+									<Avatar className="h-8 w-8">
+										<AvatarFallback className="bg-purple-100 text-purple-500">
+											{entity?.name?.charAt(0) || "A"}
+										</AvatarFallback>
+									</Avatar>
+									<div className="text-sm text-muted-foreground">Typing...</div>
+								</div>
+							)}
+
+							<div ref={messagesEndRef} />
+						</div>
+					</ScrollArea>
+
+					<div className="p-4 border-t">
+						<form
+							className="flex space-x-2"
+							onSubmit={(e) => {
+								e.preventDefault();
+								handleSendMessage();
+							}}
+						>
+							<Input
+								ref={inputRef}
+								value={inputMessage}
+								onChange={(e) => setInputMessage(e.target.value)}
+								onKeyDown={handleKeyDown}
+								placeholder={`Message ${entity?.name || "AI"}...`}
+								className="flex-1"
+								disabled={sending || isTyping}
+							/>
+							<Button
+								type="submit"
+								disabled={!inputMessage.trim() || sending || isTyping}
+								size="icon"
+							>
+								{sending ? (
+									<Loader2 className="h-5 w-5 animate-spin" />
+								) : (
+									<Send className="h-5 w-5" />
+								)}
+								<span className="sr-only">Send message</span>
+							</Button>
+						</form>
+						{error && (
+							<div className="mt-2 text-sm text-red-500">Error: {error}</div>
+						)}
+					</div>
+				</div>
+
+				<div className="w-96 border-l hidden lg:block overflow-y-auto">
+					<Tabs defaultValue="context">
+						<TabsList className="w-full grid grid-cols-2">
+							<TabsTrigger value="context">Context</TabsTrigger>
+							<TabsTrigger value="settings">Settings</TabsTrigger>
+						</TabsList>
+
+						<TabsContent value="context" className="p-4 space-y-4">
+							<div>
+								<h3 className="font-medium mb-2">Universe Knowledge</h3>
+								<Card>
+									<CardContent className="p-3 space-y-2 text-sm">
+										<div className="flex justify-between items-center">
+											<h4 className="font-medium">
+												{entity?.name || "AI"} Universe
+											</h4>
+											<Badge variant="outline" className="text-xs">
+												Core Knowledge
+											</Badge>
+										</div>
+										<p className="text-xs">
+											{entity?.description ||
+												"AI character in the Formora system"}
+										</p>
+									</CardContent>
+								</Card>
+							</div>
+
+							<div>
+								<h3 className="font-medium mb-2">Character Profile</h3>
+								<Card>
+									<CardContent className="p-3 space-y-2 text-sm">
+										<div className="flex justify-between items-center">
+											<h4 className="font-medium">Background</h4>
+											<Badge variant="outline" className="text-xs">
+												Character Trait
+											</Badge>
+										</div>
+										<p className="text-xs">
+											{entity?.description ||
+												"AI character with access to the Formora knowledge database"}
+										</p>
+									</CardContent>
+								</Card>
+							</div>
+
+							<div>
+								<h3 className="font-medium mb-2">Conversation History</h3>
+								<Card>
+									<CardContent className="p-3 text-sm">
+										<p className="text-muted-foreground text-xs">
+											Displaying current conversation
+										</p>
+										<p className="text-xs mt-2">
+											{messages.length} messages in this conversation
+										</p>
+									</CardContent>
+								</Card>
+							</div>
+						</TabsContent>
+
+						<TabsContent value="settings" className="p-4 space-y-4">
+							<Card>
+								<CardHeader className="p-3 pb-1">
+									<CardTitle className="text-sm">Response Settings</CardTitle>
+								</CardHeader>
+								<CardContent className="p-3 pt-1 space-y-3">
+									<div className="grid grid-cols-2 gap-2 text-xs">
+										<div className="space-y-1">
+											<label className="font-medium">Temperature</label>
+											<Input
+												type="range"
+												min="0"
+												max="1"
+												step="0.1"
+												defaultValue="0.7"
+											/>
+										</div>
+										<div className="space-y-1">
+											<label className="font-medium">Top P</label>
+											<Input
+												type="range"
+												min="0"
+												max="1"
+												step="0.05"
+												defaultValue="0.9"
+											/>
+										</div>
+									</div>
+									<div className="grid grid-cols-1 gap-2 text-xs">
+										<label className="font-medium">Max Context Items</label>
+										<Input type="number" min="1" max="20" defaultValue="5" />
+									</div>
+								</CardContent>
+							</Card>
+
+							<Card>
+								<CardHeader className="p-3 pb-1">
+									<CardTitle className="text-sm">Database Settings</CardTitle>
+								</CardHeader>
+								<CardContent className="p-3 pt-1 space-y-3">
+									<div className="space-y-1 text-xs">
+										<label className="font-medium">Relevance Threshold</label>
+										<Input
+											type="range"
+											min="0"
+											max="1"
+											step="0.05"
+											defaultValue="0.7"
+										/>
+									</div>
+									<div className="grid grid-cols-2 gap-2 text-xs">
+										<div className="space-y-1">
+											<label className="font-medium">Max Sources</label>
+											<Input type="number" min="1" max="10" defaultValue="5" />
+										</div>
+										<div className="space-y-1">
+											<label className="font-medium">Audio Enabled</label>
+											<Button variant="outline" size="sm" className="w-full">
+												Enabled
+											</Button>
+										</div>
+									</div>
+								</CardContent>
+							</Card>
+						</TabsContent>
+					</Tabs>
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export default ChatInterface;
