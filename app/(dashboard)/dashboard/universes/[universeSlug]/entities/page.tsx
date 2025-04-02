@@ -62,6 +62,7 @@ import {
 	ArrowUpDown,
 	ChevronLeft,
 	ChevronRight,
+	Edit,
 	Filter,
 	Loader2,
 	Plus,
@@ -1001,15 +1002,16 @@ export default function EntitiesPage() {
 											</TableCell>
 											<TableCell className="text-right">
 												<div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-													<Button
-														variant="ghost"
-														size="icon"
-														onClick={() => router.push(`/chat/${entity.id}`)}
-													>
-														<ChatBubbleIcon className="h-4 w-4" />
-														<span className="sr-only">Chat</span>
-													</Button>
-
+													{entity.entityType === "character" && (
+														<Button
+															variant="ghost"
+															size="icon"
+															onClick={() => router.push(`/chat/${entity.id}`)}
+														>
+															<ChatBubbleIcon className="h-4 w-4" />
+															<span className="sr-only">Chat</span>
+														</Button>
+													)}
 													<Button
 														variant="ghost"
 														size="icon"
@@ -1019,7 +1021,7 @@ export default function EntitiesPage() {
 															)
 														}
 													>
-														<ChevronRight className="h-4 w-4" />
+														<Edit className="h-4 w-4" />
 														<span className="sr-only">View</span>
 													</Button>
 												</div>
