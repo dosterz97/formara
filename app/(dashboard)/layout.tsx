@@ -34,14 +34,17 @@ function UserMenu({ isLandingPage }: UserMenuProps) {
 	if (!user) {
 		return (
 			<>
-				{isLandingPage && (
-					<Link
-						href="#pricing"
-						className="text-white hover:text-indigo-300 transition hidden md:block"
-					>
-						Pricing
-					</Link>
-				)}
+				<Button
+					asChild
+					variant={"link"}
+					className={`${
+						isLandingPage
+							? "text-indigo-600 hover:text-indigo-700"
+							: "text-black hover:text-gray-800"
+					}`}
+				>
+					<Link href="/sign-in">Sign in</Link>
+				</Button>
 				{/* <Link
 					href="/pricing"
 					className={`${
