@@ -53,7 +53,11 @@ export async function GET(
 			);
 		}
 
-		return NextResponse.json(entity[0].entity);
+		// Return both the entity and its universe
+		return NextResponse.json({
+			entity: entity[0].entity,
+			universe: entity[0].universe,
+		});
 	} catch (error) {
 		console.error("Error fetching entity:", error);
 		return NextResponse.json(
@@ -62,7 +66,6 @@ export async function GET(
 		);
 	}
 }
-
 // PUT update a specific entity
 export async function PUT(
 	request: NextRequest,

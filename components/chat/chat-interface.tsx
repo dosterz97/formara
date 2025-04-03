@@ -13,9 +13,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Entity } from "@/lib/db/schema";
+import { Entity, Universe } from "@/lib/db/schema";
 import { Bot, Download, Info, Loader2, Play, Send, User } from "lucide-react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 
 // Types
@@ -46,14 +46,17 @@ interface RelevantData {
 }
 
 export interface ChatInterfaceProps {
-	entity?: Entity;
+	universe: Universe;
+	entity: Entity;
 	initialMessages?: ChatMessage[];
 }
 
 export function ChatInterface({
+	universe,
 	entity,
 	initialMessages = [],
 }: ChatInterfaceProps) {
+	const router = useRouter();
 	const params = useParams();
 	const entityId =
 		entity?.id ||
@@ -297,7 +300,7 @@ export function ChatInterface({
 			{/* Hidden audio element for playing audio */}
 			<audio ref={audioRef} className="hidden" controls />
 
-			<header className="border-b border-border p-4">
+			<header className="border-b border-border py-3 px-6">
 				<div className="flex items-center justify-between">
 					<div className="flex items-center space-x-4">
 						<Avatar className="h-10 w-10">
@@ -314,11 +317,25 @@ export function ChatInterface({
 							</p>
 						</div>
 					</div>
-					<div className="flex space-x-2">
-						<Button variant="outline" size="sm">
+					<div className="flex space-x-3">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() =>
+								router.push(
+									`/dashboard/universes/${universe.slug}/entities/${entity.slug}`
+								)
+							}
+						>
 							Character Settings
 						</Button>
-						<Button variant="outline" size="sm">
+						<Button
+							variant="outline"
+							size="sm"
+							onClick={() =>
+								router.push(`/dashboard/universes/${universe.slug}/entities`)
+							}
+						>
 							Universe Settings
 						</Button>
 					</div>
@@ -327,15 +344,15 @@ export function ChatInterface({
 
 			<div className="flex-1 flex overflow-hidden">
 				<div className="flex-1 flex flex-col overflow-hidden">
-					<ScrollArea className="flex-1 p-4">
-						<div className="space-y-4">
+					<ScrollArea className="flex-1 px-6 py-4">
+						<div className="space-y-6">
 							{messages.length === 0 ? (
 								<div className="flex flex-col items-center justify-center h-96 text-center p-4">
 									<Bot
 										size={48}
-										className="text-muted-foreground mb-4 opacity-50"
+										className="text-muted-foreground mb-6 opacity-50"
 									/>
-									<h3 className="text-lg font-medium mb-2">
+									<h3 className="text-lg font-medium mb-3">
 										Start a conversation
 									</h3>
 									<p className="text-muted-foreground text-sm">
@@ -349,12 +366,12 @@ export function ChatInterface({
 										open={selectedMessage === message.id}
 										className={`rounded-lg p-4 ${
 											message.sender === "user"
-												? "bg-primary-foreground ml-12"
-												: "bg-muted mr-12"
+												? "bg-primary-foreground ml-16"
+												: "bg-muted mr-16"
 										}`}
 									>
 										<div className="flex justify-between items-start">
-											<div className="flex items-start space-x-2">
+											<div className="flex items-start space-x-3">
 												{message.sender === "character" ? (
 													<Avatar className="h-8 w-8 mt-1">
 														<AvatarFallback className="bg-purple-100 text-purple-500">
@@ -369,7 +386,7 @@ export function ChatInterface({
 													</Avatar>
 												)}
 												<div>
-													<div className="flex items-center space-x-2">
+													<div className="flex items-center space-x-3">
 														<span className="font-semibold">
 															{message.sender === "character"
 																? entity?.name || "AI"
@@ -379,7 +396,7 @@ export function ChatInterface({
 															{message.timestamp.toLocaleTimeString()}
 														</span>
 													</div>
-													<div className="mt-1 text-sm whitespace-pre-wrap">
+													<div className="mt-2 text-sm whitespace-pre-wrap">
 														{typeof message.content === "string"
 															? message.content
 															: Array.isArray(message.content)
@@ -399,28 +416,28 @@ export function ChatInterface({
 												<div className="flex">
 													{/* Audio controls for assistant messages */}
 													{message.audio?.data && (
-														<div className="flex space-x-1 mr-2">
+														<div className="flex space-x-2 mr-3">
 															<Button
 																variant="ghost"
 																size="icon"
-																className="h-6 w-6 rounded-full"
+																className="h-7 w-7 rounded-full"
 																onClick={() =>
 																	handlePlayAudio(message.audio?.data || "")
 																}
 																title="Play audio"
 															>
-																<Play className="h-3 w-3" />
+																<Play className="h-4 w-4" />
 															</Button>
 															<Button
 																variant="ghost"
 																size="icon"
-																className="h-6 w-6 rounded-full"
+																className="h-7 w-7 rounded-full"
 																onClick={() =>
 																	handleDownloadAudio(message.audio?.data || "")
 																}
 																title="Download audio"
 															>
-																<Download className="h-3 w-3" />
+																<Download className="h-4 w-4" />
 															</Button>
 														</div>
 													)}
@@ -432,7 +449,7 @@ export function ChatInterface({
 																variant="ghost"
 																size="icon"
 																onClick={() => toggleMessageInfo(message.id)}
-																className="shrink-0"
+																className="shrink-0 h-7 w-7"
 															>
 																<Info className="h-4 w-4" />
 																<span className="sr-only">
@@ -446,7 +463,7 @@ export function ChatInterface({
 										</div>
 
 										{message.sender === "character" && message.relevantData && (
-											<CollapsibleContent className="mt-4 space-y-3 border-t pt-3">
+											<CollapsibleContent className="mt-5 space-y-4 border-t pt-4">
 												<div className="flex items-center justify-between">
 													<h4 className="text-sm font-medium">
 														Relevant Data Sources
@@ -456,10 +473,10 @@ export function ChatInterface({
 													</Badge>
 												</div>
 
-												<div className="space-y-2">
+												<div className="space-y-3">
 													{message.relevantData.map((data) => (
 														<Card key={data.id} className="text-sm">
-															<CardContent className="p-3 space-y-2">
+															<CardContent className="p-4 space-y-2">
 																<div className="flex items-center justify-between">
 																	<Badge
 																		variant="secondary"
@@ -471,7 +488,7 @@ export function ChatInterface({
 																		Score: {data.relevanceScore.toFixed(2)}
 																	</Badge>
 																</div>
-																<p className="text-xs">{data.content}</p>
+																<p className="text-xs mt-2">{data.content}</p>
 															</CardContent>
 														</Card>
 													))}
@@ -483,7 +500,7 @@ export function ChatInterface({
 							)}
 
 							{isTyping && (
-								<div className="bg-muted rounded-lg p-4 mr-12 animate-pulse flex items-center space-x-2">
+								<div className="bg-muted rounded-lg p-4 mr-16 animate-pulse flex items-center space-x-3">
 									<Avatar className="h-8 w-8">
 										<AvatarFallback className="bg-purple-100 text-purple-500">
 											{entity?.name?.charAt(0) || "A"}
@@ -497,9 +514,9 @@ export function ChatInterface({
 						</div>
 					</ScrollArea>
 
-					<div className="p-4 border-t">
+					<div className="px-6 py-4 border-t">
 						<form
-							className="flex space-x-2"
+							className="flex space-x-3"
 							onSubmit={(e) => {
 								e.preventDefault();
 								handleSendMessage();
@@ -528,7 +545,7 @@ export function ChatInterface({
 							</Button>
 						</form>
 						{error && (
-							<div className="mt-2 text-sm text-red-500">Error: {error}</div>
+							<div className="mt-3 text-sm text-red-500">Error: {error}</div>
 						)}
 					</div>
 				</div>
@@ -540,11 +557,11 @@ export function ChatInterface({
 							<TabsTrigger value="settings">Settings</TabsTrigger>
 						</TabsList>
 
-						<TabsContent value="context" className="p-4 space-y-4">
+						<TabsContent value="context" className="p-5 space-y-6">
 							<div>
-								<h3 className="font-medium mb-2">Universe Knowledge</h3>
+								<h3 className="font-medium mb-3">Universe Knowledge</h3>
 								<Card>
-									<CardContent className="p-3 space-y-2 text-sm">
+									<CardContent className="p-4 space-y-3 text-sm">
 										<div className="flex justify-between items-center">
 											<h4 className="font-medium">
 												{entity?.name || "AI"} Universe
@@ -562,9 +579,9 @@ export function ChatInterface({
 							</div>
 
 							<div>
-								<h3 className="font-medium mb-2">Character Profile</h3>
+								<h3 className="font-medium mb-3">Character Profile</h3>
 								<Card>
-									<CardContent className="p-3 space-y-2 text-sm">
+									<CardContent className="p-4 space-y-3 text-sm">
 										<div className="flex justify-between items-center">
 											<h4 className="font-medium">Background</h4>
 											<Badge variant="outline" className="text-xs">
@@ -580,13 +597,13 @@ export function ChatInterface({
 							</div>
 
 							<div>
-								<h3 className="font-medium mb-2">Conversation History</h3>
+								<h3 className="font-medium mb-3">Conversation History</h3>
 								<Card>
-									<CardContent className="p-3 text-sm">
+									<CardContent className="p-4 text-sm">
 										<p className="text-muted-foreground text-xs">
 											Displaying current conversation
 										</p>
-										<p className="text-xs mt-2">
+										<p className="text-xs mt-3">
 											{messages.length} messages in this conversation
 										</p>
 									</CardContent>
@@ -594,14 +611,14 @@ export function ChatInterface({
 							</div>
 						</TabsContent>
 
-						<TabsContent value="settings" className="p-4 space-y-4">
+						<TabsContent value="settings" className="p-5 space-y-6">
 							<Card>
-								<CardHeader className="p-3 pb-1">
+								<CardHeader className="p-4 pb-2">
 									<CardTitle className="text-sm">Response Settings</CardTitle>
 								</CardHeader>
-								<CardContent className="p-3 pt-1 space-y-3">
-									<div className="grid grid-cols-2 gap-2 text-xs">
-										<div className="space-y-1">
+								<CardContent className="p-4 pt-2 space-y-4">
+									<div className="grid grid-cols-2 gap-3 text-xs">
+										<div className="space-y-2">
 											<label className="font-medium">Temperature</label>
 											<Input
 												type="range"
@@ -611,7 +628,7 @@ export function ChatInterface({
 												defaultValue="0.7"
 											/>
 										</div>
-										<div className="space-y-1">
+										<div className="space-y-2">
 											<label className="font-medium">Top P</label>
 											<Input
 												type="range"
@@ -630,11 +647,11 @@ export function ChatInterface({
 							</Card>
 
 							<Card>
-								<CardHeader className="p-3 pb-1">
+								<CardHeader className="p-4 pb-2">
 									<CardTitle className="text-sm">Database Settings</CardTitle>
 								</CardHeader>
-								<CardContent className="p-3 pt-1 space-y-3">
-									<div className="space-y-1 text-xs">
+								<CardContent className="p-4 pt-2 space-y-4">
+									<div className="space-y-2 text-xs">
 										<label className="font-medium">Relevance Threshold</label>
 										<Input
 											type="range"
@@ -644,12 +661,12 @@ export function ChatInterface({
 											defaultValue="0.7"
 										/>
 									</div>
-									<div className="grid grid-cols-2 gap-2 text-xs">
-										<div className="space-y-1">
+									<div className="grid grid-cols-2 gap-3 text-xs">
+										<div className="space-y-2">
 											<label className="font-medium">Max Sources</label>
 											<Input type="number" min="1" max="10" defaultValue="5" />
 										</div>
-										<div className="space-y-1">
+										<div className="space-y-2">
 											<label className="font-medium">Audio Enabled</label>
 											<Button variant="outline" size="sm" className="w-full">
 												Enabled

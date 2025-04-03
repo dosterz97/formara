@@ -4,7 +4,7 @@ import ChatInterface from "@/components/chat/chat-interface";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Entity } from "@/lib/db/schema";
+import { Entity, Universe } from "@/lib/db/schema";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -30,6 +30,7 @@ export default function Page() {
 	const [sending, setSending] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 	const [entity, setEntity] = useState<Entity | undefined>();
+	const [universe, setUniverse] = useState<Universe | undefined>();
 	const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
 	const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -50,9 +51,11 @@ export default function Page() {
 					throw new Error(errorData.error || "Failed to fetch entity");
 				}
 
-				const data = (await response.json()) as Entity;
+				const data = await response.json();
 
-				setEntity(data);
+				// Update to handle new response format that includes both entity and universe
+				setEntity(data.entity);
+				setUniverse(data.universe);
 			} catch (err) {
 				console.error("Error fetching entity:", err);
 				setError(
@@ -167,6 +170,7 @@ export default function Page() {
 				body: JSON.stringify({
 					messages: [...messages, userMessage],
 					entity,
+					universe, // Pass the universe data to the API
 					options: {
 						audio: true,
 					},
@@ -231,7 +235,7 @@ export default function Page() {
 		);
 	}
 
-	if (!entity) {
+	if (!entity || !universe) {
 		return (
 			<Card className="max-w-4xl mx-auto">
 				<CardContent className="pt-6 flex flex-col items-center justify-center h-64">
@@ -241,5 +245,5 @@ export default function Page() {
 		);
 	}
 
-	return <ChatInterface entity={entity} />;
+	return <ChatInterface entity={entity} universe={universe} />;
 }
