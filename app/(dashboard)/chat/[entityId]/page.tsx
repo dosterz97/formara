@@ -4,19 +4,10 @@ import ChatInterface from "@/components/chat/chat-interface";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ChatMessage } from "@/lib/chat";
 import { Entity, Universe } from "@/lib/db/schema";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-
-// Simple message type that includes audio data
-interface ChatMessage {
-	role: "user" | "assistant" | "system";
-	content: string | any[]; // Support for text parts
-	audio?: {
-		data: string;
-		format: string;
-	};
-}
 
 export default function Page() {
 	const params = useParams();
@@ -170,7 +161,7 @@ export default function Page() {
 				body: JSON.stringify({
 					messages: [...messages, userMessage],
 					entity,
-					universe, // Pass the universe data to the API
+					universe,
 					options: {
 						audio: true,
 					},
@@ -185,13 +176,14 @@ export default function Page() {
 			const json = await response.json();
 			console.log("API response:", json);
 
-			// Process assistant message and attach audio data
+			// Process assistant message and attach audio and context data
 			if (json.messages && Array.isArray(json.messages)) {
 				const assistantMessages = json.messages
 					.filter((msg: any) => msg.role === "assistant")
 					.map((msg: any) => ({
 						...msg,
 						audio: json.audio, // Attach audio data from response
+						context: json.context, // Attach context information
 					})) as ChatMessage[];
 
 				setMessages((currentMessages) => [
@@ -245,5 +237,15 @@ export default function Page() {
 		);
 	}
 
-	return <ChatInterface entity={entity} universe={universe} />;
+	return (
+		<>
+			<audio ref={audioRef} className="hidden" />
+			<ChatInterface
+				entity={entity}
+				universe={universe}
+				initialMessages={messages}
+			/>
+			<div ref={messagesEndRef} />
+		</>
+	);
 }

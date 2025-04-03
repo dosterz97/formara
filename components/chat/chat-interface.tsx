@@ -13,37 +13,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ChatMessage, Message } from "@/lib/chat";
 import { Entity, Universe } from "@/lib/db/schema";
 import { Bot, Download, Info, Loader2, Play, Send, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
-
-// Types
-interface ChatMessage {
-	role: "user" | "assistant" | "system";
-	content: string | any[]; // Support for text parts
-	id?: string;
-	timestamp?: Date;
-	audio?: {
-		data: string;
-		format: string;
-	};
-	relevantData?: RelevantData[];
-}
-
-interface Message extends ChatMessage {
-	id: string;
-	sender: "user" | "character";
-	timestamp: Date;
-}
-
-interface RelevantData {
-	id: string;
-	content: string;
-	source: string;
-	relevanceScore: number;
-	type: "text" | "image" | "audio" | "video";
-}
 
 export interface ChatInterfaceProps {
 	universe: Universe;
@@ -64,7 +38,6 @@ export function ChatInterface({
 			? params.entityId[0]
 			: (params.entityId as string));
 
-	// Convert ChatMessage[] to Message[]
 	const convertMessages = (chatMessages: ChatMessage[]): Message[] => {
 		return chatMessages.map((msg, index) => ({
 			...msg,
@@ -223,6 +196,7 @@ export function ChatInterface({
 				body: JSON.stringify({
 					messages: apiMessages,
 					entity,
+					universe, // Pass the universe data to the API
 					options: {
 						audio: true,
 					},
@@ -237,26 +211,24 @@ export function ChatInterface({
 			const json = await response.json();
 			console.log("API response:", json);
 
-			// Process assistant messages and add relevantData
+			// Process assistant messages
 			if (json.messages && Array.isArray(json.messages)) {
 				const assistantMessages = json.messages
 					.filter((msg: any) => msg.role === "assistant")
 					.map((msg: any) => {
-						// Extract relevant data from Formora context if available
-						const relevantData = json.context
-							? json.context.map((ctx: any, idx: number) => ({
-									id: `rd-${Date.now()}-${idx}`,
-									content:
-										typeof ctx.content === "string"
-											? ctx.content
-											: JSON.stringify(ctx.content),
-									source: ctx.source || "universe_knowledge",
-									relevanceScore: ctx.relevance || 0.85,
-									type: "text",
-							  }))
-							: null;
+						// Convert context data to relevantData format
+						const relevantData =
+							json.context && json.context.length > 0
+								? json.context.map((ctx: any, idx: number) => ({
+										id: `rd-${Date.now()}-${idx}`,
+										content: ctx.description || "",
+										source: ctx.name || "Unknown Entity",
+										relevanceScore: ctx.score || 0.5,
+										type: "text",
+								  }))
+								: undefined;
 
-						// Create a message with both audio and relevantData
+						// Create a message with both audio and context data
 						return {
 							role: "assistant",
 							content: msg.content,
@@ -266,7 +238,8 @@ export function ChatInterface({
 							sender: "character",
 							timestamp: new Date(),
 							audio: json.audio,
-							relevantData,
+							relevantData, // Convert context to relevantData
+							context: json.context, // Also keep original context
 						} as Message;
 					});
 
@@ -312,7 +285,7 @@ export function ChatInterface({
 							<h2 className="text-xl font-bold">
 								{entity?.name || "AI Character"}
 							</h2>
-							<p className="text-muted-foreground text-sm">
+							<p className="text-muted-foreground text-sm max-w-[500px] truncate">
 								{entity?.description || "AI Assistant"}
 							</p>
 						</div>
@@ -327,7 +300,7 @@ export function ChatInterface({
 								)
 							}
 						>
-							Character Settings
+							Character
 						</Button>
 						<Button
 							variant="outline"
@@ -336,7 +309,7 @@ export function ChatInterface({
 								router.push(`/dashboard/universes/${universe.slug}/entities`)
 							}
 						>
-							Universe Settings
+							Universe
 						</Button>
 					</div>
 				</div>
@@ -412,10 +385,10 @@ export function ChatInterface({
 												</div>
 											</div>
 
-											{message.sender === "character" && (
-												<div className="flex">
-													{/* Audio controls for assistant messages */}
-													{message.audio?.data && (
+											<div className="flex">
+												{/* Audio controls for assistant messages */}
+												{message.sender === "character" &&
+													message.audio?.data && (
 														<div className="flex space-x-2 mr-3">
 															<Button
 																variant="ghost"
@@ -442,8 +415,9 @@ export function ChatInterface({
 														</div>
 													)}
 
-													{/* Info button for relevantData */}
-													{message.relevantData && (
+												{/* Info button for context data */}
+												{message.sender === "character" &&
+													(message.relevantData || message.context) && (
 														<CollapsibleTrigger asChild>
 															<Button
 																variant="ghost"
@@ -458,40 +432,77 @@ export function ChatInterface({
 															</Button>
 														</CollapsibleTrigger>
 													)}
-												</div>
-											)}
+											</div>
 										</div>
 
-										{message.sender === "character" && message.relevantData && (
+										{message.sender === "character" && (
 											<CollapsibleContent className="mt-5 space-y-4 border-t pt-4">
 												<div className="flex items-center justify-between">
 													<h4 className="text-sm font-medium">
 														Relevant Data Sources
 													</h4>
 													<Badge variant="outline" className="text-xs">
-														{message.relevantData.length} sources
+														{message.context?.length ||
+															message.relevantData?.length ||
+															0}{" "}
+														sources
 													</Badge>
 												</div>
 
 												<div className="space-y-3">
-													{message.relevantData.map((data) => (
-														<Card key={data.id} className="text-sm">
-															<CardContent className="p-4 space-y-2">
-																<div className="flex items-center justify-between">
-																	<Badge
-																		variant="secondary"
-																		className="text-xs"
-																	>
-																		{data.source}
-																	</Badge>
-																	<Badge variant="outline" className="text-xs">
-																		Score: {data.relevanceScore.toFixed(2)}
-																	</Badge>
-																</div>
-																<p className="text-xs mt-2">{data.content}</p>
-															</CardContent>
-														</Card>
-													))}
+													{/* Show context data if available, otherwise fall back to relevantData */}
+													{message.context
+														? message.context.map((ctx) => (
+																<Card key={ctx.id} className="text-sm">
+																	<CardContent className="p-4 space-y-2">
+																		<div className="flex items-center justify-between">
+																			<Badge
+																				variant="secondary"
+																				className="text-xs"
+																			>
+																				{ctx.name}
+																			</Badge>
+																			<Badge
+																				variant="outline"
+																				className="text-xs"
+																			>
+																				{ctx.entityType}
+																			</Badge>
+																		</div>
+																		<p className="text-xs mt-2 text-muted-foreground">
+																			{ctx.description}
+																		</p>
+																		<div className="text-xs text-right">
+																			Score: {(ctx.score * 100).toFixed(0)}%
+																		</div>
+																	</CardContent>
+																</Card>
+														  ))
+														: message.relevantData
+														? message.relevantData.map((data) => (
+																<Card key={data.id} className="text-sm">
+																	<CardContent className="p-4 space-y-2">
+																		<div className="flex items-center justify-between">
+																			<Badge
+																				variant="secondary"
+																				className="text-xs"
+																			>
+																				{data.source}
+																			</Badge>
+																			<Badge
+																				variant="outline"
+																				className="text-xs"
+																			>
+																				Score: {data.relevanceScore.toFixed(2)}
+																			</Badge>
+																		</div>
+																		<p className="text-xs mt-2">
+																			{data.content}
+																		</p>
+																	</CardContent>
+																</Card>
+														  ))
+														: null}
 												</div>
 											</CollapsibleContent>
 										)}

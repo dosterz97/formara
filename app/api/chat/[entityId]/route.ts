@@ -99,12 +99,20 @@ export async function POST(req: Request) {
 	const {
 		messages,
 		entity,
+		universe,
 		options,
-	}: { messages: CoreMessage[]; entity: Entity; options?: FormoraChatOptions } =
-		await req.json();
+	}: {
+		messages: CoreMessage[];
+		entity: Entity;
+		universe?: any;
+		options?: FormoraChatOptions;
+	} = await req.json();
 
-	const universeId = entity.universeId;
-	console.log(universeId);
+	// Use the universe from the request if available, otherwise look it up
+	let universeId = universe?.id || entity.universeId;
+	let universeData = universe;
+
+	console.log("Universe ID:", universeId);
 	if (!universeId) {
 		return NextResponse.json(
 			{ error: "Universe id is required" },
@@ -122,18 +130,24 @@ export async function POST(req: Request) {
 		return NextResponse.json({ error: "No team for user" }, { status: 500 });
 	}
 
-	// Get the specific universe by ID
-	const universeResult = await db
-		.select()
-		.from(universes)
-		.where(eq(universes.id, universeId))
-		.limit(1);
+	// If universe data wasn't provided in the request, get it from the database
+	if (!universeData) {
+		// Get the specific universe by ID
+		const universeResult = await db
+			.select()
+			.from(universes)
+			.where(eq(universes.id, universeId))
+			.limit(1);
 
-	if (!universeResult || universeResult.length === 0) {
-		return NextResponse.json({ error: "Universe not found" }, { status: 404 });
+		if (!universeResult || universeResult.length === 0) {
+			return NextResponse.json(
+				{ error: "Universe not found" },
+				{ status: 404 }
+			);
+		}
+
+		universeData = universeResult[0];
 	}
-
-	const universe = universeResult[0];
 
 	// Fetch the latest entity data to get the most up-to-date voice ID
 	const latestEntityData = await db
@@ -149,12 +163,37 @@ export async function POST(req: Request) {
 	// Use the freshly fetched entity data
 	const updatedEntity = latestEntityData[0];
 
-	console.log("universe", universe);
-	const results = await searchEntities("Who is darth vader", universe, 3);
+	// Get the latest message from the user to use for context search
+	const latestUserMessage = [...messages]
+		.reverse()
+		.find((msg) => msg.role === "user");
+	const searchQuery = latestUserMessage?.content || "general information";
+	let queryText = "";
 
-	console.log("results: ", results);
+	// Handle different content types in the user message
+	if (typeof searchQuery === "string") {
+		queryText = searchQuery;
+	} else if (Array.isArray(searchQuery)) {
+		// Extract text from array of content parts
+		queryText = searchQuery
+			.filter((part) => part.type === "text" || "text" in part)
+			.map((part) => {
+				if (part.type === "text" && "text" in part) {
+					return part.text;
+				} else if ("text" in part) {
+					return part.text;
+				}
+				return "";
+			})
+			.join(" ");
+	}
 
-	const contextItems = results.map((r) => {
+	console.log("Searching with query:", queryText);
+	const searchResults = await searchEntities(queryText, universeData, 3);
+
+	console.log("Search results:", searchResults);
+
+	const contextItems = searchResults.map((r) => {
 		const entityName = r.payload.name;
 		const description = wrapText(r.payload.description, 80);
 		return `${entityName}: ${description}`;
@@ -166,7 +205,7 @@ export async function POST(req: Request) {
     ${updatedEntity.description}
 
     You are chatting with someone from your universe.
-    Do not refer to your self as an AI, stay in character.
+    Do not refer to yourself as an AI, stay in character.
 
     ======================================================== 
     Context - Here is some information that will be helpful.
@@ -182,8 +221,6 @@ export async function POST(req: Request) {
 		system,
 		messages,
 	});
-
-	// const { response } = mockGenerateText();
 
 	// Extract the response text from the latest AI message
 	let responseText = "";
@@ -234,6 +271,15 @@ export async function POST(req: Request) {
 		responseText = "I'm sorry, but I couldn't generate a proper response.";
 	}
 
+	// Format search results for inclusion in the response
+	const contextInfo = searchResults.map((result) => ({
+		id: result.id,
+		name: result.payload.name,
+		entityType: result.payload.entityType,
+		description: result.payload.description,
+		score: result.score,
+	}));
+
 	// If audio option is enabled and entity is a character, generate TTS
 	if (options?.audio && updatedEntity.entityType === "character") {
 		try {
@@ -252,6 +298,7 @@ export async function POST(req: Request) {
 
 			return Response.json({
 				messages: response.messages,
+				context: contextInfo, // Include context information
 				audio: {
 					data: audioBase64,
 					format: "mp3",
@@ -262,11 +309,15 @@ export async function POST(req: Request) {
 			// Fall back to text-only response on error
 			return Response.json({
 				messages: response.messages,
+				context: contextInfo, // Still include context information
 				error: "Failed to generate audio",
 			});
 		}
 	}
 
-	// Default text-only response
-	return Response.json({ messages: response.messages });
+	// Default text-only response with context information
+	return Response.json({
+		messages: response.messages,
+		context: contextInfo,
+	});
 }
