@@ -1,4 +1,5 @@
 import React from "react";
+import { Button } from "../ui/button";
 
 const PricingSection: React.FC = () => {
 	return (
@@ -60,9 +61,9 @@ const PricingSection: React.FC = () => {
 						</div>
 						{/* Button container with consistent padding */}
 						<div className="p-6 pt-0 mt-auto">
-							<button className="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-md transition-colors duration-200">
+							<Button className="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-md transition-colors duration-200">
 								Get Started
-							</button>
+							</Button>
 						</div>
 					</div>
 
@@ -121,9 +122,9 @@ const PricingSection: React.FC = () => {
 						</div>
 						{/* Button container with consistent padding */}
 						<div className="p-6 pt-0 mt-auto">
-							<button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors duration-200">
+							<Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors duration-200">
 								Get Started
-							</button>
+							</Button>
 						</div>
 					</div>
 
@@ -179,9 +180,9 @@ const PricingSection: React.FC = () => {
 						</div>
 						{/* Button container with consistent padding */}
 						<div className="p-6 pt-0 mt-auto">
-							<button className="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-md transition-colors duration-200">
+							<Button className="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-md transition-colors duration-200">
 								Get Started
-							</button>
+							</Button>
 						</div>
 					</div>
 				</div>
