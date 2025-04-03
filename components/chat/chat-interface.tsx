@@ -11,7 +11,6 @@ import {
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatMessage, Message } from "@/lib/chat";
 import { Entity, Universe } from "@/lib/db/schema";
@@ -23,12 +22,14 @@ export interface ChatInterfaceProps {
 	universe: Universe;
 	entity: Entity;
 	initialMessages?: ChatMessage[];
+	audioRef?: React.RefObject<HTMLAudioElement>;
 }
 
 export function ChatInterface({
 	universe,
 	entity,
 	initialMessages = [],
+	audioRef: externalAudioRef,
 }: ChatInterfaceProps) {
 	const router = useRouter();
 	const params = useParams();
@@ -65,13 +66,52 @@ export function ChatInterface({
 	const [error, setError] = useState<string | null>(null);
 	const [sending, setSending] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
+	const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
-	const audioRef = useRef<HTMLAudioElement | null>(null);
+	const internalAudioRef = useRef<HTMLAudioElement | null>(null);
+	const audioRef = externalAudioRef || internalAudioRef;
 	const [audioUrl, setAudioUrl] = useState<string | null>(null);
+	const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+
+	// Scroll to bottom function
+	const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
+		if (shouldAutoScroll) {
+			if (messagesEndRef.current) {
+				messagesEndRef.current.scrollIntoView({ behavior });
+			} else if (scrollContainerRef.current) {
+				scrollContainerRef.current.scrollTop =
+					scrollContainerRef.current.scrollHeight;
+			}
+		}
+	};
+
+	// Handle scroll events to determine if we should auto-scroll
+	const handleScroll = () => {
+		if (scrollContainerRef.current) {
+			const { scrollTop, scrollHeight, clientHeight } =
+				scrollContainerRef.current;
+			const isScrolledNearBottom =
+				scrollHeight - scrollTop - clientHeight < 100;
+			setShouldAutoScroll(isScrolledNearBottom);
+		}
+	};
+
+	// Connect ref to ScrollArea
+	const setScrollAreaRef = (el: HTMLDivElement) => {
+		scrollContainerRef.current = el;
+		if (el) {
+			el.addEventListener("scroll", handleScroll);
+		}
+	};
 
 	// Scroll to bottom when messages change
 	useEffect(() => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		scrollToBottom();
+
+		// Initial scroll with auto behavior
+		if (messages.length === 0 || messages.length === initialMessages.length) {
+			scrollToBottom("auto");
+		}
 	}, [messages]);
 
 	// Focus input on load
@@ -79,6 +119,15 @@ export function ChatInterface({
 		if (inputRef.current) {
 			inputRef.current.focus();
 		}
+	}, []);
+
+	// Clean up scroll event listener
+	useEffect(() => {
+		return () => {
+			if (scrollContainerRef.current) {
+				scrollContainerRef.current.removeEventListener("scroll", handleScroll);
+			}
+		};
 	}, []);
 
 	// Play audio function
@@ -175,6 +224,9 @@ export function ChatInterface({
 			setInputMessage("");
 			setIsTyping(true);
 
+			// Force scroll to bottom after user message is added
+			setTimeout(() => scrollToBottom(), 50);
+
 			// Convert our internal messages back to ChatMessage format for API
 			const apiMessages = messages.map((msg) => ({
 				role: msg.sender === "user" ? "user" : "assistant",
@@ -246,6 +298,9 @@ export function ChatInterface({
 				// Add to messages
 				console.log(assistantMessages);
 				setMessages((prevMessages) => [...prevMessages, ...assistantMessages]);
+
+				// Force scroll to bottom after receiving response
+				setTimeout(() => scrollToBottom(), 50);
 			}
 		} catch (err) {
 			console.error("Error sending message:", err);
@@ -269,9 +324,11 @@ export function ChatInterface({
 	};
 
 	return (
-		<div className="flex flex-col h-screen max-h-screen">
-			{/* Hidden audio element for playing audio */}
-			<audio ref={audioRef} className="hidden" controls />
+		<div className="flex flex-col flex-1 h-full">
+			{/* Use internal audio ref only if external not provided */}
+			{!externalAudioRef && (
+				<audio ref={internalAudioRef} className="hidden" controls />
+			)}
 
 			<header className="border-b border-border py-3 px-6">
 				<div className="flex items-center justify-between">
@@ -315,9 +372,13 @@ export function ChatInterface({
 				</div>
 			</header>
 
-			<div className="flex-1 flex overflow-hidden">
+			<div className="flex-1 flex overflow-hidden relative">
 				<div className="flex-1 flex flex-col overflow-hidden">
-					<ScrollArea className="flex-1 px-6 py-4">
+					{/* Use ref forwarding with the ScrollArea component */}
+					<div
+						className="flex-1 px-6 py-4 overflow-y-auto"
+						ref={setScrollAreaRef}
+					>
 						<div className="space-y-6">
 							{messages.length === 0 ? (
 								<div className="flex flex-col items-center justify-center h-96 text-center p-4">
@@ -521,9 +582,10 @@ export function ChatInterface({
 								</div>
 							)}
 
+							{/* This div is the anchor for scrolling to bottom */}
 							<div ref={messagesEndRef} />
 						</div>
-					</ScrollArea>
+					</div>
 
 					<div className="px-6 py-4 border-t">
 						<form

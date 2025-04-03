@@ -236,7 +236,7 @@ export default function Layout({ children }: LayoutProps) {
 			}`}
 		>
 			<Header />
-			{children}
+			<main className="flex-1 relative">{children}</main>
 		</section>
 	);
 }
