@@ -10,7 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useUser } from "@/lib/auth";
-import { Globe, Home, LogOut } from "lucide-react";
+import { Globe2, Home, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, Suspense, use, useEffect, useState } from "react";
@@ -188,7 +188,7 @@ function Header() {
 				{/* Logo positioned on the left */}
 				<div className="flex-none w-[250px]">
 					<Link href="/" className="flex items-center gap-2">
-						<Globe
+						<Globe2
 							className={`h-8 w-8 ${
 								isLandingPage ? "text-indigo-500" : "text-indigo-500"
 							}`}

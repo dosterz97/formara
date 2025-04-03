@@ -8,13 +8,16 @@ import {
 	ArrowRight,
 	Database,
 	Globe,
+	Globe2,
 	Layers,
 	Sparkles,
 	Users,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function FormLandingPage() {
+	const router = useRouter();
 	// Smooth scroll function for anchor links
 	useEffect(() => {
 		const handleAnchorClick = (e: MouseEvent) => {
@@ -63,7 +66,13 @@ export default function FormLandingPage() {
 						world-building connect seamlessly in one centralized hub.
 					</p>
 					<div className="flex flex-col sm:flex-row justify-center gap-4">
-						<Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
+						<Button
+							size="lg"
+							className="bg-indigo-600 hover:bg-indigo-700"
+							onClick={() => {
+								router.push("/sign-up");
+							}}
+						>
 							Start Creating <ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
 						<Button size="lg" variant="secondary">
@@ -243,7 +252,7 @@ export default function FormLandingPage() {
 					<div className="grid md:grid-cols-4 gap-8">
 						<div>
 							<div className="flex items-center gap-2 mb-4">
-								<Globe className="h-6 w-6 text-indigo-500" />
+								<Globe2 className="h-6 w-6 text-indigo-500" />
 								<span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600">
 									Formora
 								</span>
