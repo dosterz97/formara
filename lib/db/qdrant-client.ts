@@ -428,18 +428,19 @@ export async function deleteEntityVector(
 		throw error;
 	}
 }
-
 /**
  * Search for similar entities in a universe
  * @param query The search query text
  * @param universe The universe object
  * @param limit Maximum number of results to return
+ * @param threshold Minimum relevance score threshold (0-1)
  * @returns Array of search results with scores
  */
 export async function searchEntities(
 	query: string,
 	universe: Universe,
-	limit: number = 10
+	limit: number = 10,
+	threshold: number = 0.7
 ): Promise<Array<{ id: string; score: number; payload: any }>> {
 	try {
 		const collectionName = universe.vectorNamespace;
@@ -452,16 +453,17 @@ export async function searchEntities(
 
 		const queryEmbedding = embeddingResponse.data[0].embedding;
 
-		// Search in Qdrant
+		// Search in Qdrant - request more results to allow for threshold filtering
 		const searchResults = await qdrantClient.search(collectionName, {
 			vector: queryEmbedding,
-			limit: limit,
+			limit: Math.min(limit * 2, 100), // Double the limit but cap at 100 to avoid excessive results
 			with_payload: true,
 		});
 
 		// Format results - returning the original UUID from the payload
+		// Apply threshold filter as part of the processing
 		const filtered = searchResults
-			.filter((r) => !!r.payload)
+			.filter((r) => !!r.payload && r.score >= threshold) // Apply threshold filter
 			.map((result) => {
 				return {
 					// @ts-expect-error filtering them out above...
@@ -469,7 +471,8 @@ export async function searchEntities(
 					score: result.score,
 					payload: result.payload,
 				};
-			});
+			})
+			.slice(0, limit); // Ensure we don't exceed the requested limit
 
 		return filtered;
 	} catch (error: any) {

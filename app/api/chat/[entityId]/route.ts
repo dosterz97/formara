@@ -14,20 +14,6 @@ const ELEVEN_LABS_API_URL = "https://api.elevenlabs.io/v1/text-to-speech";
 // Default voice ID - you can replace with your preferred voice
 const DEFAULT_VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // Rachel voice
 
-const mockGenerateText = () => {
-	return {
-		response: {
-			messages: [
-				{
-					type: "text",
-					content: "This is a mock response.",
-					role: "assistant",
-				},
-			],
-		},
-	};
-};
-
 /**
  * Helper function to wrap text at specified character width
  */
@@ -93,6 +79,9 @@ async function generateAudio(
 export type FormoraChatOptions = {
 	audio?: boolean;
 	voiceId?: string;
+	temperature?: number;
+	relevanceThreshold?: number;
+	maxSources?: number;
 };
 
 export async function POST(req: Request) {
@@ -188,12 +177,36 @@ export async function POST(req: Request) {
 			.join(" ");
 	}
 
+	// Extract settings from options with defaults
+	const temperature = options?.temperature || 0.7; // Default to 0.7 if not specified
+	// const maxContextItems = options?.maxContextItems || 3; // Default to 3 if not specified
+
+	const maxSources = options?.maxSources || 5; // Default to 5 if not specified
+	const relevanceThreshold = options?.relevanceThreshold || 0.7; // Default to 0.7 if not specified
+
+	console.log("Search settings:", {
+		maxSources,
+		relevanceThreshold,
+		temperature,
+		// maxContextItems,
+	});
+
 	console.log("Searching with query:", queryText);
-	const searchResults = await searchEntities(queryText, universeData, 3);
+
+	// Pass maxSources and relevanceThreshold to searchEntities
+	const searchResults = await searchEntities(
+		queryText,
+		universeData,
+		maxSources,
+		relevanceThreshold
+	);
 
 	console.log("Search results:", searchResults);
 
-	const contextItems = searchResults.map((r) => {
+	// Further limit to maxSources if needed
+	const limitedResults = searchResults.slice(0, maxSources);
+
+	const contextItems = limitedResults.map((r) => {
 		const entityName = r.payload.name;
 		const description = wrapText(r.payload.description, 80);
 		return `${entityName}: ${description}`;
@@ -220,6 +233,7 @@ export async function POST(req: Request) {
 		model: openai("gpt-4"),
 		system,
 		messages,
+		temperature,
 	});
 
 	// Extract the response text from the latest AI message
@@ -272,7 +286,7 @@ export async function POST(req: Request) {
 	}
 
 	// Format search results for inclusion in the response
-	const contextInfo = searchResults.map((result) => ({
+	const contextInfo = limitedResults.map((result) => ({
 		id: result.id,
 		name: result.payload.name,
 		entityType: result.payload.entityType,

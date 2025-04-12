@@ -18,6 +18,16 @@ import { Bot, Download, Info, Loader2, Play, Send, User } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 
+// Define settings interface
+interface ChatSettings {
+	temperature: number;
+	topP: number;
+	maxContextItems: number;
+	relevanceThreshold: number;
+	maxSources: number;
+	audioEnabled: boolean;
+}
+
 export interface ChatInterfaceProps {
 	universe: Universe;
 	entity: Entity;
@@ -72,6 +82,16 @@ export function ChatInterface({
 	const audioRef = externalAudioRef || internalAudioRef;
 	const [audioUrl, setAudioUrl] = useState<string | null>(null);
 	const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+
+	// Add settings state
+	const [settings, setSettings] = useState<ChatSettings>({
+		temperature: 0.7,
+		topP: 0.9,
+		maxContextItems: 3,
+		relevanceThreshold: 0.7,
+		maxSources: 5,
+		audioEnabled: true,
+	});
 
 	// Scroll to bottom function
 	const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
@@ -129,6 +149,25 @@ export function ChatInterface({
 			}
 		};
 	}, []);
+
+	// Handle settings changes
+	const handleSettingChange = (
+		key: keyof ChatSettings,
+		value: number | boolean
+	) => {
+		setSettings((prevSettings) => ({
+			...prevSettings,
+			[key]: value,
+		}));
+	};
+
+	// Toggle audio setting
+	const toggleAudio = () => {
+		setSettings((prevSettings) => ({
+			...prevSettings,
+			audioEnabled: !prevSettings.audioEnabled,
+		}));
+	};
 
 	// Play audio function
 	const handlePlayAudio = (audioData: string) => {
@@ -239,7 +278,7 @@ export function ChatInterface({
 				content: userMessageConverted.content,
 			});
 
-			// Send to API
+			// Send to API with settings
 			const response = await fetch(`/api/chat/${entityId}`, {
 				method: "POST",
 				headers: {
@@ -250,7 +289,12 @@ export function ChatInterface({
 					entity,
 					universe, // Pass the universe data to the API
 					options: {
-						audio: true,
+						audio: settings.audioEnabled,
+						temperature: settings.temperature,
+						topP: settings.topP,
+						maxContextItems: settings.maxContextItems,
+						relevanceThreshold: settings.relevanceThreshold,
+						maxSources: settings.maxSources,
 					},
 				}),
 			});
@@ -690,7 +734,7 @@ export function ChatInterface({
 									<CardTitle className="text-sm">Response Settings</CardTitle>
 								</CardHeader>
 								<CardContent className="p-4 pt-2 space-y-4">
-									<div className="grid grid-cols-2 gap-3 text-xs">
+									<div className="grid grid-cols-1 gap-3 text-xs">
 										<div className="space-y-2">
 											<label className="font-medium">Temperature</label>
 											<Input
@@ -698,23 +742,33 @@ export function ChatInterface({
 												min="0"
 												max="1"
 												step="0.1"
-												defaultValue="0.7"
+												value={settings.temperature}
+												onChange={(e) =>
+													handleSettingChange(
+														"temperature",
+														parseFloat(e.target.value)
+													)
+												}
 											/>
-										</div>
-										<div className="space-y-2">
-											<label className="font-medium">Top P</label>
-											<Input
-												type="range"
-												min="0"
-												max="1"
-												step="0.05"
-												defaultValue="0.9"
-											/>
+											<div className="text-right text-muted-foreground">
+												{settings.temperature.toFixed(1)}
+											</div>
 										</div>
 									</div>
 									<div className="grid grid-cols-1 gap-2 text-xs">
 										<label className="font-medium">Max Context Items</label>
-										<Input type="number" min="1" max="20" defaultValue="5" />
+										<Input
+											type="number"
+											min="1"
+											max="20"
+											value={settings.maxContextItems}
+											onChange={(e) =>
+												handleSettingChange(
+													"maxContextItems",
+													parseInt(e.target.value)
+												)
+											}
+										/>
 									</div>
 								</CardContent>
 							</Card>
@@ -731,18 +785,43 @@ export function ChatInterface({
 											min="0"
 											max="1"
 											step="0.05"
-											defaultValue="0.7"
+											value={settings.relevanceThreshold}
+											onChange={(e) =>
+												handleSettingChange(
+													"relevanceThreshold",
+													parseFloat(e.target.value)
+												)
+											}
 										/>
+										<div className="text-right text-muted-foreground">
+											{settings.relevanceThreshold.toFixed(2)}
+										</div>
 									</div>
 									<div className="grid grid-cols-2 gap-3 text-xs">
 										<div className="space-y-2">
 											<label className="font-medium">Max Sources</label>
-											<Input type="number" min="1" max="10" defaultValue="5" />
+											<Input
+												type="number"
+												min="1"
+												max="10"
+												value={settings.maxSources}
+												onChange={(e) =>
+													handleSettingChange(
+														"maxSources",
+														parseInt(e.target.value)
+													)
+												}
+											/>
 										</div>
 										<div className="space-y-2">
 											<label className="font-medium">Audio Enabled</label>
-											<Button variant="outline" size="sm" className="w-full">
-												Enabled
+											<Button
+												variant={settings.audioEnabled ? "default" : "outline"}
+												size="sm"
+												className="w-full"
+												onClick={toggleAudio}
+											>
+												{settings.audioEnabled ? "Enabled" : "Disabled"}
 											</Button>
 										</div>
 									</div>
