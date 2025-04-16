@@ -121,7 +121,7 @@ export function ChatInterface({
 		maxContextItems: 3,
 		relevanceThreshold: 0.7,
 		maxSources: 5,
-		audioEnabled: true,
+		audioEnabled: false,
 	});
 
 	// Store messages in localStorage whenever they change
