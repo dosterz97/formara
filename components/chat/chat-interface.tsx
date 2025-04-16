@@ -489,6 +489,13 @@ export function ChatInterface({
 					<div
 						className="flex-1 px-6 py-4 overflow-y-auto max-w-5xl w-full"
 						ref={setScrollAreaRef}
+						style={{
+							scrollbarGutter: "stable",
+							/* For Firefox */
+							scrollbarWidth: "thin",
+							/* For Webkit browsers like Chrome/Safari/Edge */
+							overflowY: "scroll",
+						}}
 					>
 						<div className="space-y-6">
 							{messages.length === 0 ? (

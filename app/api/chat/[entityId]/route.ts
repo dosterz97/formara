@@ -228,6 +228,7 @@ export async function POST(req: Request) {
   `;
 
 	console.log(system);
+	console.log(messages);
 
 	const { response } = await generateText({
 		model: openai("gpt-4"),
