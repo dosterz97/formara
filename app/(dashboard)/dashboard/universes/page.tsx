@@ -108,13 +108,14 @@ export default function HomePage() {
 	};
 
 	return (
-		<div className="container mx-auto p-6">
+		<section className="flex-1 p-4 lg:p-8">
 			{/* Add Sonner component to the layout */}
 			<Toaster position="top-right" />
 
+			<h1 className="text-lg lg:text-2xl font-medium text-gray-900 mb-6">
+				Universes
+			</h1>
 			<div className="flex justify-between items-center mb-6">
-				<h1 className="text-3xl font-bold">Home</h1>
-
 				{/* Create Universe Form */}
 				<UniverseForm
 					isOpen={isCreateModalOpen}
@@ -230,6 +231,6 @@ export default function HomePage() {
 				universe={selectedUniverse}
 				mode="edit"
 			/>
-		</div>
+		</section>
 	);
 }

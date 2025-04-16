@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ChatMessage, Message } from "@/lib/chat";
 import { Entity, Universe } from "@/lib/db/schema";
-import { Bot, Download, Info, Loader2, Play, Send, User } from "lucide-react";
+import { Bot, Download, Info, Loader2, Play, Send } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 
@@ -537,11 +537,7 @@ export function ChatInterface({
 														</AvatarFallback>
 													</Avatar>
 												) : (
-													<Avatar className="h-8 w-8 mt-1">
-														<AvatarFallback className="bg-blue-500 text-white">
-															<User className="h-5 w-5" />
-														</AvatarFallback>
-													</Avatar>
+													<></>
 												)}
 												<div>
 													<div className="flex items-center space-x-3">
@@ -779,9 +775,6 @@ export function ChatInterface({
 										)}
 										<div className="flex justify-between items-center">
 											<h4 className="font-medium">Background</h4>
-											<Badge variant="outline" className="text-xs">
-												Character Trait
-											</Badge>
 										</div>
 										<p className="text-xs">
 											{entity?.description ||
