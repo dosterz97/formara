@@ -142,6 +142,7 @@ export async function PUT(
 			status: body.status !== undefined ? body.status : existingEntity.status,
 			voiceId:
 				body.voiceId !== undefined ? body.voiceId : existingEntity.voiceId,
+			imageUrl: body.imageUrl ?? existingEntity.imageUrl,
 			updatedAt: new Date(),
 		};
 

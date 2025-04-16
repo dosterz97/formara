@@ -1,7 +1,6 @@
-// src/components/ChatInterface.tsx
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -440,6 +439,9 @@ export function ChatInterface({
 				<div className="flex items-center justify-between">
 					<div className="flex items-center space-x-4">
 						<Avatar className="h-10 w-10">
+							{entity?.imageUrl ? (
+								<AvatarImage src={entity.imageUrl} alt={entity.name} />
+							) : null}
 							<AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-bold">
 								{entity?.name?.charAt(0) || "A"}
 							</AvatarFallback>
@@ -517,6 +519,12 @@ export function ChatInterface({
 											<div className="flex items-start space-x-3">
 												{message.sender === "character" ? (
 													<Avatar className="h-8 w-8 mt-1">
+														{entity?.imageUrl ? (
+															<AvatarImage
+																src={entity.imageUrl}
+																alt={entity.name}
+															/>
+														) : null}
 														<AvatarFallback className="bg-purple-100 text-purple-500">
 															{entity?.name?.charAt(0) || "A"}
 														</AvatarFallback>
@@ -681,13 +689,18 @@ export function ChatInterface({
 							)}
 
 							{isTyping && (
-								<div className="bg-muted rounded-lg p-4 mr-16 animate-pulse flex items-center space-x-3">
+								<div className="bg-muted rounded-lg p-4 ml-16 mr-auto max-w-[80%] w-fit animate-pulse flex items-center space-x-3">
 									<Avatar className="h-8 w-8">
+										{entity?.imageUrl ? (
+											<AvatarImage src={entity.imageUrl} alt={entity.name} />
+										) : null}
 										<AvatarFallback className="bg-purple-100 text-purple-500">
 											{entity?.name?.charAt(0) || "A"}
 										</AvatarFallback>
 									</Avatar>
-									<div className="text-sm text-muted-foreground">Typing...</div>
+									<div className="text-sm text-muted-foreground">
+										Thinking...
+									</div>
 								</div>
 							)}
 
@@ -744,6 +757,19 @@ export function ChatInterface({
 								<h3 className="font-medium mb-3">Character Profile</h3>
 								<Card>
 									<CardContent className="p-4 space-y-3 text-sm">
+										{entity?.imageUrl && (
+											<div className="flex justify-center mb-3">
+												<Avatar className="h-24 w-24">
+													<AvatarImage
+														src={entity.imageUrl}
+														alt={entity.name}
+													/>
+													<AvatarFallback className="bg-gradient-to-r from-blue-500 to-purple-500 text-white text-2xl font-bold">
+														{entity?.name?.charAt(0) || "A"}
+													</AvatarFallback>
+												</Avatar>
+											</div>
+										)}
 										<div className="flex justify-between items-center">
 											<h4 className="font-medium">Background</h4>
 											<Badge variant="outline" className="text-xs">

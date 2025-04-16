@@ -64,6 +64,7 @@ export default function EntityEditPage() {
 		status: "active",
 		basicAttributes: "{}",
 		voiceId: "",
+		imageUrl: "", // Added image URL field
 	});
 	const [loading, setLoading] = useState(true);
 	const [saving, setSaving] = useState(false);
@@ -105,7 +106,8 @@ export default function EntityEditPage() {
 					entityType: data.entityType,
 					status: data.status || "active",
 					basicAttributes: JSON.stringify(data.basicAttributes || {}, null, 2),
-					voiceId: data.voiceId || "", // Add voice ID field
+					voiceId: data.voiceId || "",
+					imageUrl: data.imageUrl || "", // Initialize image URL field
 				});
 			} catch (err) {
 				console.error("Error fetching entity:", err);
@@ -157,7 +159,8 @@ export default function EntityEditPage() {
 			entityType: entity.entityType,
 			status: entity.status,
 			basicAttributes: {}, // JSON.stringify(entity.basicAttributes || {}, null, 2),
-			voiceId: entity.voiceId || "", // Add voice ID to track changes
+			voiceId: entity.voiceId || "",
+			imageUrl: entity.imageUrl || "", // Add image URL to track changes
 		};
 
 		// Check if form data has changed
@@ -167,7 +170,8 @@ export default function EntityEditPage() {
 			originalData.entityType !== formData.entityType ||
 			originalData.status !== formData.status ||
 			originalData.basicAttributes !== formData.basicAttributes ||
-			originalData.voiceId !== formData.voiceId; // Check voice ID changes
+			originalData.voiceId !== formData.voiceId ||
+			originalData.imageUrl !== formData.imageUrl; // Check image URL changes
 
 		setHasUnsavedChanges(hasChanges);
 	}, [entity, formData]);
@@ -208,13 +212,21 @@ export default function EntityEditPage() {
 				return;
 			}
 
+			// Validate image URL if provided
+			if (formData.imageUrl && !isValidUrl(formData.imageUrl)) {
+				setFormError("Please enter a valid image URL");
+				setSaving(false);
+				return;
+			}
+
 			const updatedEntity = {
 				name: formData.name.trim(),
 				description: formData.description.trim(),
 				entityType: formData.entityType,
 				status: formData.status,
 				attributes: parsedAttributes,
-				voiceId: formData.entityType === "character" ? formData.voiceId : null, // Only set voice for characters
+				voiceId: formData.entityType === "character" ? formData.voiceId : null,
+				imageUrl: formData.imageUrl.trim(), // Include image URL in update
 			};
 
 			console.log(updatedEntity);
@@ -245,6 +257,16 @@ export default function EntityEditPage() {
 			);
 		} finally {
 			setSaving(false);
+		}
+	};
+
+	// Helper function to validate URLs
+	const isValidUrl = (url: string) => {
+		try {
+			new URL(url);
+			return true;
+		} catch (err) {
+			return false;
 		}
 	};
 
@@ -525,6 +547,36 @@ export default function EntityEditPage() {
 									))}
 								</SelectContent>
 							</Select>
+						</div>
+
+						{/* Image URL field - Added this section */}
+						<div className="space-y-2">
+							<Label htmlFor="imageUrl">Image URL</Label>
+							<Input
+								id="imageUrl"
+								name="imageUrl"
+								value={formData.imageUrl}
+								onChange={handleInputChange}
+								placeholder="https://example.com/image.jpg"
+							/>
+							<p className="text-xs text-muted-foreground">
+								Enter a URL to an image for this entity
+							</p>
+
+							{/* Image preview */}
+							{formData.imageUrl && (
+								<div className="mt-2 border rounded-md overflow-hidden w-40 h-40 relative">
+									<img
+										src={formData.imageUrl}
+										alt={`Preview for ${formData.name}`}
+										className="object-cover w-full h-full"
+										onError={(e) => {
+											(e.target as HTMLImageElement).src =
+												"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR4ADPINmsF_bTp4M0kosKM4l6ClkWTKWcXwQ&s";
+										}}
+									/>
+								</div>
+							)}
 						</div>
 
 						{/* Voice selection (only for character type) */}

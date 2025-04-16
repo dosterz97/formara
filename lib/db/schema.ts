@@ -148,6 +148,8 @@ export const entities = pgTable(
 		description: text("description"),
 		status: pgEntityStatusEnum("entity_status").default("active"),
 
+		imageUrl: varchar("image_url", { length: 2048 }),
+
 		// Basic attributes that may be useful for quick filtering
 		basicAttributes: json("basic_attributes").$type<Record<string, any>>(),
 
