@@ -67,9 +67,41 @@ export function ChatInterface({
 		}));
 	};
 
-	const [messages, setMessages] = useState<Message[]>(
-		convertMessages(initialMessages)
-	);
+	// Generate a unique conversation ID for this entity
+	const conversationKey = `chat_${universe.id}_${entityId}`;
+
+	// Initialize messages from localStorage or initial props
+	const initializeMessages = () => {
+		// Check if we're in a browser environment (for SSR compatibility)
+		if (typeof window !== "undefined") {
+			try {
+				const storedMessages = localStorage.getItem(conversationKey);
+
+				if (storedMessages) {
+					// Parse the stored messages
+					const parsedMessages = JSON.parse(storedMessages);
+
+					// Convert timestamp strings back to Date objects
+					const restoredMessages = parsedMessages.map((msg: any) => ({
+						...msg,
+						timestamp: new Date(msg.timestamp),
+					}));
+
+					// If we have stored messages, return them
+					if (restoredMessages.length > 0) {
+						return restoredMessages;
+					}
+				}
+			} catch (error) {
+				console.error("Error loading messages from localStorage:", error);
+			}
+		}
+
+		// If no stored messages or error, fall back to initial messages
+		return convertMessages(initialMessages);
+	};
+
+	const [messages, setMessages] = useState<Message[]>(initializeMessages());
 	const [inputMessage, setInputMessage] = useState("");
 	const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
 	const [isTyping, setIsTyping] = useState(false);
@@ -92,6 +124,25 @@ export function ChatInterface({
 		maxSources: 5,
 		audioEnabled: true,
 	});
+
+	// Store messages in localStorage whenever they change
+	useEffect(() => {
+		if (typeof window !== "undefined" && messages.length > 0) {
+			try {
+				// We need to handle Date objects for localStorage
+				// Create a version of messages that's safe for JSON serialization
+				const messagesToStore = messages.map((msg) => ({
+					...msg,
+					// Convert Date to string (will convert back when reading)
+					timestamp: msg.timestamp.toISOString(),
+				}));
+
+				localStorage.setItem(conversationKey, JSON.stringify(messagesToStore));
+			} catch (error) {
+				console.error("Error saving messages to localStorage:", error);
+			}
+		}
+	}, [messages, conversationKey]);
 
 	// Scroll to bottom function
 	const scrollToBottom = (behavior: ScrollBehavior = "smooth") => {
@@ -167,6 +218,17 @@ export function ChatInterface({
 			...prevSettings,
 			audioEnabled: !prevSettings.audioEnabled,
 		}));
+	};
+
+	// Clear conversation history
+	const clearConversation = () => {
+		if (typeof window !== "undefined") {
+			// Clear from localStorage
+			localStorage.removeItem(conversationKey);
+
+			// Reset messages state
+			setMessages([]);
+		}
 	};
 
 	// Play audio function
@@ -392,6 +454,9 @@ export function ChatInterface({
 						</div>
 					</div>
 					<div className="flex space-x-3">
+						<Button variant="outline" size="sm" onClick={clearConversation}>
+							Clear Chat
+						</Button>
 						<Button
 							variant="outline"
 							size="sm"
@@ -417,10 +482,10 @@ export function ChatInterface({
 			</header>
 
 			<div className="flex-1 flex overflow-hidden relative">
-				<div className="flex-1 flex flex-col overflow-hidden">
+				<div className="flex-1 flex flex-col overflow-hidden items-center">
 					{/* Use ref forwarding with the ScrollArea component */}
 					<div
-						className="flex-1 px-6 py-4 overflow-y-auto"
+						className="flex-1 px-6 py-4 overflow-y-auto max-w-5xl w-full"
 						ref={setScrollAreaRef}
 					>
 						<div className="space-y-6">
@@ -442,10 +507,10 @@ export function ChatInterface({
 									<Collapsible
 										key={message.id}
 										open={selectedMessage === message.id}
-										className={`rounded-lg p-4 ${
+										className={`rounded-lg p-4 w-fit ${
 											message.sender === "user"
-												? "bg-primary-foreground ml-16"
-												: "bg-muted mr-16"
+												? "bg-primary-foreground ml-auto mr-16 max-w-[80%]" // User messages align right
+												: "bg-muted ml-16 mr-auto max-w-[80%]" // Assistant messages align left
 										}`}
 									>
 										<div className="flex justify-between items-start">
@@ -631,7 +696,7 @@ export function ChatInterface({
 						</div>
 					</div>
 
-					<div className="px-6 py-4 border-t">
+					<div className="px-6 py-4 border-t w-full max-w-5xl">
 						<form
 							className="flex space-x-3"
 							onSubmit={(e) => {
@@ -676,26 +741,6 @@ export function ChatInterface({
 
 						<TabsContent value="context" className="p-5 space-y-6">
 							<div>
-								<h3 className="font-medium mb-3">Universe Knowledge</h3>
-								<Card>
-									<CardContent className="p-4 space-y-3 text-sm">
-										<div className="flex justify-between items-center">
-											<h4 className="font-medium">
-												{entity?.name || "AI"} Universe
-											</h4>
-											<Badge variant="outline" className="text-xs">
-												Core Knowledge
-											</Badge>
-										</div>
-										<p className="text-xs">
-											{entity?.description ||
-												"AI character in the Formora system"}
-										</p>
-									</CardContent>
-								</Card>
-							</div>
-
-							<div>
 								<h3 className="font-medium mb-3">Character Profile</h3>
 								<Card>
 									<CardContent className="p-4 space-y-3 text-sm">
@@ -723,6 +768,16 @@ export function ChatInterface({
 										<p className="text-xs mt-3">
 											{messages.length} messages in this conversation
 										</p>
+										{messages.length > 0 && (
+											<Button
+												variant="outline"
+												size="sm"
+												className="mt-4 w-full"
+												onClick={clearConversation}
+											>
+												Clear Conversation
+											</Button>
+										)}
 									</CardContent>
 								</Card>
 							</div>
@@ -825,6 +880,26 @@ export function ChatInterface({
 											</Button>
 										</div>
 									</div>
+								</CardContent>
+							</Card>
+
+							<Card>
+								<CardHeader className="p-4 pb-2">
+									<CardTitle className="text-sm">Local Storage</CardTitle>
+								</CardHeader>
+								<CardContent className="p-4 pt-2">
+									<p className="text-xs text-muted-foreground mb-4">
+										Messages are automatically saved to your browser's local
+										storage.
+									</p>
+									<Button
+										variant="destructive"
+										size="sm"
+										className="w-full"
+										onClick={clearConversation}
+									>
+										Clear All Saved Messages
+									</Button>
 								</CardContent>
 							</Card>
 						</TabsContent>
