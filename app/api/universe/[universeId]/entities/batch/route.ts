@@ -180,6 +180,7 @@ async function processEntity(
 		name: entityData.name.trim(),
 		entityType: entityType as any, // Cast to enum type
 		description: entityData.description || null,
+		imageUrl: entityData.imageUrl || null,
 		status: status as any, // Cast to enum type
 		basicAttributes,
 		vectorId: entityData.vectorId || randomUUID(), // Generate a random UUID for vector ID if not provided

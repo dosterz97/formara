@@ -290,6 +290,7 @@ async function processEntity(
 		slug,
 		name: entityData.name.trim(),
 		entityType: entityType as any, // Cast to enum type
+		imageUrl: entityData.imageUrl || null,
 		description: entityData.description || null,
 		status: status as any, // Cast to enum type
 		basicAttributes,

@@ -31,7 +31,7 @@ export interface ChatInterfaceProps {
 	universe: Universe;
 	entity: Entity;
 	initialMessages?: ChatMessage[];
-	audioRef?: React.RefObject<HTMLAudioElement>;
+	audioRef?: React.RefObject<HTMLAudioElement | null>;
 }
 
 export function ChatInterface({
