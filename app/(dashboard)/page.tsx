@@ -128,8 +128,8 @@ export default function FormLandingPage() {
 							Everything You Need For World Building
 						</h2>
 						<p className="text-lg text-white max-w-2xl mx-auto">
-							Formora connects all elements of your creative universe, making it
-							easier than ever to develop consistent, rich worlds.
+							Formorra connects all elements of your creative universe, making
+							it easier than ever to develop consistent, rich worlds.
 						</p>
 					</div>
 
@@ -232,7 +232,7 @@ export default function FormLandingPage() {
 						Ready to Build Your Universe?
 					</h2>
 					<p className="text-lg text-white mb-8 max-w-2xl mx-auto">
-						Join thousands of creators who are using Formora to build rich,
+						Join thousands of creators who are using Formorra to build rich,
 						consistent worlds for their stories, games, and creative projects.
 					</p>
 					<div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -254,7 +254,7 @@ export default function FormLandingPage() {
 							<div className="flex items-center gap-2 mb-4">
 								<Globe2 className="h-6 w-6 text-indigo-500" />
 								<span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-600">
-									Formora
+									Formorra
 								</span>
 							</div>
 							<p className="text-white mb-4">
@@ -385,7 +385,7 @@ export default function FormLandingPage() {
 					</div>
 
 					<div className="mt-12 pt-8 border-t border-slate-800 text-center text-white text-sm">
-						<p>© 2025 Formora. All rights reserved.</p>
+						<p>© 2025 Formorra. All rights reserved.</p>
 					</div>
 				</div>
 			</footer>

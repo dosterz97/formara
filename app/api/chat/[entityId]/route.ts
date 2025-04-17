@@ -76,7 +76,7 @@ async function generateAudio(
 	return await response.arrayBuffer();
 }
 
-export type FormoraChatOptions = {
+export type FormorraChatOptions = {
 	audio?: boolean;
 	voiceId?: string;
 	temperature?: number;
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
 		messages: CoreMessage[];
 		entity: Entity;
 		universe?: any;
-		options?: FormoraChatOptions;
+		options?: FormorraChatOptions;
 	} = await req.json();
 
 	// Use the universe from the request if available, otherwise look it up

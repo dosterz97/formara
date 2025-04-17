@@ -778,7 +778,7 @@ export function ChatInterface({
 										</div>
 										<p className="text-xs">
 											{entity?.description ||
-												"AI character with access to the Formora knowledge database"}
+												"AI character with access to the Formorra knowledge database"}
 										</p>
 									</CardContent>
 								</Card>

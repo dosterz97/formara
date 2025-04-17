@@ -200,7 +200,7 @@ function Header() {
 									: "text-xl font-semibold text-gray-900"
 							}
 						>
-							Formora
+							Formorra
 						</span>
 					</Link>
 				</div>

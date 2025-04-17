@@ -8,7 +8,7 @@ import { Manrope } from "next/font/google";
 import "./globals.css";
 
 export const metadata: Metadata = {
-	title: "Formora",
+	title: "Formorra",
 	description: "Create universes that matter.",
 };
 
