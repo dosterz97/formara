@@ -33,7 +33,7 @@ export function Footer() {
 							</li>
 							<li>
 								<a
-									href="#pricing"
+									href="/pricing"
 									className="text-white hover:text-indigo-300 transition"
 								>
 									Pricing
