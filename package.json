@@ -7,6 +7,7 @@
 		"db:setup": "npx tsx lib/db/setup.ts",
 		"db:dropall": "npx tsx lib/db/drop-all.ts",
 		"db:seed": "npx tsx lib/db/seed.ts",
+		"db:seedStripe": "npx tsx lib/db/seed-stripe.ts",
 		"db:seedQdrant": "npx tsx lib/db/qdrant-seed.ts",
 		"db:generate": "drizzle-kit generate",
 		"db:migrate": "drizzle-kit migrate",

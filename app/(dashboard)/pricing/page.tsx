@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { checkoutAction } from "@/lib/payments/actions";
 import { getStripePrices, getStripeProducts } from "@/lib/payments/stripe";
-import { Check } from "lucide-react";
 import Link from "next/link";
 import { SubmitButton } from "./submit-button";
 
@@ -16,11 +15,15 @@ export default async function PricingPage() {
 		getStripeProducts(),
 	]);
 
-	const basePlan = products.find((product) => product.name === "Base");
-	const plusPlan = products.find((product) => product.name === "Plus");
+	const creatorPlan = products.find((product) => product.name === "Creator");
+	const studioPlan = products.find((product) => product.name === "Studio");
 
-	const basePrice = prices.find((price) => price.productId === basePlan?.id);
-	const plusPrice = prices.find((price) => price.productId === plusPlan?.id);
+	const creatorPrice = prices.find(
+		(price) => price.productId === creatorPlan?.id
+	);
+	const studioPrice = prices.find(
+		(price) => price.productId === studioPlan?.id
+	);
 
 	return (
 		<div className="w-full min-h-screen bg-slate-950 text-slate-50">
@@ -40,57 +43,145 @@ export default async function PricingPage() {
 			{/* Pricing Cards Section */}
 			<section className="w-full py-16 px-4 bg-slate-900">
 				<div className="max-w-6xl mx-auto">
-					<div className="grid md:grid-cols-3 gap-8 mx-auto">
+					<div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
 						{/* Free Plan */}
-						<PricingCard
-							name="Free"
-							price={0}
-							interval="forever"
-							trialDays={0}
-							features={[
-								"3 Worlds Maximum",
-								"Basic World Templates",
-								"Community Support",
-								"Standard Export Options",
-							]}
-							href="/sign-up"
-							buttonText="Get Started Free"
-							highlighted={false}
-						/>
+						<div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden flex flex-col">
+							<div className="p-6 flex-grow">
+								<div className="mb-4">
+									<h3 className="text-xl text-white font-bold">Free</h3>
+									<p className="text-white">For casual creators</p>
+								</div>
+								<div className="mb-6">
+									<span className="text-4xl font-bold text-white">$0</span>
+									<span className="text-white">/month</span>
+								</div>
+								<ul className="space-y-3 mb-8">
+									{[
+										"3 Worlds Maximum",
+										"Basic World Templates",
+										"Community Support",
+										"Standard Export Options",
+									].map((feature, index) => (
+										<li key={index} className="flex items-start gap-2">
+											<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
+												✓
+											</div>
+											<span className="text-white">{feature}</span>
+										</li>
+									))}
+								</ul>
+							</div>
+							<div className="p-6 pt-0 mt-auto">
+								<Link href="/sign-up">
+									<Button className="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-md transition-colors duration-200">
+										Get Started Free
+									</Button>
+								</Link>
+							</div>
+						</div>
 
-						{/* Base Plan */}
-						<PricingCard
-							name={basePlan?.name || "Base"}
-							price={basePrice?.unitAmount || 800}
-							interval={basePrice?.interval || "month"}
-							trialDays={basePrice?.trialPeriodDays || 7}
-							features={[
-								"Unlimited Worlds",
-								"Unlimited Workspace Members",
-								"Email Support",
-								"Advanced Templates",
-								"Premium Export Options",
-							]}
-							priceId={basePrice?.id}
-							highlighted={false}
-						/>
+						{/* Creator Plan */}
+						<div className="bg-gradient-to-b from-indigo-900/40 to-purple-900/40 border border-indigo-500/20 rounded-lg overflow-hidden relative flex flex-col">
+							<div className="absolute top-0 right-0 bg-indigo-500 text-white px-3 py-1 text-sm font-medium rounded-bl-lg rounded-tr-lg">
+								Popular
+							</div>
+							<div className="p-6 flex-grow">
+								<div className="mb-4">
+									<h3 className="text-xl text-white font-bold">
+										{creatorPlan?.name || "Creator"}
+									</h3>
+									<p className="text-white">For serious world-builders</p>
+								</div>
+								<div className="mb-6">
+									<span className="text-4xl font-bold text-white">
+										${(creatorPrice?.unitAmount || 2000) / 100}
+									</span>
+									<span className="text-white">
+										/{creatorPrice?.interval || "month"}
+									</span>
+								</div>
+								{creatorPrice?.trialPeriodDays &&
+									creatorPrice.trialPeriodDays > 0 && (
+										<p className="text-sm text-indigo-300 mb-4">
+											with {creatorPrice.trialPeriodDays} day free trial
+										</p>
+									)}
+								<ul className="space-y-3 mb-8">
+									{[
+										"Unlimited Worlds",
+										"Unlimited Workspace Members",
+										"Email Support",
+										"Advanced Templates",
+										"Premium Export Options",
+									].map((feature, index) => (
+										<li key={index} className="flex items-start gap-2">
+											<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
+												✓
+											</div>
+											<span className="text-white">{feature}</span>
+										</li>
+									))}
+								</ul>
+							</div>
+							<div className="p-6 pt-0 mt-auto">
+								<form action={checkoutAction} className="w-full">
+									<input
+										type="hidden"
+										name="priceId"
+										value={creatorPrice?.id}
+									/>
+									<SubmitButton className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md transition-colors duration-200" />
+								</form>
+							</div>
+						</div>
 
-						{/* Plus Plan */}
-						<PricingCard
-							name={plusPlan?.name || "Plus"}
-							price={plusPrice?.unitAmount || 1200}
-							interval={plusPrice?.interval || "month"}
-							trialDays={plusPrice?.trialPeriodDays || 7}
-							features={[
-								"Everything in Base, plus:",
-								"Early Access to New Features",
-								"24/7 Support + Slack Access",
-								"AI-Assisted Creation",
-								"Custom Branded Exports",
-							]}
-							priceId={plusPrice?.id}
-							highlighted={true}
-						/>
+						{/* Studio Plan */}
+						<div className="bg-slate-800/50 border border-slate-700 rounded-lg overflow-hidden flex flex-col">
+							<div className="p-6 flex-grow">
+								<div className="mb-4">
+									<h3 className="text-xl text-white font-bold">
+										{studioPlan?.name || "Studio"}
+									</h3>
+									<p className="text-white">For professional teams</p>
+								</div>
+								<div className="mb-6">
+									<span className="text-4xl font-bold text-white">
+										${(studioPrice?.unitAmount || 10000) / 100}
+									</span>
+									<span className="text-white">
+										/{studioPrice?.interval || "month"}
+									</span>
+								</div>
+								{studioPrice?.trialPeriodDays &&
+									studioPrice.trialPeriodDays > 0 && (
+										<p className="text-sm text-slate-300 mb-4">
+											with {studioPrice.trialPeriodDays} day free trial
+										</p>
+									)}
+								<ul className="space-y-3 mb-8">
+									{[
+										"Everything in Creator, plus:",
+										"Early Access to New Features",
+										"24/7 Support + Slack Access",
+										"AI-Assisted Creation",
+										"Custom Branded Exports",
+									].map((feature, index) => (
+										<li key={index} className="flex items-start gap-2">
+											<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
+												✓
+											</div>
+											<span className="text-white">{feature}</span>
+										</li>
+									))}
+								</ul>
+							</div>
+							<div className="p-6 pt-0 mt-auto">
+								<form action={checkoutAction} className="w-full">
+									<input type="hidden" name="priceId" value={studioPrice?.id} />
+									<SubmitButton className="w-full bg-slate-700 hover:bg-slate-600 text-white py-2 px-4 rounded-md transition-colors duration-200" />
+								</form>
+							</div>
+						</div>
 					</div>
 
 					{/* Additional FAQ about pricing */}
@@ -158,86 +249,5 @@ export default async function PricingPage() {
 			{/* Import Footer component from your components directory */}
 			<Footer />
 		</div>
-	);
-}
-
-function PricingCard({
-	name,
-	price,
-	interval,
-	trialDays,
-	features,
-	priceId,
-	href,
-	buttonText,
-	highlighted = false,
-}: {
-	name: string;
-	price: number;
-	interval: string;
-	trialDays: number;
-	features: string[];
-	priceId?: string;
-	href?: string;
-	buttonText?: string;
-	highlighted?: boolean;
-}) {
-	return (
-		<Card
-			className={`bg-slate-800/50 border-slate-700 ${
-				highlighted ? "border-indigo-500 ring-1 ring-indigo-500" : ""
-			} overflow-hidden relative`}
-		>
-			{highlighted && (
-				<div className="absolute top-0 inset-x-0 h-1.5 bg-indigo-500"></div>
-			)}
-
-			<div className="p-6">
-				<h2 className="text-2xl font-bold text-white mb-2">{name}</h2>
-
-				{trialDays > 0 && (
-					<p className="text-sm text-slate-300 mb-4">
-						with {trialDays} day free trial
-					</p>
-				)}
-
-				<div className="mb-6">
-					<p className="text-4xl font-bold text-white">
-						{price === 0 ? (
-							"Free"
-						) : (
-							<>
-								${price / 100}
-								<span className="text-lg font-normal text-slate-300 ml-1">
-									per user / {interval}
-								</span>
-							</>
-						)}
-					</p>
-				</div>
-
-				<ul className="space-y-4 mb-8 min-h-48">
-					{features.map((feature, index) => (
-						<li key={index} className="flex items-start">
-							<Check className="h-5 w-5 text-indigo-500 mr-2 mt-0.5 flex-shrink-0" />
-							<span className="text-slate-200">{feature}</span>
-						</li>
-					))}
-				</ul>
-
-				{price === 0 && href ? (
-					<Link href={href}>
-						<Button className="w-full bg-indigo-600 hover:bg-indigo-700">
-							{buttonText || "Get Started Free"}
-						</Button>
-					</Link>
-				) : (
-					<form action={checkoutAction} className="w-full">
-						<input type="hidden" name="priceId" value={priceId} />
-						<SubmitButton />
-					</form>
-				)}
-			</div>
-		</Card>
 	);
 }
