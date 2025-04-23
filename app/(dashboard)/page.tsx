@@ -3,6 +3,7 @@
 import { Footer } from "@/components/footer";
 import AnimatedTabs from "@/components/home/animated-tabs";
 import PricingSection from "@/components/home/pricing-cards";
+import { IframePlayer } from "@/components/iframe-lightbox";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -75,9 +76,11 @@ export default function FormLandingPage() {
 						>
 							Start Creating <ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
-						<Button size="lg" variant="secondary">
-							Watch Demo
-						</Button>
+						<IframePlayer src="https://app.supademo.com/embed/cm9thg38f0ksv11m7d1qxfpsj?embed_v=2">
+							<Button size="lg" variant="secondary">
+								Watch Demo
+							</Button>
+						</IframePlayer>
 					</div>
 
 					{/* Hero Image */}
@@ -239,9 +242,11 @@ export default function FormLandingPage() {
 						<Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
 							Start Your Free Trial <ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
-						<Button size="lg" variant="secondary">
-							Watch Demo
-						</Button>
+						<IframePlayer src="https://app.supademo.com/embed/cm9thg38f0ksv11m7d1qxfpsj?embed_v=2">
+							<Button size="lg" variant="secondary">
+								Watch Demo
+							</Button>
+						</IframePlayer>
 					</div>
 				</div>
 			</section>
