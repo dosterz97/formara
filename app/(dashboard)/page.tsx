@@ -76,7 +76,7 @@ export default function FormLandingPage() {
 						>
 							Start Creating <ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
-						<IframePlayer src="https://app.supademo.com/embed/cm9thg38f0ksv11m7d1qxfpsj?embed_v=2">
+						<IframePlayer src="https://app.supademo.com/embed/cm9urbdzf02bbwbbi7e83ia40?embed_v=2">
 							<Button size="lg" variant="secondary">
 								Watch Demo
 							</Button>
@@ -87,7 +87,18 @@ export default function FormLandingPage() {
 					<div className="mt-16 w-full max-w-5xl mx-auto bg-slate-800/50 rounded-lg border border-slate-700 p-4">
 						<div className="aspect-video rounded-md overflow-hidden relative bg-slate-900">
 							<div className="absolute inset-0 flex items-center justify-center">
-								<div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 w-full">
+								<div className="relative box-content max-h-[80vh] w-full aspect-[1.7419] py-10">
+									<iframe
+										src="https://app.supademo.com/embed/cm9urbdzf02bbwbbi7e83ia40?embed_v=2"
+										loading="lazy"
+										title="Formorra Crash Course"
+										allow="clipboard-write"
+										frameBorder="0"
+										allowFullScreen
+										className="absolute top-0 left-0 w-full h-full"
+									></iframe>
+								</div>
+								{/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 w-full">
 									<div className="col-span-1 bg-slate-800 rounded-md p-4 h-64">
 										<div className="h-8 w-32 bg-indigo-500/20 rounded mb-4"></div>
 										<div className="space-y-2">
@@ -116,7 +127,7 @@ export default function FormLandingPage() {
 											</div>
 										</div>
 									</div>
-								</div>
+								</div> */}
 							</div>
 						</div>
 					</div>
@@ -242,7 +253,7 @@ export default function FormLandingPage() {
 						<Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
 							Start Your Free Trial <ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
-						<IframePlayer src="https://app.supademo.com/embed/cm9thg38f0ksv11m7d1qxfpsj?embed_v=2">
+						<IframePlayer src="https://app.supademo.com/embed/cm9urbdzf02bbwbbi7e83ia40?embed_v=2">
 							<Button size="lg" variant="secondary">
 								Watch Demo
 							</Button>
