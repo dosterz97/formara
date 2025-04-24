@@ -76,7 +76,7 @@ export default function FormLandingPage() {
 						>
 							Start Creating <ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
-						<IframePlayer src="https://app.supademo.com/embed/cm9urbdzf02bbwbbi7e83ia40?embed_v=2">
+						<IframePlayer src="https://app.supademo.com/embed/cm9vtplns12jfwbbibv5fty4b?embed_v=2">
 							<Button size="lg" variant="secondary">
 								Watch Demo
 							</Button>
@@ -89,7 +89,7 @@ export default function FormLandingPage() {
 							<div className="absolute inset-0 flex items-center justify-center">
 								<div className="relative box-content max-h-[80vh] w-full aspect-[1.7419] py-10">
 									<iframe
-										src="https://app.supademo.com/embed/cm9urbdzf02bbwbbi7e83ia40?embed_v=2"
+										src="https://app.supademo.com/embed/cm9vtplns12jfwbbibv5fty4b?embed_v=2"
 										loading="lazy"
 										title="Formorra Crash Course"
 										allow="clipboard-write"
@@ -98,36 +98,6 @@ export default function FormLandingPage() {
 										className="absolute top-0 left-0 w-full h-full"
 									></iframe>
 								</div>
-								{/* <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 w-full">
-									<div className="col-span-1 bg-slate-800 rounded-md p-4 h-64">
-										<div className="h-8 w-32 bg-indigo-500/20 rounded mb-4"></div>
-										<div className="space-y-2">
-											<div className="h-4 w-full bg-slate-700 rounded"></div>
-											<div className="h-4 w-full bg-slate-700 rounded"></div>
-											<div className="h-4 w-3/4 bg-slate-700 rounded"></div>
-										</div>
-									</div>
-									<div className="col-span-2 bg-slate-800 rounded-md p-4 hidden md:block">
-										<div className="h-full flex flex-col">
-											<div className="flex justify-between mb-4">
-												<div className="h-8 w-40 bg-purple-500/20 rounded"></div>
-												<div className="h-8 w-20 bg-indigo-500/20 rounded"></div>
-											</div>
-											<div className="flex-1 grid grid-cols-2 gap-4">
-												<div className="bg-slate-700/50 rounded-md p-3">
-													<div className="h-24 bg-slate-600/50 rounded mb-3"></div>
-													<div className="h-4 w-3/4 bg-slate-600 rounded mb-2"></div>
-													<div className="h-4 w-1/2 bg-slate-600 rounded"></div>
-												</div>
-												<div className="bg-slate-700/50 rounded-md p-3">
-													<div className="h-24 bg-slate-600/50 rounded mb-3"></div>
-													<div className="h-4 w-3/4 bg-slate-600 rounded mb-2"></div>
-													<div className="h-4 w-1/2 bg-slate-600 rounded"></div>
-												</div>
-											</div>
-										</div>
-									</div>
-								</div> */}
 							</div>
 						</div>
 					</div>
@@ -253,7 +223,7 @@ export default function FormLandingPage() {
 						<Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
 							Start Your Free Trial <ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
-						<IframePlayer src="https://app.supademo.com/embed/cm9urbdzf02bbwbbi7e83ia40?embed_v=2">
+						<IframePlayer src="https://app.supademo.com/embed/cm9vtplns12jfwbbibv5fty4b?embed_v=2">
 							<Button size="lg" variant="secondary">
 								Watch Demo
 							</Button>
