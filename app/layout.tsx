@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Toaster } from "@/components/ui/sonner";
 import { UserProvider } from "@/lib/auth";
 import { getUser } from "@/lib/db/queries";
+import { GoogleTagManager } from "@next/third-parties/google";
 
 import { Manrope } from "next/font/google";
 import "./globals.css";
@@ -34,6 +35,7 @@ export default function RootLayout({
 				<UserProvider userPromise={userPromise}>{children}</UserProvider>
 				<Toaster richColors />
 			</body>
+			<GoogleTagManager gtmId="AW-17041494526" />
 		</html>
 	);
 }
