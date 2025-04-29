@@ -1,3 +1,4 @@
+import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import { Globe2 } from "lucide-react";
 
 export function Footer() {
@@ -16,6 +17,15 @@ export function Footer() {
 							Create connected universes for your stories, games, and creative
 							projects.
 						</p>
+						<a
+							href="https://discord.gg/eE8Bjxrn"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="inline-flex items-center gap-2 text-white hover:text-indigo-300 transition"
+						>
+							<DiscordLogoIcon className="h-5 w-5 text-indigo-400" />
+							<span>Join our Discord</span>
+						</a>
 					</div>
 
 					<div>
