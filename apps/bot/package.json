@@ -1,20 +1,21 @@
 {
-	"name": "@formara/bot",
-	"version": "0.1.0",
+	"name": "bot",
+	"version": "1.0.0",
 	"private": true,
 	"scripts": {
 		"dev": "tsx watch src/index.ts",
 		"build": "tsc",
-		"start": "node dist/index.js",
-		"lint": "eslint src --ext .ts"
+		"start": "node dist/index.js"
 	},
 	"dependencies": {
 		"discord.js": "^14.14.1",
-		"dotenv": "^16.4.5"
+		"dotenv": "^16.4.5",
+		"drizzle-orm": "^0.30.4",
+		"postgres": "^3.4.3"
 	},
 	"devDependencies": {
 		"@types/node": "^20.11.24",
 		"tsx": "^4.7.1",
-		"typescript": "^5.3.3"
+		"typescript": "^5.4.2"
 	}
 }

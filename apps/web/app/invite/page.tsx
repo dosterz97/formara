@@ -3,8 +3,7 @@
 import { Button } from "@/components/ui/button";
 
 export default function InvitePage() {
-	const discordOAuthUrl =
-		"https://discord.com/api/oauth2/authorize?client_id=1372062654016913468&permissions=274878024704&scope=bot%20applications.commands";
+	const discordOAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID}&permissions=274878024704&scope=bot%20applications.commands`;
 
 	return (
 		<div className="flex items-center justify-center min-h-screen">
