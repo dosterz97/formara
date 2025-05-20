@@ -1,6 +1,6 @@
 /** @type {import("prettier").Config} */
 const config = {
-	useTabs: true,
+  useTabs: true,
 };
 
 module.exports = config;
