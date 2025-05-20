@@ -2,7 +2,7 @@
 	"name": "formara",
 	"private": true,
 	"scripts": {
-		"dev": "pnpm --filter web dev",
+		"dev": "concurrently --names \"WEB,BOT\" --prefix-colors \"cyan,magenta\" \"pnpm --filter web dev\" \"pnpm --filter bot dev\"",
 		"build": "pnpm --filter web build",
 		"start": "pnpm --filter web start",
 		"db:setup": "pnpm --filter web db:setup",
@@ -111,6 +111,7 @@
 		"zod": "^3.24.2"
 	},
 	"devDependencies": {
-		"typescript": "^5.8.2"
+		"typescript": "^5.8.2",
+		"concurrently": "^8.2.2"
 	}
 }
