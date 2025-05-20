@@ -1,18 +1,19 @@
 {
-	"name": "formara",
+	"name": "web",
+	"version": "0.1.0",
 	"private": true,
 	"scripts": {
-		"dev": "pnpm --filter web dev",
-		"build": "pnpm --filter web build",
-		"start": "pnpm --filter web start",
-		"db:setup": "pnpm --filter web db:setup",
-		"db:dropall": "pnpm --filter web db:dropall",
-		"db:seed": "pnpm --filter web db:seed",
-		"db:seedStripe": "pnpm --filter web db:seedStripe",
-		"db:seedQdrant": "pnpm --filter web db:seedQdrant",
-		"db:generate": "pnpm --filter web db:generate",
-		"db:migrate": "pnpm --filter web db:migrate",
-		"db:studio": "pnpm --filter web db:studio"
+		"dev": "next dev --turbopack",
+		"build": "next build",
+		"start": "next start",
+		"db:setup": "npx tsx lib/db/setup.ts",
+		"db:dropall": "npx tsx lib/db/drop-all.ts",
+		"db:seed": "npx tsx lib/db/seed.ts",
+		"db:seedStripe": "npx tsx lib/db/seed-stripe.ts",
+		"db:seedQdrant": "npx tsx lib/db/qdrant-seed.ts",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:studio": "drizzle-kit studio"
 	},
 	"dependencies": {
 		"@ai-sdk/fireworks": "^0.1.8",
@@ -105,12 +106,8 @@
 		"tailwindcss": "4.0.12",
 		"tailwindcss-animate": "^1.0.7",
 		"tailwindcss-react-aria-components": "2.0.0",
-		"typescript": "^5.8.2",
 		"usehooks-ts": "^3.1.0",
 		"uuid": "^11.1.0",
 		"zod": "^3.24.2"
-	},
-	"devDependencies": {
-		"typescript": "^5.8.2"
 	}
 }

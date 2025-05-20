@@ -3,6 +3,16 @@ import { compare, hash } from "bcryptjs";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
+console.log('Environment variables:', {
+	AUTH_SECRET: process.env.AUTH_SECRET,
+	NODE_ENV: process.env.NODE_ENV,
+	POSTGRES_URL: process.env.POSTGRES_URL
+});
+
+if (!process.env.AUTH_SECRET || process.env.AUTH_SECRET.length < 32) {
+	throw new Error('AUTH_SECRET environment variable must be set and be at least 32 characters long');
+}
+
 const key = new TextEncoder().encode(process.env.AUTH_SECRET);
 const SALT_ROUNDS = 10;
 
