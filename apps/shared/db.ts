@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import {
 	json,
 	pgTable,
@@ -11,6 +11,7 @@ import {
 import { drizzle } from "drizzle-orm/postgres-js";
 import path from "path";
 import postgres from "postgres";
+import { bots, discordBots } from "../web/lib/db/schema";
 
 // Load .env from root directory - go up two levels from shared/db.ts to reach root
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
@@ -65,4 +66,32 @@ export type Entity = typeof entities.$inferSelect;
 export async function getEntityById(id: string): Promise<Entity | null> {
 	const result = await db.select().from(entities).where(eq(entities.id, id));
 	return result[0] || null;
+}
+
+export async function getBotByGuildId(guildId: string) {
+	try {
+		const result = await db
+			.select({
+				name: bots.name,
+				description: bots.description,
+				systemPrompt: bots.systemPrompt,
+				status: bots.status,
+				settings: bots.settings,
+			})
+			.from(discordBots)
+			.innerJoin(bots, eq(discordBots.botId, bots.id))
+			.where(
+				and(
+					eq(discordBots.guildId, guildId),
+					eq(discordBots.status, "active"),
+					eq(bots.status, "active")
+				)
+			)
+			.limit(1);
+
+		return result[0] || null;
+	} catch (error) {
+		console.error("Error getting bot by guild ID:", error);
+		return null;
+	}
 }

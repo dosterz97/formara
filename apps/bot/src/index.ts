@@ -1,7 +1,7 @@
 import { Client, Events, GatewayIntentBits, Message } from "discord.js";
 import dotenv from "dotenv";
 import path from "path";
-import { client as pgClient } from "../../shared/db";
+import { getBotByGuildId } from "../../shared/db";
 import { handleGuildCreate, handleGuildDelete } from "./db";
 import { generateBotResponse } from "./services/gemini";
 
@@ -85,29 +85,19 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 		console.log("Bot was mentioned, fetching bot data");
 		try {
-			// Get the bot data using a join between discord_bots and bots tables
-			const result = await pgClient`
-				SELECT b.name, b.description, b.system_prompt, b.status, b.settings
-				FROM discord_bots db
-				INNER JOIN bots b ON b.id = db.bot_id
-				WHERE db.guild_id = ${message.guild.id}
-				AND db.status = 'active'
-				AND b.status = 'active'
-				LIMIT 1
-			`;
+			const bot = await getBotByGuildId(message.guild.id);
 
-			if (!result || result.length === 0) {
+			if (!bot) {
 				console.error("Bot configuration not found for this server");
 				await message.reply("I'm not properly configured for this server yet.");
 				return;
 			}
 
-			const bot = result[0];
 			const botData = {
 				name: bot.name,
 				description: bot.description || "",
 				attributes: {
-					systemPrompt: bot.system_prompt || "",
+					systemPrompt: bot.systemPrompt || "",
 					status: bot.status,
 					settings: bot.settings || {},
 				},
