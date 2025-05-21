@@ -1,14 +1,12 @@
 import { Client, Events, GatewayIntentBits, Message } from "discord.js";
 import dotenv from "dotenv";
 import path from "path";
-import { getEntityById } from "../../shared/db";
+import { client as pgClient } from "../../shared/db";
 import { handleGuildCreate, handleGuildDelete } from "./db";
-import { generateVaderResponse } from "./services/gemini";
+import { generateBotResponse } from "./services/gemini";
 
 // Load .env from root directory
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
-
-const DARTH_VADER_ID = "a7fbe48e-d24d-454c-a5f7-c8398b074770";
 
 const client = new Client({
 	intents: [
@@ -19,12 +17,6 @@ const client = new Client({
 		GatewayIntentBits.GuildMembers,
 	],
 });
-
-let characterData: {
-	name: string;
-	description: string;
-	attributes: Record<string, any>;
-} | null = null;
 
 // Handle bot being added to a new server
 client.on(Events.GuildCreate, async (guild) => {
@@ -43,7 +35,7 @@ client.on(Events.GuildCreate, async (guild) => {
 
 			if (defaultChannel?.isTextBased()) {
 				await defaultChannel.send(
-					"*mechanical breathing* I have arrived. The Force is strong with this server."
+					"Hello! I'm your new AI assistant. Feel free to mention me in any message to start a conversation!"
 				);
 			}
 		} catch (error) {
@@ -64,25 +56,8 @@ client.on(Events.GuildDelete, async (guild) => {
 	}
 });
 
-client.once(Events.ClientReady, async (c) => {
+client.once(Events.ClientReady, (c) => {
 	console.log(`Ready! Logged in as ${c.user.tag}`);
-
-	// Fetch character data on startup
-	try {
-		const entity = await getEntityById(DARTH_VADER_ID);
-		if (entity) {
-			characterData = {
-				name: entity.name,
-				description: entity.description || "",
-				attributes: entity.basicAttributes || {},
-			};
-			console.log("Character data loaded:", characterData);
-		} else {
-			console.error("Character not found in database");
-		}
-	} catch (error) {
-		console.error("Error fetching character data:", error);
-	}
 });
 
 client.on(Events.MessageCreate, async (message: Message) => {
@@ -99,31 +74,56 @@ client.on(Events.MessageCreate, async (message: Message) => {
 		return;
 	}
 
-	// Check if the message mentions the bot
+	// Check if the message mentions the bot and is in a guild
 	if (message.mentions.users.has(client.user!.id)) {
-		console.log("Bot was mentioned, generating AI response");
+		if (!message.guild) {
+			await message.reply(
+				"I can only respond in servers, not in direct messages."
+			);
+			return;
+		}
+
+		console.log("Bot was mentioned, fetching bot data");
 		try {
-			if (!characterData) {
-				await message.reply("Error: Character data not loaded");
+			// Get the bot data using a join between discord_bots and bots tables
+			const result = await pgClient`
+				SELECT b.name, b.description, b.system_prompt, b.status, b.settings
+				FROM discord_bots db
+				INNER JOIN bots b ON b.id = db.bot_id
+				WHERE db.guild_id = ${message.guild.id}
+				AND db.status = 'active'
+				AND b.status = 'active'
+				LIMIT 1
+			`;
+
+			if (!result || result.length === 0) {
+				console.error("Bot configuration not found for this server");
+				await message.reply("I'm not properly configured for this server yet.");
 				return;
 			}
 
-			// Get AI-generated response from Gemini
-			const response = await generateVaderResponse(message.content);
+			const bot = result[0];
+			const botData = {
+				name: bot.name,
+				description: bot.description || "",
+				attributes: {
+					systemPrompt: bot.system_prompt || "",
+					status: bot.status,
+					settings: bot.settings || {},
+				},
+			};
+
+			console.log("Bot data:", botData);
+
+			// Get AI-generated response using bot data
+			const response = await generateBotResponse(message.content, botData);
 			await message.reply(response);
 			console.log("Response sent successfully");
 		} catch (error) {
-			console.error("Error sending response:", error);
-			// Fall back to random response if AI fails
-			const responses = [
-				"I find your lack of faith disturbing.",
-				"You underestimate the power of the Dark Side.",
-				"Join me, and together we can rule the galaxy.",
-				"The Force is strong with this one.",
-				"Be careful not to choke on your aspirations.",
-			];
+			console.error("Error processing message:", error);
+			// Fall back to generic response if AI fails
 			await message.reply(
-				responses[Math.floor(Math.random() * responses.length)]
+				"I apologize, but I am experiencing difficulties processing your message right now."
 			);
 		}
 	}

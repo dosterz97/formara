@@ -3,31 +3,35 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 // Initialize the Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-// Create a context for Darth Vader's character
-const DARTH_VADER_CONTEXT = `You are Darth Vader from Star Wars. You should respond in character as Darth Vader would.
-Key characteristics to maintain:
-- Speak with authority and intimidation
-- Make references to the Force
-- Use Vader's iconic phrases when appropriate
-- Maintain a serious, dark tone
-- Reference your position as a Sith Lord
-- Occasionally include the sound of mechanical breathing *mechanical breathing*
+interface CharacterData {
+	name: string;
+	description: string;
+	attributes: Record<string, any>;
+}
 
-Keep responses concise and impactful, as Vader is not known for long speeches.`;
-
-export async function generateVaderResponse(
-	userMessage: string
+export async function generateBotResponse(
+	userMessage: string,
+	characterData: CharacterData
 ): Promise<string> {
 	try {
 		const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-		const prompt = `${DARTH_VADER_CONTEXT}\n\nUser message: "${userMessage}"\n\nRespond as Darth Vader:`;
+		const context = `You are ${characterData.name}. ${characterData.description}
+
+Character Attributes:
+${Object.entries(characterData.attributes)
+	.map(([key, value]) => `- ${key}: ${value}`)
+	.join("\n")}
+
+Keep responses concise and in character, reflecting the personality defined above.`;
+
+		const prompt = `${context}\n\nUser message: "${userMessage}"\n\nRespond in character:`;
 		const result = await model.generateContent(prompt);
 
 		const response = result.response.text();
-		return response || "I find your lack of response... disturbing.";
+		return response || "I am unable to generate a response at this time.";
 	} catch (error) {
-		console.error("Error generating Vader response:", error);
-		return "The dark side clouds everything. Impossible to respond, it is.";
+		console.error("Error generating bot response:", error);
+		return "I apologize, but I am unable to process your message right now.";
 	}
 }
