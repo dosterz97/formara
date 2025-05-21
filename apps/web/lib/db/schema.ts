@@ -134,6 +134,44 @@ export const universes = pgTable(
 	}
 );
 
+// Bots table - for AI assistants/characters
+export const bots = pgTable(
+	"bots",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		teamId: uuid("team_id")
+			.notNull()
+			.references(() => teams.id),
+		slug: varchar("slug", { length: 50 }).notNull(),
+		name: varchar("name", { length: 100 }).notNull(),
+		description: text("description"),
+		status: pgEntityStatusEnum("entity_status").default("active"),
+
+		// Bot specific fields
+		systemPrompt: text("system_prompt"),
+		voiceId: varchar("voice_id", { length: 100 }),
+		imageUrl: varchar("image_url", { length: 2048 }),
+
+		// Configuration and settings
+		settings: json("settings").$type<Record<string, any>>(),
+
+		// Metadata
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+		createdBy: uuid("created_by").references(() => users.id),
+	},
+	(table) => {
+		return [
+			{
+				teamBotSlugIdx: uniqueIndex("bot_team_slug_idx").on(
+					table.teamId,
+					table.slug
+				),
+			},
+		];
+	}
+);
+
 // Metaverse entities table - for characters, locations, etc.
 export const entities = pgTable(
 	"entities",
@@ -224,6 +262,7 @@ export const teamsRelations = relations(teams, ({ many }) => ({
 	activityLogs: many(activityLogs),
 	invitations: many(invitations),
 	universes: many(universes),
+	bots: many(bots),
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -283,6 +322,7 @@ export const universeRelations = relations(universes, ({ one, many }) => ({
 	entities: many(entities),
 	tags: many(tags),
 	activityLogs: many(metaverseActivityLogs),
+	bots: many(bots),
 }));
 
 export const entityRelations = relations(entities, ({ one, many }) => ({
@@ -345,6 +385,17 @@ export const metaverseActivityLogsRelations = relations(
 	})
 );
 
+export const botRelations = relations(bots, ({ one }) => ({
+	team: one(teams, {
+		fields: [bots.teamId],
+		references: [teams.id],
+	}),
+	creator: one(users, {
+		fields: [bots.createdBy],
+		references: [users.id],
+	}),
+}));
+
 // === EXISTING TYPE EXPORTS ===
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -377,6 +428,9 @@ export type NewMetaverseActivityLog = typeof metaverseActivityLogs.$inferInsert;
 export type UniverseWithEntities = Universe & {
 	entities: Entity[];
 };
+
+export type Bot = typeof bots.$inferSelect;
+export type NewBot = typeof bots.$inferInsert;
 
 // === ENUM EXPORTS ===
 export enum ActivityType {
