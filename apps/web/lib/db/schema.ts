@@ -142,20 +142,14 @@ export const bots = pgTable(
 		teamId: uuid("team_id")
 			.notNull()
 			.references(() => teams.id),
-		slug: varchar("slug", { length: 50 }).notNull(),
-		name: varchar("name", { length: 100 }).notNull(),
+		slug: varchar("slug", { length: 100 }).notNull(),
+		name: varchar("name", { length: 255 }).notNull(),
 		description: text("description"),
-		status: pgEntityStatusEnum("entity_status").default("active"),
-
-		// Bot specific fields
 		systemPrompt: text("system_prompt"),
+		status: varchar("status", { length: 20 }).notNull().default("active"),
 		voiceId: varchar("voice_id", { length: 100 }),
 		imageUrl: varchar("image_url", { length: 2048 }),
-
-		// Configuration and settings
 		settings: json("settings").$type<Record<string, any>>(),
-
-		// Metadata
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 		updatedAt: timestamp("updated_at").notNull().defaultNow(),
 		createdBy: uuid("created_by").references(() => users.id),
@@ -166,6 +160,33 @@ export const bots = pgTable(
 				teamBotSlugIdx: uniqueIndex("bot_team_slug_idx").on(
 					table.teamId,
 					table.slug
+				),
+			},
+		];
+	}
+);
+
+// Discord bot relationships
+export const discordBots = pgTable(
+	"discord_bots",
+	{
+		id: uuid("id").primaryKey().defaultRandom(),
+		botId: uuid("bot_id")
+			.notNull()
+			.references(() => bots.id),
+		guildId: varchar("guild_id", { length: 100 }).notNull(),
+		guildName: varchar("guild_name", { length: 255 }),
+		status: varchar("status", { length: 20 }).notNull().default("active"),
+		settings: json("settings").$type<Record<string, any>>(),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+	},
+	(table) => {
+		return [
+			{
+				botGuildIdx: uniqueIndex("bot_guild_idx").on(
+					table.botId,
+					table.guildId
 				),
 			},
 		];
@@ -385,7 +406,7 @@ export const metaverseActivityLogsRelations = relations(
 	})
 );
 
-export const botRelations = relations(bots, ({ one }) => ({
+export const botRelations = relations(bots, ({ one, many }) => ({
 	team: one(teams, {
 		fields: [bots.teamId],
 		references: [teams.id],
@@ -393,6 +414,14 @@ export const botRelations = relations(bots, ({ one }) => ({
 	creator: one(users, {
 		fields: [bots.createdBy],
 		references: [users.id],
+	}),
+	discordBots: many(discordBots),
+}));
+
+export const discordBotsRelations = relations(discordBots, ({ one }) => ({
+	bot: one(bots, {
+		fields: [discordBots.botId],
+		references: [bots.id],
 	}),
 }));
 

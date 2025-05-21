@@ -24,25 +24,57 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Bot } from "@/lib/db/schema";
-import { ArrowLeft, Loader2, Pencil, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { getDiscordOAuthUrl } from "@/lib/discord/constants";
+import { ArrowLeft, Loader2, Pencil, Share2, Trash2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
 
+const getOAuthUrl = (botId: string) =>
+	getDiscordOAuthUrl(process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID!, botId);
+
 interface BotDetailsProps {
-	params: {
+	params: Promise<{
 		botSlug: string;
-	};
+	}>;
 }
 
 export default function BotDetailsPage({ params }: BotDetailsProps) {
-	const { botSlug } = params;
+	const { botSlug } = use(params);
+	const searchParams = useSearchParams();
 	const [bot, setBot] = useState<Bot | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [deleteLoading, setDeleteLoading] = useState(false);
 	const router = useRouter();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+	// Check for Discord integration status
+	useEffect(() => {
+		const success = searchParams.get("success");
+		const error = searchParams.get("error");
+
+		if (success === "true") {
+			toast.success("Bot successfully added to Discord server!");
+		} else if (error) {
+			switch (error) {
+				case "already_exists":
+					toast.error("Bot is already added to this Discord server.");
+					break;
+				case "auth_failed":
+					toast.error("Failed to authenticate with Discord.");
+					break;
+				case "guild_fetch_failed":
+					toast.error("Failed to fetch Discord server information.");
+					break;
+				case "db_error":
+					toast.error("Failed to save Discord integration.");
+					break;
+				default:
+					toast.error("An unknown error occurred.");
+			}
+		}
+	}, [searchParams]);
 
 	// Fetch bot data
 	useEffect(() => {
@@ -203,6 +235,12 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 						onClick={() => router.push("/dashboard/bots")}
 					>
 						<ArrowLeft className="mr-2 h-4 w-4" /> Back
+					</Button>
+					<Button
+						variant="outline"
+						onClick={() => window.open(getOAuthUrl(bot.id), "_blank")}
+					>
+						<Share2 className="mr-2 h-4 w-4" /> Add to Discord
 					</Button>
 					<BotForm
 						isOpen={isEditModalOpen}
