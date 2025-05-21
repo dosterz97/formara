@@ -2,6 +2,7 @@ import { Client, Events, GatewayIntentBits, Message } from "discord.js";
 import dotenv from "dotenv";
 import path from "path";
 import { getEntityById } from "../../shared/db";
+import { handleGuildCreate, handleGuildDelete } from "./db";
 
 // Load .env from root directory
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
@@ -23,6 +24,28 @@ let characterData: {
 	description: string;
 	attributes: Record<string, any>;
 } | null = null;
+
+// Handle bot being added to a new server
+client.on(Events.GuildCreate, async (guild) => {
+	console.log(`Bot was added to guild: ${guild.name} (${guild.id})`);
+
+	const success = await handleGuildCreate(guild.id, guild.name);
+	if (success) {
+		console.log(`Reactivated bot for guild ${guild.id}`);
+	}
+});
+
+// Handle bot being removed from a server
+client.on(Events.GuildDelete, async (guild) => {
+	console.log(`Bot was removed from guild: ${guild.name} (${guild.id})`);
+
+	const success = await handleGuildDelete(guild.id);
+	if (success) {
+		console.log(`Updated status for guild ${guild.id} to inactive`);
+	} else {
+		console.error(`Failed to update status for guild ${guild.id}`);
+	}
+});
 
 client.once(Events.ClientReady, async (c) => {
 	console.log(`Ready! Logged in as ${c.user.tag}`);
