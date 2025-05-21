@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { getEntityById } from "../../shared/db";
 import { handleGuildCreate, handleGuildDelete } from "./db";
+import { generateVaderResponse } from "./services/gemini";
 
 // Load .env from root directory
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
@@ -32,6 +33,22 @@ client.on(Events.GuildCreate, async (guild) => {
 	const success = await handleGuildCreate(guild.id, guild.name);
 	if (success) {
 		console.log(`Reactivated bot for guild ${guild.id}`);
+		// Send a welcome message to the default channel if possible
+		try {
+			const defaultChannel = guild.channels.cache.find(
+				(channel) =>
+					channel.type === 0 && // GUILD_TEXT
+					channel.permissionsFor(guild.members.me!)?.has("SendMessages")
+			);
+
+			if (defaultChannel?.isTextBased()) {
+				await defaultChannel.send(
+					"*mechanical breathing* I have arrived. The Force is strong with this server."
+				);
+			}
+		} catch (error) {
+			console.error("Error sending welcome message:", error);
+		}
 	}
 });
 
@@ -84,46 +101,30 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 	// Check if the message mentions the bot
 	if (message.mentions.users.has(client.user!.id)) {
-		console.log("Bot was mentioned, sending response");
+		console.log("Bot was mentioned, generating AI response");
 		try {
 			if (!characterData) {
 				await message.reply("Error: Character data not loaded");
 				return;
 			}
 
-			// Darth Vader themed responses based on different message contexts
-			let response = "";
-			const userMessage = message.content.toLowerCase();
-
-			if (userMessage.includes("ping") || userMessage.includes("test")) {
-				response =
-					"I sense a disturbance in the Force... *mechanical breathing* Your ping has been acknowledged.";
-			} else if (userMessage.includes("hello") || userMessage.includes("hi")) {
-				response = "I have been waiting for you. We meet at last.";
-			} else if (userMessage.includes("help")) {
-				response =
-					"The dark side of the Force is a pathway to many abilities some consider to be... unnatural.";
-			} else {
-				// Default responses if no specific context matches
-				const responses = [
-					"I find your lack of faith disturbing.",
-					"You underestimate the power of the Dark Side.",
-					"Join me, and together we can rule the galaxy.",
-					"The Force is strong with this one.",
-					"Be careful not to choke on your aspirations.",
-					"The circle is now complete.",
-					"All too easy.",
-					"Impressive. Most impressive.",
-					"You have failed me for the last time.",
-					"The Force is with you, but you are not a Jedi yet.",
-				];
-				response = responses[Math.floor(Math.random() * responses.length)];
-			}
-
+			// Get AI-generated response from Gemini
+			const response = await generateVaderResponse(message.content);
 			await message.reply(response);
 			console.log("Response sent successfully");
 		} catch (error) {
 			console.error("Error sending response:", error);
+			// Fall back to random response if AI fails
+			const responses = [
+				"I find your lack of faith disturbing.",
+				"You underestimate the power of the Dark Side.",
+				"Join me, and together we can rule the galaxy.",
+				"The Force is strong with this one.",
+				"Be careful not to choke on your aspirations.",
+			];
+			await message.reply(
+				responses[Math.floor(Math.random() * responses.length)]
+			);
 		}
 	}
 });
