@@ -1,14 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-	Globe2,
-	Menu,
-	MessageSquare,
-	Settings,
-	Shield,
-	Users,
-} from "lucide-react";
+import { Menu, MessageSquare, Settings, Shield, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -22,11 +15,9 @@ export default function DashboardLayout({
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
 	const navItems = [
-		{ href: "/dashboard/universes", icon: Globe2, label: "Universes" },
 		{ href: "/dashboard/bots", icon: MessageSquare, label: "Bots" },
 		{ href: "/dashboard/general", icon: Settings, label: "General" },
 		{ href: "/dashboard", icon: Users, label: "Team" },
-		// { href: "/dashboard/activity", icon: Activity, label: "Activity" },
 		{ href: "/dashboard/security", icon: Shield, label: "Security" },
 	];
 
