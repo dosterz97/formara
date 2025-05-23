@@ -1,5 +1,5 @@
 {
-  "id": "222e0044-9149-42ed-a21e-1c778cf8201d",
+  "id": "49e520f4-e3e3-4ec3-a40c-a2534aaebc91",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -82,8 +82,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.entities": {
-      "name": "entities",
+    "public.bots": {
+      "name": "bots",
       "schema": "",
       "columns": {
         "id": {
@@ -93,8 +93,8 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "universe_id": {
-          "name": "universe_id",
+        "team_id": {
+          "name": "team_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -111,38 +111,42 @@
           "primaryKey": false,
           "notNull": true
         },
-        "entity_type": {
-          "name": "entity_type",
-          "type": "entity_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
         "description": {
           "name": "description",
           "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "entity_status": {
-          "name": "entity_status",
-          "type": "entity_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'active'"
-        },
-        "basic_attributes": {
-          "name": "basic_attributes",
-          "type": "json",
+        "system_prompt": {
+          "name": "system_prompt",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "vector_id": {
-          "name": "vector_id",
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "voice_id": {
+          "name": "voice_id",
           "type": "varchar(100)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "varchar(2048)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "settings": {
+          "name": "settings",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -167,12 +171,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "entities_universe_id_universes_id_fk": {
-          "name": "entities_universe_id_universes_id_fk",
-          "tableFrom": "entities",
-          "tableTo": "universes",
+        "bots_team_id_teams_id_fk": {
+          "name": "bots_team_id_teams_id_fk",
+          "tableFrom": "bots",
+          "tableTo": "teams",
           "columnsFrom": [
-            "universe_id"
+            "team_id"
           ],
           "columnsTo": [
             "id"
@@ -180,9 +184,9 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "entities_created_by_users_id_fk": {
-          "name": "entities_created_by_users_id_fk",
-          "tableFrom": "entities",
+        "bots_created_by_users_id_fk": {
+          "name": "bots_created_by_users_id_fk",
+          "tableFrom": "bots",
           "tableTo": "users",
           "columnsFrom": [
             "created_by"
@@ -200,8 +204,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.entity_tags": {
-      "name": "entity_tags",
+    "public.discord_bots": {
+      "name": "discord_bots",
       "schema": "",
       "columns": {
         "id": {
@@ -211,17 +215,36 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "entity_id": {
-          "name": "entity_id",
+        "bot_id": {
+          "name": "bot_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "tag_id": {
-          "name": "tag_id",
-          "type": "uuid",
+        "guild_id": {
+          "name": "guild_id",
+          "type": "varchar(100)",
           "primaryKey": false,
           "notNull": true
+        },
+        "guild_name": {
+          "name": "guild_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "settings": {
+          "name": "settings",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
         },
         "created_at": {
           "name": "created_at",
@@ -230,47 +253,22 @@
           "notNull": true,
           "default": "now()"
         },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "entity_tags_entity_id_entities_id_fk": {
-          "name": "entity_tags_entity_id_entities_id_fk",
-          "tableFrom": "entity_tags",
-          "tableTo": "entities",
+        "discord_bots_bot_id_bots_id_fk": {
+          "name": "discord_bots_bot_id_bots_id_fk",
+          "tableFrom": "discord_bots",
+          "tableTo": "bots",
           "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "entity_tags_tag_id_tags_id_fk": {
-          "name": "entity_tags_tag_id_tags_id_fk",
-          "tableFrom": "entity_tags",
-          "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "entity_tags_created_by_users_id_fk": {
-          "name": "entity_tags_created_by_users_id_fk",
-          "tableFrom": "entity_tags",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
+            "bot_id"
           ],
           "columnsTo": [
             "id"
@@ -370,8 +368,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.metaverse_activity_logs": {
-      "name": "metaverse_activity_logs",
+    "public.knowledge": {
+      "name": "knowledge",
       "schema": "",
       "columns": {
         "id": {
@@ -381,135 +379,39 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "universe_id": {
-          "name": "universe_id",
+        "bot_id": {
+          "name": "bot_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "entity_id": {
-          "name": "entity_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "action": {
-          "name": "action",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "details": {
-          "name": "details",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "timestamp": {
-          "name": "timestamp",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "ip_address": {
-          "name": "ip_address",
-          "type": "varchar(45)",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "metaverse_activity_logs_universe_id_universes_id_fk": {
-          "name": "metaverse_activity_logs_universe_id_universes_id_fk",
-          "tableFrom": "metaverse_activity_logs",
-          "tableTo": "universes",
-          "columnsFrom": [
-            "universe_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "metaverse_activity_logs_user_id_users_id_fk": {
-          "name": "metaverse_activity_logs_user_id_users_id_fk",
-          "tableFrom": "metaverse_activity_logs",
-          "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "metaverse_activity_logs_entity_id_entities_id_fk": {
-          "name": "metaverse_activity_logs_entity_id_entities_id_fk",
-          "tableFrom": "metaverse_activity_logs",
-          "tableTo": "entities",
-          "columnsFrom": [
-            "entity_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.tags": {
-      "name": "tags",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "universe_id": {
-          "name": "universe_id",
-          "type": "uuid",
+        "slug": {
+          "name": "slug",
+          "type": "varchar(100)",
           "primaryKey": false,
           "notNull": true
         },
         "name": {
           "name": "name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vector_id": {
+          "name": "vector_id",
           "type": "varchar(100)",
           "primaryKey": false,
           "notNull": true
         },
-        "category": {
-          "name": "category",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
@@ -524,22 +426,22 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "tags_universe_id_universes_id_fk": {
-          "name": "tags_universe_id_universes_id_fk",
-          "tableFrom": "tags",
-          "tableTo": "universes",
+        "knowledge_bot_id_bots_id_fk": {
+          "name": "knowledge_bot_id_bots_id_fk",
+          "tableFrom": "knowledge",
+          "tableTo": "bots",
           "columnsFrom": [
-            "universe_id"
+            "bot_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "tags_created_by_users_id_fk": {
-          "name": "tags_created_by_users_id_fk",
-          "tableFrom": "tags",
+        "knowledge_created_by_users_id_fk": {
+          "name": "knowledge_created_by_users_id_fk",
+          "tableFrom": "knowledge",
           "tableTo": "users",
           "columnsFrom": [
             "created_by"
@@ -714,117 +616,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.universes": {
-      "name": "universes",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "team_id": {
-          "name": "team_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "slug": {
-          "name": "slug",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "rules": {
-          "name": "rules",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "entity_status": {
-          "name": "entity_status",
-          "type": "entity_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "'active'"
-        },
-        "vector_namespace": {
-          "name": "vector_namespace",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "created_by": {
-          "name": "created_by",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "universes_team_id_teams_id_fk": {
-          "name": "universes_team_id_teams_id_fk",
-          "tableFrom": "universes",
-          "tableTo": "teams",
-          "columnsFrom": [
-            "team_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "universes_created_by_users_id_fk": {
-          "name": "universes_created_by_users_id_fk",
-          "tableFrom": "universes",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
     "public.users": {
       "name": "users",
       "schema": "",
@@ -899,33 +690,7 @@
       "isRLSEnabled": false
     }
   },
-  "enums": {
-    "public.entity_status": {
-      "name": "entity_status",
-      "schema": "public",
-      "values": [
-        "active",
-        "inactive",
-        "deceased",
-        "historical",
-        "conceptual",
-        "unknown"
-      ]
-    },
-    "public.entity_type": {
-      "name": "entity_type",
-      "schema": "public",
-      "values": [
-        "character",
-        "location",
-        "item",
-        "event",
-        "concept",
-        "organization",
-        "other"
-      ]
-    }
-  },
+  "enums": {},
   "schemas": {},
   "sequences": {},
   "roles": {},

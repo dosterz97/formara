@@ -1,1 +1,0 @@
-ALTER TABLE "entities" ADD COLUMN "voice_id" varchar(100);

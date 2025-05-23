@@ -1,6 +1,7 @@
 "use client";
 
 import { BotForm } from "@/components/bot-form";
+import { KnowledgeTable } from "@/components/knowledge-table";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -22,10 +23,16 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot } from "@/lib/db/schema";
+import { Bot, Knowledge } from "@/lib/db/schema";
 import { getDiscordOAuthUrl } from "@/lib/discord/constants";
-import { ArrowLeft, Loader2, Pencil, Share2, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { use, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -43,7 +50,9 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 	const { botSlug } = use(params);
 	const searchParams = useSearchParams();
 	const [bot, setBot] = useState<Bot | null>(null);
+	const [knowledge, setKnowledge] = useState<Knowledge[]>([]);
 	const [loading, setLoading] = useState(true);
+	const [knowledgeLoading, setKnowledgeLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [deleteLoading, setDeleteLoading] = useState(false);
 	const router = useRouter();
@@ -107,6 +116,35 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 		}
 	}, [botSlug]);
 
+	// Fetch knowledge data
+	useEffect(() => {
+		const fetchKnowledge = async () => {
+			if (!bot) return;
+
+			try {
+				setKnowledgeLoading(true);
+				const response = await fetch(`/api/bots/${bot.id}/knowledge`);
+
+				if (!response.ok) {
+					const errorData = await response.json();
+					throw new Error(errorData.error || "Failed to fetch knowledge");
+				}
+
+				const data = await response.json();
+				setKnowledge(data);
+			} catch (err) {
+				console.error("Error fetching knowledge:", err);
+				toast.error("Failed to load knowledge data");
+			} finally {
+				setKnowledgeLoading(false);
+			}
+		};
+
+		if (bot) {
+			fetchKnowledge();
+		}
+	}, [bot]);
+
 	// Handle bot deletion
 	const handleDeleteBot = async () => {
 		if (!bot) return toast.error("Bot does not exist!");
@@ -114,7 +152,7 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 		try {
 			setDeleteLoading(true);
 
-			const response = await fetch(`/api/bot/${bot.id}`, {
+			const response = await fetch(`/api/bots/${bot.id}`, {
 				method: "DELETE",
 			});
 
@@ -220,115 +258,115 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 	};
 
 	return (
-		<div className="container mx-auto p-8">
-			{/* Header with navigation */}
-			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-				<div>
-					<h1 className="text-2xl font-bold">{bot.name}</h1>
-					<p className="text-muted-foreground">
-						Created on {formatDate(bot.createdAt.toString())}
-					</p>
-				</div>
-				<div className="mt-4 sm:mt-0 space-x-2 flex">
-					<Button
-						variant="outline"
-						onClick={() => router.push("/dashboard/bots")}
-					>
-						<ArrowLeft className="mr-2 h-4 w-4" /> Back
-					</Button>
-					<Button
-						variant="outline"
-						onClick={() => window.open(getOAuthUrl(bot.id), "_blank")}
-					>
-						<Share2 className="mr-2 h-4 w-4" /> Add to Discord
-					</Button>
-					<BotForm
-						isOpen={isEditModalOpen}
-						onOpenChange={setIsEditModalOpen}
-						onSuccess={handleEditSuccess}
-						bot={bot}
-						mode="edit"
-					/>
-					<Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
-						<Pencil className="mr-2 h-4 w-4" /> Edit
-					</Button>
-					<AlertDialog>
-						<AlertDialogTrigger asChild>
-							<Button variant="destructive">
-								<Trash2 className="mr-2 h-4 w-4" /> Delete
-							</Button>
-						</AlertDialogTrigger>
-						<AlertDialogContent>
-							<AlertDialogHeader>
-								<AlertDialogTitle>Are you sure?</AlertDialogTitle>
-								<AlertDialogDescription>
-									This action cannot be undone. This will permanently delete the
-									bot &quot;{bot.name}&quot;.
-								</AlertDialogDescription>
-							</AlertDialogHeader>
-							<AlertDialogFooter>
-								<AlertDialogCancel>Cancel</AlertDialogCancel>
-								<AlertDialogAction
-									onClick={handleDeleteBot}
-									className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-									disabled={deleteLoading}
-								>
+		<>
+			<div className="mb-6">
+				<Button
+					variant="outline"
+					onClick={() => router.push("/dashboard/bots")}
+					className="mb-4"
+				>
+					<ArrowLeft className="mr-2 h-4 w-4" /> Back to Bots
+				</Button>
+				<div className="flex items-center justify-between">
+					<div>
+						<h1 className="text-2xl font-bold tracking-tight">{bot?.name}</h1>
+						<p className="text-muted-foreground">{bot?.description}</p>
+					</div>
+					<div className="flex items-center gap-2">
+						<Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
+							<Pencil className="mr-2 h-4 w-4" /> Edit
+						</Button>
+						<AlertDialog>
+							<AlertDialogTrigger asChild>
+								<Button variant="destructive">
 									{deleteLoading ? (
-										<>
-											<Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
-											Deleting...
-										</>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 									) : (
-										"Delete"
+										<Trash2 className="mr-2 h-4 w-4" />
 									)}
-								</AlertDialogAction>
-							</AlertDialogFooter>
-						</AlertDialogContent>
-					</AlertDialog>
+									Delete
+								</Button>
+							</AlertDialogTrigger>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>
+										Are you sure you want to delete this bot?
+									</AlertDialogTitle>
+									<AlertDialogDescription>
+										This action cannot be undone. This will permanently delete
+										the bot and all its data.
+									</AlertDialogDescription>
+								</AlertDialogHeader>
+								<AlertDialogFooter>
+									<AlertDialogCancel>Cancel</AlertDialogCancel>
+									<AlertDialogAction
+										onClick={handleDeleteBot}
+										className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+									>
+										Delete
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
+					</div>
 				</div>
 			</div>
 
-			{/* Bot details */}
-			<Card>
-				<CardHeader>
-					<div className="flex justify-between items-center">
-						<div>
-							<CardTitle>{bot.name}</CardTitle>
-							<CardDescription>Slug: {bot.slug}</CardDescription>
+			<div className="grid gap-6">
+				<Card>
+					<CardHeader>
+						<CardTitle>Bot Details</CardTitle>
+						<CardDescription>
+							Configure your bot's settings and behavior
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<div className="space-y-4">
+							<div>
+								<h3 className="font-medium mb-2">System Prompt</h3>
+								<p className="text-sm text-muted-foreground">
+									{bot?.systemPrompt || "No system prompt set"}
+								</p>
+							</div>
+							<div>
+								<h3 className="font-medium mb-2">Voice</h3>
+								<p className="text-sm text-muted-foreground">
+									{bot?.voiceId || "No voice selected"}
+								</p>
+							</div>
+							<div>
+								<h3 className="font-medium mb-2">Status</h3>
+								<Badge variant="outline">{bot?.status}</Badge>
+							</div>
 						</div>
-						<Badge
-							variant={bot.status === "active" ? "default" : "secondary"}
-							className="ml-2"
-						>
-							{bot.status
-								? bot.status.charAt(0).toUpperCase() + bot.status.slice(1)
-								: "n/a"}
-						</Badge>
-					</div>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					{bot.description && (
-						<div>
-							<h3 className="text-sm font-medium text-muted-foreground mb-1">
-								Description
-							</h3>
-							<p>{bot.description}</p>
-						</div>
-					)}
+					</CardContent>
+				</Card>
 
-					<div>
-						<h3 className="text-sm font-medium text-muted-foreground mb-1">
-							System Prompt
-						</h3>
-						<p className="whitespace-pre-wrap">{bot.systemPrompt}</p>
-					</div>
-				</CardContent>
-				<CardFooter className="flex justify-between border-t p-6">
-					<div className="text-sm text-muted-foreground">
-						Last updated: {formatDate(bot.updatedAt.toString())}
-					</div>
-				</CardFooter>
-			</Card>
-		</div>
+				<KnowledgeTable
+					botId={bot?.id || ""}
+					knowledge={knowledge}
+					isLoading={knowledgeLoading}
+				/>
+			</div>
+
+			{/* Edit modal */}
+			<Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+				<DialogContent>
+					<DialogHeader>
+						<DialogTitle>Edit Bot</DialogTitle>
+					</DialogHeader>
+					<BotForm
+						bot={bot}
+						isOpen={isEditModalOpen}
+						onOpenChange={setIsEditModalOpen}
+						mode="edit"
+						onSuccess={(updatedBot) => {
+							handleEditSuccess(updatedBot);
+							setIsEditModalOpen(false);
+						}}
+					/>
+				</DialogContent>
+			</Dialog>
+		</>
 	);
 }

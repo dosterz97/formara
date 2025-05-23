@@ -1,47 +1,12 @@
 {
-  "version": "5",
-  "dialect": "pg",
+  "version": "7",
+  "dialect": "postgresql",
   "entries": [
     {
       "idx": 0,
       "version": "7",
-      "when": 1742447858499,
-      "tag": "0000_keen_sentry",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1742762623749,
-      "tag": "0001_far_lightspeed",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1743574734534,
-      "tag": "0002_boring_invisible_woman",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1744779577303,
-      "tag": "0003_woozy_post",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1747795683307,
-      "tag": "0004_purple_blur",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1747797822933,
-      "tag": "0005_famous_lila_cheney",
+      "when": 1747898284900,
+      "tag": "0000_acoustic_midnight",
       "breakpoints": true
     }
   ]
