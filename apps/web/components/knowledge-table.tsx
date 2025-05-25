@@ -1,4 +1,5 @@
 import { ManualKnowledgeEntryForm } from "@/components/ManualKnowledgeEntryForm";
+import { WebPageKnowledgeForm } from "@/components/WebPageKnowledgeForm";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -104,6 +105,19 @@ export function KnowledgeTable({
 				// Add new item to local state
 				setLocalKnowledge((prev) => [updatedData, ...prev]);
 			}
+		}
+
+		handleModalClose();
+		// Trigger refresh if available
+		onRefresh?.();
+	};
+
+	const handleWebPageSuccess = (results: any[]) => {
+		console.log("Webpage knowledge import successful:", results);
+
+		// Add all new items to local state
+		if (results && results.length > 0) {
+			setLocalKnowledge((prev) => [...results, ...prev]);
 		}
 
 		handleModalClose();
@@ -229,7 +243,7 @@ export function KnowledgeTable({
 										<Plus className="mr-2 h-4 w-4" /> Add Knowledge
 									</Button>
 								</DialogTrigger>
-								<DialogContent className="sm:max-w-[600px]">
+								<DialogContent className="sm:max-w-[800px]">
 									<DialogHeader>
 										<DialogTitle>
 											{selectedKnowledge ? "Edit Knowledge" : "Add Knowledge"}
@@ -265,8 +279,10 @@ export function KnowledgeTable({
 												/>
 											</TabsContent>
 											<TabsContent value="webpage">
-												{/* Webpage import form will go here */}
-												<p>Webpage import form coming soon...</p>
+												<WebPageKnowledgeForm
+													botId={botId}
+													onSuccess={handleWebPageSuccess}
+												/>
 											</TabsContent>
 										</Tabs>
 									)}
