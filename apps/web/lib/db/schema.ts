@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+	boolean,
 	json,
 	pgTable,
 	text,
@@ -134,15 +135,17 @@ export const discordBots = pgTable(
 export const knowledge = pgTable(
 	"knowledge",
 	{
-		id: uuid("id").primaryKey().defaultRandom(),
+		id: uuid("id").primaryKey().defaultRandom().notNull(),
 		botId: uuid("bot_id")
 			.notNull()
 			.references(() => bots.id, { onDelete: "cascade" }),
 		slug: varchar("slug", { length: 100 }).notNull(),
 		name: varchar("name", { length: 255 }).notNull(),
+		content: text("content").notNull(),
 		vectorId: varchar("vector_id", { length: 100 }).notNull(),
-		createdAt: timestamp("created_at").notNull().defaultNow(),
-		updatedAt: timestamp("updated_at").notNull().defaultNow(),
+		manualEntry: boolean("manual_entry").default(false).notNull(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at").defaultNow().notNull(),
 		createdBy: uuid("created_by").references(() => users.id),
 	},
 	(table) => {

@@ -1,3 +1,14 @@
+import { ManualKnowledgeEntryForm } from "@/components/ManualKnowledgeEntryForm";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -24,21 +35,113 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Knowledge } from "@/lib/db/schema";
-import { Brain, Globe, Loader2, Plus } from "lucide-react";
-import { useState } from "react";
+import { Brain, Globe, Loader2, Plus, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 interface KnowledgeTableProps {
 	botId: string;
 	knowledge: Knowledge[];
 	isLoading?: boolean;
+	onRefresh?: () => void;
 }
 
 export function KnowledgeTable({
 	botId,
 	knowledge,
 	isLoading,
+	onRefresh,
 }: KnowledgeTableProps) {
 	const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+	const [selectedKnowledge, setSelectedKnowledge] = useState<Knowledge | null>(
+		null
+	);
+	const [localKnowledge, setLocalKnowledge] = useState<Knowledge[]>(knowledge);
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [knowledgeToDelete, setKnowledgeToDelete] = useState<Knowledge | null>(
+		null
+	);
+	const [isDeleting, setIsDeleting] = useState(false);
+
+	// Update local knowledge when props change
+	useEffect(() => {
+		setLocalKnowledge(knowledge);
+	}, [knowledge]);
+
+	const handleRowClick = (item: Knowledge) => {
+		setSelectedKnowledge(item);
+		setIsImportModalOpen(true);
+	};
+
+	const handleModalClose = () => {
+		setIsImportModalOpen(false);
+		setSelectedKnowledge(null);
+	};
+
+	const handleAddNew = () => {
+		setSelectedKnowledge(null);
+		setIsImportModalOpen(true);
+	};
+
+	const handleSuccess = (updatedData?: Knowledge) => {
+		console.log("Knowledge operation successful:", updatedData);
+
+		if (updatedData) {
+			if (selectedKnowledge) {
+				// Update existing item in local state
+				setLocalKnowledge((prev) =>
+					prev.map((item) => (item.id === updatedData.id ? updatedData : item))
+				);
+			} else {
+				// Add new item to local state
+				setLocalKnowledge((prev) => [updatedData, ...prev]);
+			}
+		}
+
+		handleModalClose();
+		// Trigger refresh if available
+		onRefresh?.();
+	};
+
+	const handleDeleteClick = (item: Knowledge, e: React.MouseEvent) => {
+		e.stopPropagation();
+		setKnowledgeToDelete(item);
+		setDeleteDialogOpen(true);
+	};
+
+	const handleDeleteConfirm = async () => {
+		if (!knowledgeToDelete) return;
+
+		setIsDeleting(true);
+		try {
+			console.log("Deleting knowledge:", knowledgeToDelete.id);
+			const res = await fetch(`/api/knowledge/${knowledgeToDelete.id}`, {
+				method: "DELETE",
+			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				throw new Error(errorData.error || "Failed to delete knowledge entry");
+			}
+
+			console.log("Delete successful");
+
+			// Remove from local state
+			setLocalKnowledge((prev) =>
+				prev.filter((item) => item.id !== knowledgeToDelete.id)
+			);
+
+			// Trigger refresh if available
+			onRefresh?.();
+		} catch (err: any) {
+			console.error("Delete error:", err);
+			// You might want to show an error toast here
+			alert(err.message || "Failed to delete knowledge entry");
+		} finally {
+			setIsDeleting(false);
+			setDeleteDialogOpen(false);
+			setKnowledgeToDelete(null);
+		}
+	};
 
 	if (isLoading) {
 		return (
@@ -64,71 +167,130 @@ export function KnowledgeTable({
 							onOpenChange={setIsImportModalOpen}
 						>
 							<DialogTrigger asChild>
-								<Button>
+								<Button onClick={handleAddNew}>
 									<Plus className="mr-2 h-4 w-4" /> Add Knowledge
 								</Button>
 							</DialogTrigger>
 							<DialogContent className="sm:max-w-[600px]">
 								<DialogHeader>
-									<DialogTitle>Add Knowledge</DialogTitle>
+									<DialogTitle>
+										{selectedKnowledge ? "Edit Knowledge" : "Add Knowledge"}
+									</DialogTitle>
 									<DialogDescription>
-										Choose how you want to add knowledge to your bot
+										{selectedKnowledge
+											? "Update the knowledge entry details"
+											: "Choose how you want to add knowledge to your bot"}
 									</DialogDescription>
 								</DialogHeader>
-								<Tabs defaultValue="manual" className="w-full">
-									<TabsList className="grid w-full grid-cols-2">
-										<TabsTrigger value="manual">
-											<Brain className="mr-2 h-4 w-4" />
-											Manual Entry
-										</TabsTrigger>
-										<TabsTrigger value="webpage">
-											<Globe className="mr-2 h-4 w-4" />
-											From Webpage
-										</TabsTrigger>
-									</TabsList>
-									<TabsContent value="manual">
-										{/* Manual entry form will go here */}
-										<p>Manual entry form coming soon...</p>
-									</TabsContent>
-									<TabsContent value="webpage">
-										{/* Webpage import form will go here */}
-										<p>Webpage import form coming soon...</p>
-									</TabsContent>
-								</Tabs>
+								{selectedKnowledge ? (
+									<ManualKnowledgeEntryForm
+										botId={botId}
+										initialData={selectedKnowledge}
+										onSuccess={handleSuccess}
+									/>
+								) : (
+									<Tabs defaultValue="manual" className="w-full">
+										<TabsList className="grid w-full grid-cols-2">
+											<TabsTrigger value="manual">
+												<Brain className="mr-2 h-4 w-4" />
+												Manual Entry
+											</TabsTrigger>
+											<TabsTrigger value="webpage">
+												<Globe className="mr-2 h-4 w-4" />
+												From Webpage
+											</TabsTrigger>
+										</TabsList>
+										<TabsContent value="manual">
+											<ManualKnowledgeEntryForm
+												botId={botId}
+												onSuccess={handleSuccess}
+											/>
+										</TabsContent>
+										<TabsContent value="webpage">
+											{/* Webpage import form will go here */}
+											<p>Webpage import form coming soon...</p>
+										</TabsContent>
+									</Tabs>
+								)}
 							</DialogContent>
 						</Dialog>
 					</div>
 				</CardHeader>
 				<CardContent>
-					{knowledge.length > 0 ? (
-						<div className="rounded-md border">
-							<Table>
-								<TableHeader>
-									<TableRow>
-										<TableHead className="w-[40%]">Name</TableHead>
-										<TableHead>Added</TableHead>
-										<TableHead>Added By</TableHead>
-										<TableHead className="text-right">Actions</TableHead>
-									</TableRow>
-								</TableHeader>
-								<TableBody>
-									{knowledge.map((item) => (
-										<TableRow key={item.id}>
-											<TableCell className="font-medium">{item.name}</TableCell>
-											<TableCell>
-												{new Date(item.createdAt).toLocaleDateString()}
-											</TableCell>
-											<TableCell>User</TableCell>
-											<TableCell className="text-right">
-												{/* Actions will go here */}
-												<Button variant="ghost" size="sm">
-													View
-												</Button>
-											</TableCell>
+					{localKnowledge.length > 0 ? (
+						<div className="w-full overflow-hidden rounded-md border">
+							<div className="w-full overflow-x-auto">
+								<Table className="w-full table-fixed">
+									<TableHeader>
+										<TableRow>
+											<TableHead className="w-1/2">Name</TableHead>
+											<TableHead className="w-1/6">Added</TableHead>
+											<TableHead className="w-1/6">Added By</TableHead>
+											<TableHead className="w-1/6 text-right">
+												Actions
+											</TableHead>
 										</TableRow>
-									))}
-								</TableBody>
-							</Table>
+									</TableHeader>
+									<TableBody>
+										{localKnowledge.map((item) => (
+											<TableRow
+												key={item.id}
+												className="cursor-pointer hover:bg-muted/50"
+												onClick={() => handleRowClick(item)}
+											>
+												<TableCell className="w-1/2 max-w-0">
+													<div className="space-y-1 w-full">
+														<div className="font-medium truncate w-full">
+															{item.name}
+														</div>
+														<div className="text-sm text-muted-foreground truncate w-full">
+															{item.content?.split("\n")[0] || "No content"}
+														</div>
+													</div>
+												</TableCell>
+												<TableCell className="w-1/6">
+													<div className="truncate">
+														{new Date(item.createdAt).toLocaleDateString()}
+													</div>
+												</TableCell>
+												<TableCell className="w-1/6">
+													<div className="truncate">User</div>
+												</TableCell>
+												<TableCell className="w-1/6 text-right">
+													<div className="flex items-center justify-end gap-2">
+														<Button
+															variant="ghost"
+															size="sm"
+															onClick={(e) => {
+																e.stopPropagation();
+																handleRowClick(item);
+															}}
+														>
+															Edit
+														</Button>
+														<Button
+															variant="ghost"
+															size="sm"
+															onClick={(e) => handleDeleteClick(item, e)}
+															className="text-destructive hover:text-destructive"
+															disabled={
+																isDeleting && knowledgeToDelete?.id === item.id
+															}
+														>
+															{isDeleting &&
+															knowledgeToDelete?.id === item.id ? (
+																<Loader2 className="h-4 w-4 animate-spin" />
+															) : (
+																<Trash2 className="h-4 w-4" />
+															)}
+														</Button>
+													</div>
+												</TableCell>
+											</TableRow>
+										))}
+									</TableBody>
+								</Table>
+							</div>
 						</div>
 					) : (
 						<div className="flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -142,13 +304,31 @@ export function KnowledgeTable({
 								Start by adding some knowledge to your bot. You can add it
 								manually or import it from a webpage.
 							</p>
-							<Button onClick={() => setIsImportModalOpen(true)}>
+							<Button onClick={handleAddNew}>
 								<Plus className="mr-2 h-4 w-4" /> Add Knowledge
 							</Button>
 						</div>
 					)}
 				</CardContent>
 			</Card>
+			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>
+							Are you sure you want to delete this knowledge entry?
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							This action cannot be undone.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction onClick={handleDeleteConfirm}>
+							Delete
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</>
 	);
 }

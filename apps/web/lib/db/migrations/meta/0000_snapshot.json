@@ -1,5 +1,5 @@
 {
-  "id": "49e520f4-e3e3-4ec3-a40c-a2534aaebc91",
+  "id": "1b885132-2f1f-40a9-89e5-126e4d9d3d01",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -397,11 +397,24 @@
           "primaryKey": false,
           "notNull": true
         },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "vector_id": {
           "name": "vector_id",
           "type": "varchar(100)",
           "primaryKey": false,
           "notNull": true
+        },
+        "manual_entry": {
+          "name": "manual_entry",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
         },
         "created_at": {
           "name": "created_at",

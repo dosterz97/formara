@@ -49,7 +49,9 @@ CREATE TABLE "knowledge" (
 	"bot_id" uuid NOT NULL,
 	"slug" varchar(100) NOT NULL,
 	"name" varchar(255) NOT NULL,
+	"content" text NOT NULL,
 	"vector_id" varchar(100) NOT NULL,
+	"manual_entry" boolean DEFAULT false NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	"created_by" uuid
