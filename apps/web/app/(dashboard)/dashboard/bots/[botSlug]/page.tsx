@@ -1,6 +1,7 @@
 "use client";
 
 import { BotForm } from "@/components/bot-form";
+import { ChatInterface } from "@/components/chat-interface";
 import { KnowledgeTable } from "@/components/knowledge-table";
 import {
 	AlertDialog,
@@ -347,6 +348,8 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 					knowledge={knowledge}
 					isLoading={knowledgeLoading}
 				/>
+
+				<ChatInterface botId={bot?.id || ""} botName={bot?.name || ""} />
 			</div>
 
 			{/* Edit modal */}

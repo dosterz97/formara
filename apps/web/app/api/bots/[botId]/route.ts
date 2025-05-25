@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/drizzle";
+import { deleteBotKnowledgeCollection } from "@/lib/db/qdrant-client";
 import { bots } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -47,7 +48,19 @@ export async function DELETE(
 	try {
 		const { botId } = await context.params;
 
-		// Delete the bot
+		// Delete the knowledge collection from Qdrant first
+		try {
+			await deleteBotKnowledgeCollection(botId);
+			console.log(`Successfully deleted knowledge collection for bot ${botId}`);
+		} catch (vectorError) {
+			console.warn(
+				"Failed to delete knowledge collection from Qdrant:",
+				vectorError
+			);
+			// Continue with database deletion even if vector collection deletion fails
+		}
+
+		// Delete the bot (this will cascade delete knowledge entries due to foreign key constraint)
 		await db.delete(bots).where(eq(bots.id, botId));
 
 		return NextResponse.json({ success: true });

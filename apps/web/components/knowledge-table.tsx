@@ -35,7 +35,14 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Knowledge } from "@/lib/db/schema";
-import { Brain, Globe, Loader2, Plus, Trash2 } from "lucide-react";
+import {
+	AlertTriangle,
+	Brain,
+	Globe,
+	Loader2,
+	Plus,
+	Trash2,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface KnowledgeTableProps {
@@ -57,10 +64,12 @@ export function KnowledgeTable({
 	);
 	const [localKnowledge, setLocalKnowledge] = useState<Knowledge[]>(knowledge);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
 	const [knowledgeToDelete, setKnowledgeToDelete] = useState<Knowledge | null>(
 		null
 	);
 	const [isDeleting, setIsDeleting] = useState(false);
+	const [isDeletingAll, setIsDeletingAll] = useState(false);
 
 	// Update local knowledge when props change
 	useEffect(() => {
@@ -143,6 +152,40 @@ export function KnowledgeTable({
 		}
 	};
 
+	const handleDeleteAllClick = () => {
+		setDeleteAllDialogOpen(true);
+	};
+
+	const handleDeleteAllConfirm = async () => {
+		setIsDeletingAll(true);
+		try {
+			console.log("Deleting all knowledge for bot:", botId);
+			const res = await fetch(`/api/bots/${botId}/knowledge/clear`, {
+				method: "DELETE",
+			});
+
+			if (!res.ok) {
+				const errorData = await res.json();
+				throw new Error(errorData.error || "Failed to clear all knowledge");
+			}
+
+			const result = await res.json();
+			console.log("Delete all successful:", result);
+
+			// Clear local state
+			setLocalKnowledge([]);
+
+			// Trigger refresh if available
+			onRefresh?.();
+		} catch (err: any) {
+			console.error("Delete all error:", err);
+			alert(err.message || "Failed to clear all knowledge");
+		} finally {
+			setIsDeletingAll(false);
+			setDeleteAllDialogOpen(false);
+		}
+	};
+
 	if (isLoading) {
 		return (
 			<div className="flex items-center justify-center p-8">
@@ -162,58 +205,74 @@ export function KnowledgeTable({
 								Add and manage knowledge for your bot to use in conversations
 							</CardDescription>
 						</div>
-						<Dialog
-							open={isImportModalOpen}
-							onOpenChange={setIsImportModalOpen}
-						>
-							<DialogTrigger asChild>
-								<Button onClick={handleAddNew}>
-									<Plus className="mr-2 h-4 w-4" /> Add Knowledge
+						<div className="flex items-center gap-2">
+							{localKnowledge.length > 0 && (
+								<Button
+									variant="outline"
+									onClick={handleDeleteAllClick}
+									disabled={isDeletingAll}
+								>
+									{isDeletingAll ? (
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									) : (
+										<Trash2 className="mr-2 h-4 w-4" />
+									)}
+									Delete All
 								</Button>
-							</DialogTrigger>
-							<DialogContent className="sm:max-w-[600px]">
-								<DialogHeader>
-									<DialogTitle>
-										{selectedKnowledge ? "Edit Knowledge" : "Add Knowledge"}
-									</DialogTitle>
-									<DialogDescription>
-										{selectedKnowledge
-											? "Update the knowledge entry details"
-											: "Choose how you want to add knowledge to your bot"}
-									</DialogDescription>
-								</DialogHeader>
-								{selectedKnowledge ? (
-									<ManualKnowledgeEntryForm
-										botId={botId}
-										initialData={selectedKnowledge}
-										onSuccess={handleSuccess}
-									/>
-								) : (
-									<Tabs defaultValue="manual" className="w-full">
-										<TabsList className="grid w-full grid-cols-2">
-											<TabsTrigger value="manual">
-												<Brain className="mr-2 h-4 w-4" />
-												Manual Entry
-											</TabsTrigger>
-											<TabsTrigger value="webpage">
-												<Globe className="mr-2 h-4 w-4" />
-												From Webpage
-											</TabsTrigger>
-										</TabsList>
-										<TabsContent value="manual">
-											<ManualKnowledgeEntryForm
-												botId={botId}
-												onSuccess={handleSuccess}
-											/>
-										</TabsContent>
-										<TabsContent value="webpage">
-											{/* Webpage import form will go here */}
-											<p>Webpage import form coming soon...</p>
-										</TabsContent>
-									</Tabs>
-								)}
-							</DialogContent>
-						</Dialog>
+							)}
+							<Dialog
+								open={isImportModalOpen}
+								onOpenChange={setIsImportModalOpen}
+							>
+								<DialogTrigger asChild>
+									<Button onClick={handleAddNew}>
+										<Plus className="mr-2 h-4 w-4" /> Add Knowledge
+									</Button>
+								</DialogTrigger>
+								<DialogContent className="sm:max-w-[600px]">
+									<DialogHeader>
+										<DialogTitle>
+											{selectedKnowledge ? "Edit Knowledge" : "Add Knowledge"}
+										</DialogTitle>
+										<DialogDescription>
+											{selectedKnowledge
+												? "Update the knowledge entry details"
+												: "Choose how you want to add knowledge to your bot"}
+										</DialogDescription>
+									</DialogHeader>
+									{selectedKnowledge ? (
+										<ManualKnowledgeEntryForm
+											botId={botId}
+											initialData={selectedKnowledge}
+											onSuccess={handleSuccess}
+										/>
+									) : (
+										<Tabs defaultValue="manual" className="w-full">
+											<TabsList className="grid w-full grid-cols-2">
+												<TabsTrigger value="manual">
+													<Brain className="mr-2 h-4 w-4" />
+													Manual Entry
+												</TabsTrigger>
+												<TabsTrigger value="webpage">
+													<Globe className="mr-2 h-4 w-4" />
+													From Webpage
+												</TabsTrigger>
+											</TabsList>
+											<TabsContent value="manual">
+												<ManualKnowledgeEntryForm
+													botId={botId}
+													onSuccess={handleSuccess}
+												/>
+											</TabsContent>
+											<TabsContent value="webpage">
+												{/* Webpage import form will go here */}
+												<p>Webpage import form coming soon...</p>
+											</TabsContent>
+										</Tabs>
+									)}
+								</DialogContent>
+							</Dialog>
+						</div>
 					</div>
 				</CardHeader>
 				<CardContent>
@@ -311,6 +370,37 @@ export function KnowledgeTable({
 					)}
 				</CardContent>
 			</Card>
+			<AlertDialog
+				open={deleteAllDialogOpen}
+				onOpenChange={setDeleteAllDialogOpen}
+			>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle className="flex items-center gap-2">
+							<AlertTriangle className="h-5 w-5 text-destructive" />
+							Delete All Knowledge?
+						</AlertDialogTitle>
+						<AlertDialogDescription>
+							This will permanently delete all {localKnowledge.length} knowledge
+							entries from both the database and vector store. This action
+							cannot be undone.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel>Cancel</AlertDialogCancel>
+						<AlertDialogAction
+							onClick={handleDeleteAllConfirm}
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+						>
+							{isDeletingAll ? (
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							) : (
+								"Delete All"
+							)}
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>
 					<AlertDialogHeader>
