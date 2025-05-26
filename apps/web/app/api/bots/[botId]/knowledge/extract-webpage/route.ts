@@ -1,4 +1,15 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+
+// Initialize Gemini AI
+const getGeminiModel = () => {
+	const geminiApiKey = process.env.GEMINI_API_KEY;
+	if (!geminiApiKey) {
+		throw new Error("GEMINI_API_KEY not configured");
+	}
+	const genAI = new GoogleGenerativeAI(geminiApiKey);
+	return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+};
 
 interface JinaResponse {
 	code: number;
@@ -136,19 +147,16 @@ export async function POST(
 			);
 		}
 
-		const extractedContent = {
-			title: title.trim(),
-			content: content.trim(),
-			description: description.trim(),
-			url: url,
-		};
+		// Summarize and clean content with Gemini
+		console.log("Summarizing and chunking content with Gemini...");
+		const chunks = await summarizeWithGemini(content, title);
 
 		console.log(
-			`Successfully extracted ${content.length} characters from ${url}`
+			`Successfully extracted and created ${chunks.length} intelligent chunks from ${url}`
 		);
 
 		return NextResponse.json({
-			extractedContent,
+			chunks: chunks,
 			settings: {
 				chunkSize,
 				overlap,
@@ -158,13 +166,23 @@ export async function POST(
 		console.error("Error extracting content:", error);
 
 		let errorMessage = "Failed to extract content from webpage";
+		let errorType = "general";
+
 		if (error.name === "TimeoutError") {
-			errorMessage = "The webpage took too long to load. Please try again";
+			errorMessage =
+				"This page is too large or complex to process. Please try a smaller page or upgrade for extended processing.";
+			errorType = "timeout";
 		} else if (error.message?.includes("network")) {
 			errorMessage = "Network error while accessing the webpage";
 		}
 
-		return NextResponse.json({ error: errorMessage }, { status: 500 });
+		return NextResponse.json(
+			{
+				error: errorMessage,
+				errorType: errorType,
+			},
+			{ status: 500 }
+		);
 	}
 }
 
@@ -221,4 +239,132 @@ function cleanContent(content: string): string {
 			.replace(/^\s*\[.*?\].*$/gm, "") // Remove common annotation patterns
 			.trim()
 	);
+}
+
+// Helper function to summarize content using Gemini
+async function summarizeWithGemini(
+	content: string,
+	title: string
+): Promise<Array<{ name: string; content: string }>> {
+	const geminiApiKey = process.env.GEMINI_API_KEY;
+
+	if (!geminiApiKey) {
+		console.log("Gemini API key not found, skipping summarization");
+		// Fallback: return single chunk
+		return [
+			{
+				name: title || "Web Page Content",
+				content: content,
+			},
+		];
+	}
+
+	try {
+		const model = getGeminiModel();
+
+		const prompt = `Please clean up, summarize, and intelligently chunk this web page content for a knowledge base. Break it into logical sections based on topics or themes.
+
+Title: ${title}
+
+Content: ${content}
+
+Instructions:
+- Remove any navigation elements, ads, or irrelevant content
+- Break the content into 3-8 logical chunks based on topics/themes
+- Each chunk should be substantial (300-2000 characters) and self-contained
+- Structure each chunk clearly with proper formatting
+- Use markdown formatting for better structure
+- Give each chunk a descriptive name that summarizes its content
+
+Return ONLY a valid JSON array with this exact format (no markdown formatting, no "json" prefix, just the raw JSON):
+[
+  {
+    "name": "Descriptive chunk title",
+    "content": "The cleaned and formatted content for this section..."
+  },
+  {
+    "name": "Another chunk title", 
+    "content": "The content for the next logical section..."
+  }
+]
+
+IMPORTANT: Return ONLY the JSON array, no other text, no markdown code blocks, no explanations.`;
+
+		const result = await model.generateContent(prompt);
+		const response = await result.response;
+		const responseText = response.text();
+
+		// Try to parse the JSON response
+		try {
+			// Clean up the response text in case it has markdown formatting
+			let cleanedResponse = responseText.trim();
+
+			// Remove common prefixes that Gemini might add
+			if (cleanedResponse.startsWith("json")) {
+				cleanedResponse = cleanedResponse.substring(4).trim();
+			}
+			if (cleanedResponse.startsWith("```json")) {
+				cleanedResponse = cleanedResponse.substring(7).trim();
+			}
+			if (cleanedResponse.endsWith("```")) {
+				cleanedResponse = cleanedResponse
+					.substring(0, cleanedResponse.length - 3)
+					.trim();
+			}
+
+			const chunks = JSON.parse(cleanedResponse);
+			if (
+				Array.isArray(chunks) &&
+				chunks.length > 0 &&
+				chunks.every(
+					(chunk: any) =>
+						chunk &&
+						chunk.name &&
+						chunk.content &&
+						typeof chunk.content === "string"
+				)
+			) {
+				// Filter and validate chunks
+				const validChunks = chunks
+					.filter((chunk: any) => chunk.content.trim().length > 0)
+					.map((chunk: any, index: number) => ({
+						name: chunk.name || `Chunk ${index + 1}`,
+						content: chunk.content.trim(),
+					}));
+
+				if (validChunks.length > 0) {
+					console.log(
+						`Gemini successfully created ${validChunks.length} intelligent chunks`
+					);
+					return validChunks;
+				} else {
+					throw new Error("No valid chunks with content");
+				}
+			} else {
+				throw new Error("Invalid chunk format or missing required fields");
+			}
+		} catch (parseError) {
+			console.log(
+				"Failed to parse Gemini JSON response, falling back to single chunk:",
+				parseError,
+				"Raw response:",
+				responseText.substring(0, 200) + "..."
+			);
+			return [
+				{
+					name: title || "Web Page Content",
+					content: responseText, // Use the response as content even if not JSON
+				},
+			];
+		}
+	} catch (error) {
+		console.error("Gemini summarization failed:", error);
+		// Fallback: return single chunk with original content
+		return [
+			{
+				name: title || "Web Page Content",
+				content: content,
+			},
+		];
+	}
 }

@@ -27,6 +27,7 @@ const nextConfig: NextConfig = {
 		QDRANT_API_KEY: process.env.QDRANT_API_KEY,
 		VERCEL_BLOB_READ_WRITE_TOKEN: process.env.VERCEL_BLOB_READ_WRITE_TOKEN,
 		JINA_AI_API_KEY: process.env.JINA_AI_API_KEY,
+		GEMINI_API_KEY: process.env.GEMINI_API_KEY,
 	},
 };
 

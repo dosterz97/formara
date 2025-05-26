@@ -55,12 +55,14 @@ export function WebPageKnowledgeForm({
 	const [knowledgeChunks, setKnowledgeChunks] = useState<KnowledgeChunk[]>([]);
 	const [isCreating, setIsCreating] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [errorType, setErrorType] = useState<string | null>(null);
 	const [chunkSize, setChunkSize] = useState(2000);
 	const [overlap, setOverlap] = useState(200);
 
 	// Pagination state
 	const [currentPage, setCurrentPage] = useState(1);
 	const [chunksPerPage] = useState(10); // Show 10 chunks per page
+	const [expandedChunkId, setExpandedChunkId] = useState<string | null>(null);
 
 	// Calculate pagination
 	const totalPages = Math.ceil(knowledgeChunks.length / chunksPerPage);
@@ -144,6 +146,7 @@ export function WebPageKnowledgeForm({
 
 		setIsExtracting(true);
 		setError(null);
+		setErrorType(null);
 		setExtractedContent(null);
 		setKnowledgeChunks([]);
 
@@ -161,20 +164,93 @@ export function WebPageKnowledgeForm({
 
 			if (!response.ok) {
 				const errorData = await response.json();
+				setErrorType(errorData.errorType || "general");
 				throw new Error(
 					errorData.error || "Failed to extract content from webpage"
 				);
 			}
 
 			const data = await response.json();
-			setExtractedContent(data.extractedContent);
 
-			// Create knowledge chunks from the extracted content
-			const chunks = chunkContent(
-				data.extractedContent.content,
-				data.extractedContent.title
-			);
-			setKnowledgeChunks(chunks);
+			console.log("Received data from API:", {
+				hasChunks: !!data.chunks,
+				chunksLength: data.chunks?.length,
+				chunksType: typeof data.chunks,
+				hasExtractedContent: !!data.extractedContent,
+				sampleChunk: data.chunks?.[0],
+			});
+
+			// Handle new response format with direct chunks from Gemini
+			if (data.chunks && Array.isArray(data.chunks)) {
+				console.log("Processing Gemini chunks:", data.chunks.length);
+
+				// Convert Gemini chunks to our KnowledgeChunk format
+				const chunks = data.chunks
+					.filter((chunk: any, index: number) => {
+						const isValid = chunk && typeof chunk === "object";
+						if (!isValid) {
+							console.warn(`Invalid chunk at index ${index}:`, chunk);
+						}
+						return isValid;
+					}) // Filter out invalid chunks
+					.map((chunk: any, index: number) => {
+						const processedChunk = {
+							id: (index + 1).toString(),
+							name: chunk.name || `Chunk ${index + 1}`,
+							content: chunk.content || "",
+							selected: true,
+						};
+
+						if (!chunk.content) {
+							console.warn(`Chunk ${index} has no content:`, chunk);
+						}
+
+						return processedChunk;
+					})
+					.filter((chunk: KnowledgeChunk) => {
+						const hasContent = chunk.content.trim().length > 0;
+						if (!hasContent) {
+							console.warn(`Removing empty chunk:`, chunk);
+						}
+						return hasContent;
+					}); // Remove empty chunks
+
+				console.log(
+					`Processed ${chunks.length} valid chunks from ${data.chunks.length} raw chunks`
+				);
+
+				if (chunks.length > 0) {
+					setKnowledgeChunks(chunks);
+
+					// Create a mock extractedContent for compatibility
+					setExtractedContent({
+						title: chunks[0]?.name || "Web Page Content",
+						content: chunks.map((c: KnowledgeChunk) => c.content).join("\n\n"),
+						description: `Intelligently processed into ${chunks.length} chunks`,
+						url: url,
+					});
+				} else {
+					// If no valid chunks, fall back to error
+					throw new Error("No valid content chunks were generated");
+				}
+			} else {
+				// Fallback to old format if needed
+				if (
+					data.extractedContent &&
+					typeof data.extractedContent === "object"
+				) {
+					setExtractedContent(data.extractedContent);
+
+					// Create knowledge chunks from the extracted content
+					const chunks = chunkContent(
+						data.extractedContent.content || "",
+						data.extractedContent.title || "Web Page Content"
+					);
+					setKnowledgeChunks(chunks);
+				} else {
+					throw new Error("Invalid response format from extraction service");
+				}
+			}
 		} catch (err: any) {
 			console.error("Extraction error:", err);
 			setError(err.message || "Failed to extract content from webpage");
@@ -219,6 +295,14 @@ export function WebPageKnowledgeForm({
 
 		try {
 			for (const chunk of selectedChunks) {
+				const chunkName = chunk?.name || `Chunk ${chunk?.id || ""}`;
+				const chunkContent = chunk?.content || "";
+
+				if (!chunkContent.trim()) {
+					console.warn(`Skipping chunk "${chunkName}" - no content`);
+					continue;
+				}
+
 				const response = await fetch("/api/knowledge", {
 					method: "POST",
 					headers: {
@@ -226,9 +310,9 @@ export function WebPageKnowledgeForm({
 					},
 					body: JSON.stringify({
 						botId,
-						slug: slugify(chunk.name, { lower: true, strict: true }),
-						name: chunk.name,
-						content: chunk.content,
+						slug: slugify(chunkName, { lower: true, strict: true }),
+						name: chunkName,
+						content: chunkContent,
 						manualEntry: false, // This is from web import
 					}),
 				});
@@ -236,7 +320,7 @@ export function WebPageKnowledgeForm({
 				if (!response.ok) {
 					const errorData = await response.json();
 					throw new Error(
-						`Failed to create "${chunk.name}": ${errorData.error}`
+						`Failed to create "${chunkName}": ${errorData.error}`
 					);
 				}
 
@@ -311,7 +395,19 @@ export function WebPageKnowledgeForm({
 				<Alert variant="destructive">
 					<AlertCircle className="h-4 w-4" />
 					<AlertTitle>Error</AlertTitle>
-					<AlertDescription>{error}</AlertDescription>
+					<AlertDescription className="space-y-2">
+						<div>{error}</div>
+						{errorType === "timeout" && (
+							<Button
+								variant="outline"
+								size="sm"
+								className="mt-2"
+								onClick={() => window.open("/pricing", "_blank")}
+							>
+								Upgrade Here
+							</Button>
+						)}
+					</AlertDescription>
 				</Alert>
 			)}
 
@@ -352,6 +448,7 @@ export function WebPageKnowledgeForm({
 									setExtractedContent(null);
 									setKnowledgeChunks([]);
 									setError(null);
+									setErrorType(null);
 								}}
 								className="h-7 px-2 text-xs flex-shrink-0"
 							>
@@ -362,51 +459,67 @@ export function WebPageKnowledgeForm({
 
 					<CardContent className="w-full">
 						<div className="h-48 sm:h-64 lg:h-80 overflow-y-auto space-y-2 border rounded-lg p-2 bg-gray-50/50 w-full">
-							{currentChunks.map((chunk) => (
-								<div
-									key={chunk.id}
-									className={`border rounded-md p-2 transition-colors bg-white w-full cursor-pointer ${
-										chunk.selected
-											? "border-blue-200 bg-blue-50/50 hover:bg-blue-100/50"
-											: "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
-									}`}
-									onClick={() => {
-										setKnowledgeChunks((prev) =>
-											prev.map((c) =>
-												c.id === chunk.id ? { ...c, selected: !c.selected } : c
-											)
-										);
-									}}
-								>
-									<div className="flex items-start gap-2 w-full">
-										<Checkbox
-											checked={chunk.selected}
-											onCheckedChange={(checked) => {
-												setKnowledgeChunks((prev) =>
-													prev.map((c) =>
-														c.id === chunk.id
-															? { ...c, selected: !!checked }
-															: c
-													)
-												);
-											}}
-											className="mt-0.5 flex-shrink-0"
-											onClick={(e) => e.stopPropagation()} // Prevent double-toggle
-										/>
-										<div className="flex-1 min-w-0 space-y-1 overflow-hidden w-0">
-											<h4 className="font-medium text-xs truncate break-all">
-												{chunk.name}
-											</h4>
-											<p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed break-all overflow-wrap-anywhere">
-												{chunk.content}
-											</p>
-											<div className="text-xs text-muted-foreground">
-												{chunk.content.length.toLocaleString()} chars
+							{currentChunks.map((chunk) => {
+								const isExpanded = expandedChunkId === chunk.id;
+								const chunkContent = chunk?.content || "";
+								const chunkName = chunk?.name || `Chunk ${chunk?.id || ""}`;
+
+								return (
+									<div
+										key={chunk.id}
+										className={`border rounded-md p-2 transition-colors bg-white w-full cursor-pointer ${
+											chunk.selected
+												? "border-blue-200 bg-blue-50/50 hover:bg-blue-100/50"
+												: "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+										} ${isExpanded ? "ring-2 ring-blue-200" : ""}`}
+										onClick={() => {
+											setExpandedChunkId(isExpanded ? null : chunk.id);
+										}}
+									>
+										<div className="flex items-start gap-2 w-full">
+											<Checkbox
+												checked={chunk.selected}
+												onCheckedChange={(checked) => {
+													setKnowledgeChunks((prev) =>
+														prev.map((c) =>
+															c.id === chunk.id
+																? { ...c, selected: !!checked }
+																: c
+														)
+													);
+												}}
+												className="mt-0.5 flex-shrink-0"
+												onClick={(e) => e.stopPropagation()} // Prevent expansion when clicking checkbox
+											/>
+											<div className="flex-1 min-w-0 space-y-1 overflow-hidden w-0">
+												<h4 className="font-medium text-xs truncate break-all">
+													{chunkName}
+												</h4>
+												{isExpanded ? (
+													<div className="space-y-2">
+														<p className="text-xs text-muted-foreground leading-relaxed break-all overflow-wrap-anywhere whitespace-pre-wrap">
+															{chunkContent}
+														</p>
+														<div className="text-xs text-blue-600 font-medium">
+															Click to collapse
+														</div>
+													</div>
+												) : (
+													<div className="space-y-1">
+														<p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed break-all overflow-wrap-anywhere">
+															{chunkContent}
+														</p>
+														<div className="text-xs text-blue-600">
+															Click to expand •{" "}
+															{chunkContent.length.toLocaleString()} chars
+														</div>
+													</div>
+												)}
 											</div>
 										</div>
 									</div>
-								</div>
-							))}
+								);
+							})}
 
 							{currentChunks.length === 0 && (
 								<div className="text-center text-muted-foreground py-4 text-xs">
