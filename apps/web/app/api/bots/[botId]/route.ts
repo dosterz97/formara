@@ -6,10 +6,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(
 	request: Request,
-	context: { params: { botId: string } }
+	{ params }: { params: Promise<{ botId: string }> }
 ) {
 	try {
-		const { botId } = await context.params;
+		const { botId } = await params;
 
 		// First try to find by slug since it's not a UUID
 		let bot = await db.query.bots.findFirst({
@@ -43,10 +43,10 @@ export async function GET(
 
 export async function DELETE(
 	request: Request,
-	context: { params: { botId: string } }
+	{ params }: { params: Promise<{ botId: string }> }
 ) {
 	try {
-		const { botId } = await context.params;
+		const { botId } = await params;
 
 		// Delete the knowledge collection from Qdrant first
 		try {

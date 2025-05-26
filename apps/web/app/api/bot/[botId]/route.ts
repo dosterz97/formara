@@ -7,7 +7,7 @@ import slugify from "slugify";
 
 export async function GET(
 	request: NextRequest,
-	{ params }: { params: { botId: string } }
+	{ params }: { params: Promise<{ botId: string }> }
 ) {
 	try {
 		const user = await getUser();
@@ -46,7 +46,7 @@ export async function GET(
 
 export async function PUT(
 	request: NextRequest,
-	{ params }: { params: { botId: string } }
+	{ params }: { params: Promise<{ botId: string }> }
 ) {
 	try {
 		const user = await getUser();
@@ -134,7 +134,7 @@ export async function PUT(
 
 export async function DELETE(
 	request: NextRequest,
-	{ params }: { params: { botId: string } }
+	{ params }: { params: Promise<{ botId: string }> }
 ) {
 	try {
 		const user = await getUser();

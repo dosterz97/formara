@@ -5,10 +5,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(
 	request: Request,
-	context: { params: { botId: string } }
+	{ params }: { params: Promise<{ botId: string }> }
 ) {
 	try {
-		const { botId } = await context.params;
+		const { botId } = await params;
 
 		const knowledgeItems = await db
 			.select()
@@ -27,10 +27,10 @@ export async function GET(
 
 export async function POST(
 	request: Request,
-	context: { params: { botId: string } }
+	{ params }: { params: Promise<{ botId: string }> }
 ) {
 	try {
-		const { botId } = await context.params;
+		const { botId } = await params;
 		const data = await request.json();
 
 		// TODO: Add validation for required fields
