@@ -1,19 +1,20 @@
 import { db } from "@/lib/db/drizzle";
 import { searchKnowledge } from "@/lib/db/qdrant-client";
 import { bots } from "@/lib/db/schema";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-	apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize Gemini client
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(
 	request: Request,
 	{ params }: { params: Promise<{ botId: string }> }
 ) {
+	const startTime = Date.now();
+	const timings: { [key: string]: number } = {};
+
 	try {
 		const { botId } = await params;
 		const { message } = await request.json();
@@ -28,7 +29,9 @@ export async function POST(
 		console.log(`Chat request for bot ${botId}:`, message);
 
 		// Get bot details
+		const botFetchStart = Date.now();
 		const bot = await db.select().from(bots).where(eq(bots.id, botId)).limit(1);
+		timings.botFetch = Date.now() - botFetchStart;
 
 		if (bot.length === 0) {
 			return NextResponse.json({ error: "Bot not found" }, { status: 404 });
@@ -37,6 +40,7 @@ export async function POST(
 		const botData = bot[0];
 
 		// Search for relevant knowledge
+		const knowledgeSearchStart = Date.now();
 		let relevantKnowledge: string[] = [];
 		let knowledgeSources: Array<{
 			name: string;
@@ -60,8 +64,10 @@ export async function POST(
 			console.warn("No relevant knowledge found or search failed:", error);
 			// Continue without knowledge base if search fails
 		}
+		timings.knowledgeSearch = Date.now() - knowledgeSearchStart;
 
 		// Construct the system prompt
+		const promptConstructionStart = Date.now();
 		const systemPrompt = `${
 			botData.systemPrompt || "You are a helpful AI assistant."
 		}
@@ -75,32 +81,38 @@ Please use this information to help answer the user's question. If the informati
 		: "No specific knowledge base information was found for this query. Please provide a helpful response based on your general knowledge."
 }`;
 
-		// Generate response using OpenAI
-		const completion = await openai.chat.completions.create({
-			model: "gpt-4o-mini",
-			messages: [
-				{
-					role: "system",
-					content: systemPrompt,
-				},
-				{
-					role: "user",
-					content: message,
-				},
-			],
-			max_tokens: 1000,
-			temperature: 0.7,
+		// Combine system prompt with user message for Gemini
+		const fullPrompt = `${systemPrompt}
+
+User: ${message}`;
+		timings.promptConstruction = Date.now() - promptConstructionStart;
+
+		// Generate response using Gemini
+		const genAIStart = Date.now();
+		const model = genAI.getGenerativeModel({
+			model: "gemini-2.5-flash-preview-05-20",
 		});
+		const result = await model.generateContent(fullPrompt);
+		const response = result.response;
+		timings.genAIGeneration = Date.now() - genAIStart;
 
-		const response =
-			completion.choices[0]?.message?.content ||
-			"I'm sorry, I couldn't generate a response.";
+		const responseText =
+			response.text() || "I'm sorry, I couldn't generate a response.";
 
-		console.log("Generated response:", response);
+		console.log("Generated response:", responseText);
+
+		timings.total = Date.now() - startTime;
 
 		return NextResponse.json({
-			response,
+			response: responseText,
 			knowledgeSources: knowledgeSources.length > 0 ? knowledgeSources : null,
+			timings: {
+				total: timings.total,
+				botFetch: timings.botFetch,
+				knowledgeSearch: timings.knowledgeSearch,
+				promptConstruction: timings.promptConstruction,
+				genAIGeneration: timings.genAIGeneration,
+			},
 		});
 	} catch (error: any) {
 		console.error("Error in chat endpoint:", error);

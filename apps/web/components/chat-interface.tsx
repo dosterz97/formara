@@ -15,17 +15,112 @@ interface KnowledgeSource {
 	score: number;
 }
 
+interface Timings {
+	total: number;
+	botFetch: number;
+	knowledgeSearch: number;
+	promptConstruction: number;
+	genAIGeneration: number;
+}
+
 interface Message {
 	id: string;
 	content: string;
 	role: "user" | "assistant";
 	timestamp: Date;
 	knowledgeSources?: KnowledgeSource[];
+	timings?: Timings;
 }
 
 interface ChatInterfaceProps {
 	botId: string;
 	botName: string;
+}
+
+function TimingBreakdown({ timings }: { timings: Timings }) {
+	const formatTime = (ms: number) => {
+		if (ms >= 1000) {
+			return `${(ms / 1000).toFixed(2)}s`;
+		}
+		return `${ms}ms`;
+	};
+
+	const getPercentage = (ms: number) => {
+		return ((ms / timings.total) * 100).toFixed(1);
+	};
+
+	return (
+		<div className="mt-2 p-3 bg-muted/50 rounded-md text-xs">
+			<div className="flex items-center justify-between mb-2">
+				<span className="font-medium text-muted-foreground">
+					Performance Breakdown
+				</span>
+				<span className="font-mono text-muted-foreground">
+					Total: {formatTime(timings.total)}
+				</span>
+			</div>
+			<div className="space-y-1">
+				<div className="flex justify-between items-center">
+					<span className="text-muted-foreground">Bot Fetch:</span>
+					<div className="flex items-center gap-2">
+						<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+							<div
+								className="h-full bg-blue-500"
+								style={{ width: `${getPercentage(timings.botFetch)}%` }}
+							/>
+						</div>
+						<span className="font-mono w-12 text-right">
+							{formatTime(timings.botFetch)}
+						</span>
+					</div>
+				</div>
+				<div className="flex justify-between items-center">
+					<span className="text-muted-foreground">Knowledge Search:</span>
+					<div className="flex items-center gap-2">
+						<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+							<div
+								className="h-full bg-green-500"
+								style={{ width: `${getPercentage(timings.knowledgeSearch)}%` }}
+							/>
+						</div>
+						<span className="font-mono w-12 text-right">
+							{formatTime(timings.knowledgeSearch)}
+						</span>
+					</div>
+				</div>
+				<div className="flex justify-between items-center">
+					<span className="text-muted-foreground">Prompt Construction:</span>
+					<div className="flex items-center gap-2">
+						<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+							<div
+								className="h-full bg-yellow-500"
+								style={{
+									width: `${getPercentage(timings.promptConstruction)}%`,
+								}}
+							/>
+						</div>
+						<span className="font-mono w-12 text-right">
+							{formatTime(timings.promptConstruction)}
+						</span>
+					</div>
+				</div>
+				<div className="flex justify-between items-center">
+					<span className="text-muted-foreground">Gemini Generation:</span>
+					<div className="flex items-center gap-2">
+						<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+							<div
+								className="h-full bg-purple-500"
+								style={{ width: `${getPercentage(timings.genAIGeneration)}%` }}
+							/>
+						</div>
+						<span className="font-mono w-12 text-right">
+							{formatTime(timings.genAIGeneration)}
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	);
 }
 
 export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
@@ -78,6 +173,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 				role: "assistant",
 				timestamp: new Date(),
 				knowledgeSources: data.knowledgeSources || undefined,
+				timings: data.timings || undefined,
 			};
 
 			setMessages((prev) => [...prev, assistantMessage]);
@@ -148,6 +244,11 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 										<KnowledgeSourcesWidget
 											sources={message.knowledgeSources}
 										/>
+									</div>
+								)}
+								{message.role === "assistant" && message.timings && (
+									<div className="w-full">
+										<TimingBreakdown timings={message.timings} />
 									</div>
 								)}
 							</div>

@@ -14,7 +14,9 @@ export async function generateBotResponse(
 	characterData: CharacterData
 ): Promise<string> {
 	try {
-		const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+		const model = genAI.getGenerativeModel({
+			model: "gemini-2.5-flash-preview-05-20",
+		});
 
 		const context = `You are ${characterData.name}. ${characterData.description}
 

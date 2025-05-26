@@ -8,7 +8,7 @@ const getGeminiModel = () => {
 		throw new Error("GEMINI_API_KEY not configured");
 	}
 	const genAI = new GoogleGenerativeAI(geminiApiKey);
-	return genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+	return genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-05-20" });
 };
 
 interface JinaResponse {
