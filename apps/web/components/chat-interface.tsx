@@ -97,14 +97,14 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 
 	return (
 		<Card className="h-[600px] flex flex-col">
-			<CardHeader>
+			<CardHeader className="flex-shrink-0">
 				<CardTitle className="flex items-center gap-2">
 					<Bot className="h-5 w-5" />
 					Chat with {botName}
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="flex-1 flex flex-col p-0">
-				<div className="flex-1 overflow-y-auto p-4 space-y-4">
+			<CardContent className="flex-1 flex flex-col p-0 min-h-0">
+				<div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
 					{messages.length === 0 && (
 						<div className="text-center text-muted-foreground py-8">
 							Start a conversation to test the bot's knowledge base!
@@ -119,7 +119,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 							)}
 						>
 							{message.role === "assistant" && (
-								<Avatar className="h-8 w-8">
+								<Avatar className="h-8 w-8 flex-shrink-0">
 									<AvatarFallback>
 										<Bot className="h-4 w-4" />
 									</AvatarFallback>
@@ -127,7 +127,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 							)}
 							<div
 								className={cn(
-									"max-w-[80%]",
+									"max-w-[80%] flex-shrink",
 									message.role === "user"
 										? "flex flex-col items-end"
 										: "flex flex-col items-start"
@@ -135,7 +135,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 							>
 								<div
 									className={cn(
-										"p-3 rounded-lg text-sm",
+										"p-3 rounded-lg text-sm break-words",
 										message.role === "user"
 											? "bg-primary text-primary-foreground"
 											: "bg-muted"
@@ -144,7 +144,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 									{message.content}
 								</div>
 								{message.role === "assistant" && message.knowledgeSources && (
-									<div className="w-full">
+									<div className="w-full mt-2">
 										<KnowledgeSourcesWidget
 											sources={message.knowledgeSources}
 										/>
@@ -152,7 +152,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 								)}
 							</div>
 							{message.role === "user" && (
-								<Avatar className="h-8 w-8">
+								<Avatar className="h-8 w-8 flex-shrink-0">
 									<AvatarFallback>
 										<User className="h-4 w-4" />
 									</AvatarFallback>
@@ -162,7 +162,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 					))}
 					{isLoading && (
 						<div className="flex gap-3">
-							<Avatar className="h-8 w-8">
+							<Avatar className="h-8 w-8 flex-shrink-0">
 								<AvatarFallback>
 									<Bot className="h-4 w-4" />
 								</AvatarFallback>
@@ -174,7 +174,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 					)}
 					<div ref={messagesEndRef} />
 				</div>
-				<div className="border-t p-4">
+				<div className="border-t p-4 flex-shrink-0">
 					<form onSubmit={handleSubmit} className="flex gap-2">
 						<Input
 							value={input}

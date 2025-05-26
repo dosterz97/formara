@@ -30,16 +30,57 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import {
+	Form,
+	FormControl,
+	FormDescription,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { Bot, Knowledge } from "@/lib/db/schema";
 import { getDiscordOAuthUrl } from "@/lib/discord/constants";
-import { ArrowLeft, Loader2, Pencil, Trash2 } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, Loader2, Pencil, Save, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { use, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { z } from "zod";
 
 const getOAuthUrl = (botId: string) =>
 	getDiscordOAuthUrl(process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID!, botId);
+
+// Form schema for bot editing
+const formSchema = z.object({
+	name: z
+		.string()
+		.min(1, "Name is required")
+		.max(100, "Name must be less than 100 characters"),
+	description: z
+		.string()
+		.max(500, "Description must be less than 500 characters")
+		.optional(),
+	systemPrompt: z
+		.string()
+		.min(1, "System prompt is required")
+		.max(2000, "System prompt must be less than 2000 characters"),
+	status: z.enum(["active", "inactive"]),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 interface BotDetailsProps {
 	params: Promise<{
@@ -58,6 +99,33 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 	const [deleteLoading, setDeleteLoading] = useState(false);
 	const router = useRouter();
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+	// Editing state
+	const [isEditing, setIsEditing] = useState(false);
+	const [editLoading, setEditLoading] = useState(false);
+
+	// Form for inline editing
+	const form = useForm<FormValues>({
+		resolver: zodResolver(formSchema),
+		defaultValues: {
+			name: "",
+			description: "",
+			systemPrompt: "",
+			status: "active",
+		},
+	});
+
+	// Update form when bot data changes
+	useEffect(() => {
+		if (bot) {
+			form.reset({
+				name: bot.name,
+				description: bot.description || "",
+				systemPrompt: bot.systemPrompt || "",
+				status: (bot.status as any) || "active",
+			});
+		}
+	}, [bot, form]);
 
 	// Check for Discord integration status
 	useEffect(() => {
@@ -177,6 +245,51 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 		// Update the bot in the local state
 		setBot(updatedBot);
 		toast.success("Bot updated successfully");
+	};
+
+	// Handle inline form submission
+	const handleInlineEdit = async (values: FormValues) => {
+		if (!bot) return;
+
+		try {
+			setEditLoading(true);
+
+			const response = await fetch(`/api/bot/${bot.id}`, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(values),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || "Failed to update bot");
+			}
+
+			const updatedBot = await response.json();
+			setBot(updatedBot);
+			setIsEditing(false);
+			toast.success("Bot updated successfully");
+		} catch (error) {
+			console.error("Error updating bot:", error);
+			toast.error("Failed to update bot");
+		} finally {
+			setEditLoading(false);
+		}
+	};
+
+	// Cancel editing
+	const handleCancelEdit = () => {
+		if (bot) {
+			form.reset({
+				name: bot.name,
+				description: bot.description || "",
+				systemPrompt: bot.systemPrompt || "",
+				status: (bot.status as any) || "active",
+			});
+		}
+		setIsEditing(false);
 	};
 
 	// Loading state
@@ -314,42 +427,205 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 			</div>
 
 			<div className="grid gap-6">
-				<Card>
-					<CardHeader>
-						<CardTitle>Bot Details</CardTitle>
-						<CardDescription>
-							Configure your bot's settings and behavior
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						<div className="space-y-4">
-							<div>
-								<h3 className="font-medium mb-2">System Prompt</h3>
-								<p className="text-sm text-muted-foreground">
-									{bot?.systemPrompt || "No system prompt set"}
-								</p>
-							</div>
-							<div>
-								<h3 className="font-medium mb-2">Voice</h3>
-								<p className="text-sm text-muted-foreground">
-									{bot?.voiceId || "No voice selected"}
-								</p>
-							</div>
-							<div>
-								<h3 className="font-medium mb-2">Status</h3>
-								<Badge variant="outline">{bot?.status}</Badge>
-							</div>
-						</div>
-					</CardContent>
-				</Card>
+				<Tabs defaultValue="details" className="w-full">
+					<TabsList className="grid w-full grid-cols-3">
+						<TabsTrigger value="details">Details</TabsTrigger>
+						<TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
+						<TabsTrigger value="chat">Chat Interface</TabsTrigger>
+					</TabsList>
+					<TabsContent value="details">
+						<Card>
+							<CardHeader>
+								<div className="flex items-center justify-between">
+									<div>
+										<CardTitle>Bot Details</CardTitle>
+										<CardDescription>
+											Configure your bot's settings and behavior
+										</CardDescription>
+									</div>
+									<div className="flex items-center gap-2">
+										{!isEditing ? (
+											<Button
+												variant="outline"
+												size="sm"
+												onClick={() => setIsEditing(true)}
+												disabled={editLoading}
+											>
+												<Pencil className="mr-2 h-4 w-4" />
+												Edit
+											</Button>
+										) : (
+											<div className="flex gap-2">
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={handleCancelEdit}
+													disabled={editLoading}
+												>
+													<X className="mr-2 h-4 w-4" />
+													Cancel
+												</Button>
+												<Button
+													size="sm"
+													onClick={form.handleSubmit(handleInlineEdit)}
+													disabled={editLoading}
+												>
+													{editLoading ? (
+														<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+													) : (
+														<Save className="mr-2 h-4 w-4" />
+													)}
+													Save
+												</Button>
+											</div>
+										)}
+									</div>
+								</div>
+							</CardHeader>
+							<CardContent>
+								{!isEditing ? (
+									<div className="space-y-4">
+										<div>
+											<h3 className="font-medium mb-2">Name</h3>
+											<p className="text-sm text-muted-foreground">
+												{bot?.name}
+											</p>
+										</div>
+										<div>
+											<h3 className="font-medium mb-2">Description</h3>
+											<p className="text-sm text-muted-foreground">
+												{bot?.description || "No description set"}
+											</p>
+										</div>
+										<div>
+											<h3 className="font-medium mb-2">System Prompt</h3>
+											<p className="text-sm text-muted-foreground">
+												{bot?.systemPrompt || "No system prompt set"}
+											</p>
+										</div>
+										<div>
+											<h3 className="font-medium mb-2">Voice</h3>
+											<p className="text-sm text-muted-foreground">
+												{bot?.voiceId || "No voice selected"}
+											</p>
+										</div>
+										<div>
+											<h3 className="font-medium mb-2">Status</h3>
+											<Badge variant="outline">{bot?.status}</Badge>
+										</div>
+									</div>
+								) : (
+									<Form {...form}>
+										<form
+											onSubmit={form.handleSubmit(handleInlineEdit)}
+											className="space-y-4"
+										>
+											<FormField
+												control={form.control}
+												name="name"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>Name</FormLabel>
+														<FormControl>
+															<Input placeholder="Bot name" {...field} />
+														</FormControl>
+														<FormDescription>
+															The name of your bot.
+														</FormDescription>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
 
-				<KnowledgeTable
-					botId={bot?.id || ""}
-					knowledge={knowledge}
-					isLoading={knowledgeLoading}
-				/>
+											<FormField
+												control={form.control}
+												name="description"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>Description</FormLabel>
+														<FormControl>
+															<Textarea
+																placeholder="Describe your bot..."
+																className="resize-none"
+																{...field}
+															/>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
 
-				<ChatInterface botId={bot?.id || ""} botName={bot?.name || ""} />
+											<FormField
+												control={form.control}
+												name="systemPrompt"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>System Prompt</FormLabel>
+														<FormControl>
+															<Textarea
+																placeholder="Enter the system prompt that defines your bot's behavior..."
+																className="resize-none h-32"
+																{...field}
+															/>
+														</FormControl>
+														<FormDescription>
+															This prompt defines your bot's personality and
+															behavior.
+														</FormDescription>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+
+											<FormField
+												control={form.control}
+												name="status"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>Status</FormLabel>
+														<Select
+															onValueChange={field.onChange}
+															defaultValue={field.value}
+															value={field.value}
+														>
+															<FormControl>
+																<SelectTrigger>
+																	<SelectValue placeholder="Select a status" />
+																</SelectTrigger>
+															</FormControl>
+															<SelectContent>
+																{["active", "inactive"].map((status) => (
+																	<SelectItem key={status} value={status}>
+																		{status.charAt(0).toUpperCase() +
+																			status.slice(1)}
+																	</SelectItem>
+																))}
+															</SelectContent>
+														</Select>
+														<FormDescription>
+															The current status of this bot.
+														</FormDescription>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
+										</form>
+									</Form>
+								)}
+							</CardContent>
+						</Card>
+					</TabsContent>
+					<TabsContent value="knowledge">
+						<KnowledgeTable
+							botId={bot?.id || ""}
+							knowledge={knowledge}
+							isLoading={knowledgeLoading}
+						/>
+					</TabsContent>
+					<TabsContent value="chat">
+						<ChatInterface botId={bot?.id || ""} botName={bot?.name || ""} />
+					</TabsContent>
+				</Tabs>
 			</div>
 
 			{/* Edit modal */}
