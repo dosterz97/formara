@@ -4,11 +4,17 @@ export interface KnowledgeSource {
 	score: number;
 }
 
+export interface ChatHistoryMessage {
+	role: "user" | "assistant";
+	content: string;
+}
+
 export interface PromptOptions {
 	systemPrompt?: string;
 	description?: string;
 	knowledgeSources?: KnowledgeSource[];
 	userMessage: string;
+	chatHistory?: ChatHistoryMessage[];
 }
 
 /**
@@ -22,6 +28,7 @@ export function constructPrompt(options: PromptOptions): string {
 		description,
 		knowledgeSources = [],
 		userMessage,
+		chatHistory = [],
 	} = options;
 
 	// Bot description section
@@ -53,16 +60,29 @@ ${knowledgeSources
 	.map((source) => `${source.name}: ${source.content}`)
 	.join("\n\n")}
 
-Use this contextual knowledge to provide accurate, well-informed responses. If the knowledge doesn't directly relate to the user's question, you may still provide helpful responses based on your general capabilities.`
-			: "CONTEXTUAL KNOWLEDGE: No specific contextual information was found in the knowledge base for this query. Please provide a helpful response based on your general knowledge and capabilities.";
+Use this contextual knowledge to provide accurate, well-informed responses. If the knowledge doesn't directly relate to the user's question, you may still provide helpful responses based on your general capabilities.
+
+`
+			: `CONTEXTUAL KNOWLEDGE: No specific contextual information was found in the knowledge base for this query. Please provide a helpful response based on your general knowledge and capabilities.
+
+`;
+
+	// Chat history section
+	const chatHistorySection =
+		chatHistory.length > 0
+			? `CONVERSATION HISTORY:
+${chatHistory
+	.map((msg) => `${msg.role === "user" ? "User" : "Assistant"}: ${msg.content}`)
+	.join("\n")}
+
+`
+			: "";
 
 	// Construct the complete system prompt
-	const completeSystemPrompt = `${descriptionSection}${systemInstructionsSection}${knowledgeSection}`;
+	const completeSystemPrompt = `${descriptionSection}${systemInstructionsSection}${knowledgeSection}${chatHistorySection}`;
 
 	// Combine system prompt with user message for Gemini
-	const fullPrompt = `${completeSystemPrompt}
-
-User: ${userMessage}`;
+	const fullPrompt = `${completeSystemPrompt}User: ${userMessage}`;
 
 	return fullPrompt;
 }

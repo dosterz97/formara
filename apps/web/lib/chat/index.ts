@@ -41,6 +41,7 @@ export interface RelevantData {
 export {
 	constructPrompt,
 	formatKnowledgeSources,
+	type ChatHistoryMessage,
 	type KnowledgeSource,
 	type PromptOptions,
 } from "./prompt";

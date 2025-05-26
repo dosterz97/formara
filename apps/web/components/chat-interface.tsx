@@ -19,6 +19,7 @@ import {
 	Clock,
 	Loader2,
 	Send,
+	Trash2,
 	User,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -171,6 +172,9 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 	const [isLoading, setIsLoading] = useState(false);
 	const messagesEndRef = useRef<HTMLDivElement>(null);
 
+	// Local storage key for this bot's chat history
+	const chatStorageKey = `chat-history-${botId}`;
+
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	};
@@ -178,6 +182,41 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 	useEffect(() => {
 		scrollToBottom();
 	}, [messages]);
+
+	// Load chat history from local storage on component mount
+	useEffect(() => {
+		try {
+			const savedMessages = localStorage.getItem(chatStorageKey);
+			if (savedMessages) {
+				const parsedMessages = JSON.parse(savedMessages);
+				setMessages(parsedMessages);
+			}
+		} catch (error) {
+			console.error("Error loading chat history:", error);
+		}
+	}, [chatStorageKey]);
+
+	// Save chat history to local storage whenever messages change
+	useEffect(() => {
+		if (messages.length > 0) {
+			try {
+				localStorage.setItem(chatStorageKey, JSON.stringify(messages));
+			} catch (error) {
+				console.error("Error saving chat history:", error);
+			}
+		}
+	}, [messages, chatStorageKey]);
+
+	// Convert messages to chat history format for API
+	const getChatHistory = () => {
+		return messages
+			.filter((msg) => msg.role === "user" || msg.role === "assistant")
+			.map((msg) => ({
+				role: msg.role,
+				content: msg.content,
+			}))
+			.slice(-20); // Limit to last 20 messages
+	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -195,12 +234,17 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 		setIsLoading(true);
 
 		try {
+			const chatHistory = getChatHistory();
+
 			const response = await fetch(`/api/bots/${botId}/chat`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
-				body: JSON.stringify({ message: input }),
+				body: JSON.stringify({
+					message: input,
+					chatHistory: chatHistory,
+				}),
 			});
 
 			if (!response.ok) {
@@ -234,12 +278,34 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 		}
 	};
 
+	// Clear chat history
+	const clearChatHistory = () => {
+		setMessages([]);
+		try {
+			localStorage.removeItem(chatStorageKey);
+		} catch (error) {
+			console.error("Error clearing chat history:", error);
+		}
+	};
+
 	return (
 		<Card className="h-[600px] flex flex-col">
 			<CardHeader className="flex-shrink-0">
-				<CardTitle className="flex items-center gap-2">
-					<Bot className="h-5 w-5" />
-					Chat with {botName}
+				<CardTitle className="flex items-center justify-between">
+					<div className="flex items-center gap-2">
+						<Bot className="h-5 w-5" />
+						Chat with {botName}
+					</div>
+					{messages.length > 0 && (
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={clearChatHistory}
+							className="text-muted-foreground hover:text-destructive"
+						>
+							<Trash2 className="h-4 w-4" />
+						</Button>
+					)}
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="flex-1 flex flex-col p-0 min-h-0">

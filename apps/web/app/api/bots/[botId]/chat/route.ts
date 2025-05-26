@@ -18,7 +18,7 @@ export async function POST(
 
 	try {
 		const { botId } = await params;
-		const { message } = await request.json();
+		const { message, chatHistory = [] } = await request.json();
 
 		if (!message || typeof message !== "string") {
 			return NextResponse.json(
@@ -28,6 +28,9 @@ export async function POST(
 		}
 
 		console.log(`Chat request for bot ${botId}:`, message);
+
+		// Limit chat history to last 20 messages (10 exchanges)
+		const limitedChatHistory = chatHistory.slice(-20);
 
 		// Get bot details
 		const botFetchStart = Date.now();
@@ -65,6 +68,7 @@ export async function POST(
 			description: botData.description || undefined,
 			knowledgeSources: knowledgeSources,
 			userMessage: message,
+			chatHistory: limitedChatHistory,
 		});
 
 		// Generate response using Gemini
