@@ -1,3 +1,4 @@
+import { constructPrompt, formatKnowledgeSources } from "@/lib/chat/prompt";
 import { db } from "@/lib/db/drizzle";
 import { searchKnowledge } from "@/lib/db/qdrant-client";
 import { bots } from "@/lib/db/schema";
@@ -41,24 +42,16 @@ export async function POST(
 
 		// Search for relevant knowledge
 		const knowledgeSearchStart = Date.now();
-		let relevantKnowledge: string[] = [];
 		let knowledgeSources: Array<{
 			name: string;
 			content: string;
 			score: number;
 		}> = [];
 		try {
-			const knowledgeResults = await searchKnowledge(message, botId, 3, 0.7);
-			relevantKnowledge = knowledgeResults.map(
-				(result) => `${result.payload?.name}: ${result.payload?.content}`
-			);
-			knowledgeSources = knowledgeResults.map((result) => ({
-				name: result.payload?.name || "Untitled",
-				content: result.payload?.content || "",
-				score: result.score,
-			}));
+			const knowledgeResults = await searchKnowledge(message, botId, 5, 0.7);
+			knowledgeSources = formatKnowledgeSources(knowledgeResults);
 			console.log(
-				`Found ${relevantKnowledge.length} relevant knowledge entries`
+				`Found ${knowledgeSources.length} relevant knowledge entries`
 			);
 		} catch (error) {
 			console.warn("No relevant knowledge found or search failed:", error);
@@ -66,24 +59,12 @@ export async function POST(
 		}
 		timings.knowledgeSearch = Date.now() - knowledgeSearchStart;
 
-		// Construct the system prompt
-		const systemPrompt = `${
-			botData.systemPrompt || "You are a helpful AI assistant."
-		}
-
-${
-	relevantKnowledge.length > 0
-		? `Here is some relevant information from the knowledge base:
-${relevantKnowledge.join("\n\n")}
-
-Please use this information to help answer the user's question. If the information doesn't help answer the question, you can still provide a helpful response based on your general knowledge.`
-		: "No specific knowledge base information was found for this query. Please provide a helpful response based on your general knowledge."
-}`;
-
-		// Combine system prompt with user message for Gemini
-		const fullPrompt = `${systemPrompt}
-
-User: ${message}`;
+		// Construct the prompt using shared utility
+		const fullPrompt = constructPrompt({
+			systemPrompt: botData.systemPrompt || undefined,
+			knowledgeSources: knowledgeSources,
+			userMessage: message,
+		});
 
 		// Generate response using Gemini
 		const genAIStart = Date.now();
@@ -104,6 +85,7 @@ User: ${message}`;
 		return NextResponse.json({
 			response: responseText,
 			knowledgeSources: knowledgeSources.length > 0 ? knowledgeSources : null,
+			prompt: fullPrompt,
 			timings: {
 				total: timings.total,
 				botFetch: timings.botFetch,

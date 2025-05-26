@@ -10,6 +10,7 @@ import {
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
+import { KnowledgeSource } from "@/lib/chat/prompt";
 import { cn } from "@/lib/utils";
 import {
 	Bot,
@@ -21,12 +22,6 @@ import {
 	User,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
-interface KnowledgeSource {
-	name: string;
-	content: string;
-	score: number;
-}
 
 interface Timings {
 	total: number;
@@ -42,6 +37,7 @@ interface Message {
 	timestamp: Date;
 	knowledgeSources?: KnowledgeSource[];
 	timings?: Timings;
+	prompt?: string;
 }
 
 interface ChatInterfaceProps {
@@ -138,6 +134,37 @@ function TimingBreakdown({ timings }: { timings: Timings }) {
 	);
 }
 
+function PromptViewer({ prompt }: { prompt: string }) {
+	const [isOpen, setIsOpen] = useState(false);
+
+	return (
+		<Card className="mt-2 bg-orange-50/50 border-orange-200">
+			<Collapsible open={isOpen} onOpenChange={setIsOpen}>
+				<CollapsibleTrigger asChild>
+					<CardHeader className="pb-2 pt-3 px-3 cursor-pointer hover:bg-orange-100/50 transition-colors">
+						<CardTitle className="text-xs font-medium text-orange-700 flex items-center gap-2">
+							<Bot className="h-3 w-3" />
+							Gemini Input Prompt
+							{isOpen ? (
+								<ChevronDown className="h-3 w-3" />
+							) : (
+								<ChevronRight className="h-3 w-3" />
+							)}
+						</CardTitle>
+					</CardHeader>
+				</CollapsibleTrigger>
+				<CollapsibleContent>
+					<CardContent className="pt-0 px-3 pb-3">
+						<pre className="text-xs text-gray-700 whitespace-pre-wrap bg-white border border-orange-200 rounded-md p-3 max-h-96 overflow-y-auto">
+							{prompt}
+						</pre>
+					</CardContent>
+				</CollapsibleContent>
+			</Collapsible>
+		</Card>
+	);
+}
+
 export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState("");
@@ -189,6 +216,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 				timestamp: new Date(),
 				knowledgeSources: data.knowledgeSources || undefined,
 				timings: data.timings || undefined,
+				prompt: data.prompt || undefined,
 			};
 
 			setMessages((prev) => [...prev, assistantMessage]);
@@ -264,6 +292,11 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 								{message.role === "assistant" && message.timings && (
 									<div className="w-full">
 										<TimingBreakdown timings={message.timings} />
+									</div>
+								)}
+								{message.role === "assistant" && message.prompt && (
+									<div className="w-full">
+										<PromptViewer prompt={message.prompt} />
 									</div>
 								)}
 							</div>

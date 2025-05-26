@@ -36,3 +36,11 @@ export interface RelevantData {
 	relevanceScore: number;
 	type: "text" | "image" | "audio" | "video";
 }
+
+// Export prompt utilities
+export {
+	constructPrompt,
+	formatKnowledgeSources,
+	type KnowledgeSource,
+	type PromptOptions,
+} from "./prompt";
