@@ -6,6 +6,7 @@ export interface KnowledgeSource {
 
 export interface PromptOptions {
 	systemPrompt?: string;
+	description?: string;
 	knowledgeSources?: KnowledgeSource[];
 	userMessage: string;
 }
@@ -16,10 +17,31 @@ export interface PromptOptions {
  * @returns The complete prompt string ready for AI generation
  */
 export function constructPrompt(options: PromptOptions): string {
-	const { systemPrompt, knowledgeSources = [], userMessage } = options;
+	const {
+		systemPrompt,
+		description,
+		knowledgeSources = [],
+		userMessage,
+	} = options;
 
-	// Base system prompt
-	const baseSystemPrompt = systemPrompt || "You are a helpful AI assistant.";
+	// Bot description section
+	const descriptionSection = description
+		? `PERSONALITY DESCRIPTION:
+${description}
+
+`
+		: "";
+
+	// System instructions section
+	const systemInstructionsSection = systemPrompt
+		? `SYSTEM INSTRUCTIONS:
+${systemPrompt}
+
+`
+		: `SYSTEM INSTRUCTIONS:
+You are a helpful AI assistant.
+
+`;
 
 	// Knowledge base section
 	const knowledgeSection =
@@ -35,9 +57,7 @@ Use this contextual knowledge to provide accurate, well-informed responses. If t
 			: "CONTEXTUAL KNOWLEDGE: No specific contextual information was found in the knowledge base for this query. Please provide a helpful response based on your general knowledge and capabilities.";
 
 	// Construct the complete system prompt
-	const completeSystemPrompt = `${baseSystemPrompt}
-
-${knowledgeSection}`;
+	const completeSystemPrompt = `${descriptionSection}${systemInstructionsSection}${knowledgeSection}`;
 
 	// Combine system prompt with user message for Gemini
 	const fullPrompt = `${completeSystemPrompt}

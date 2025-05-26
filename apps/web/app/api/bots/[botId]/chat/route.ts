@@ -62,6 +62,7 @@ export async function POST(
 		// Construct the prompt using shared utility
 		const fullPrompt = constructPrompt({
 			systemPrompt: botData.systemPrompt || undefined,
+			description: botData.description || undefined,
 			knowledgeSources: knowledgeSources,
 			userMessage: message,
 		});
