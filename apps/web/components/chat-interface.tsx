@@ -4,9 +4,22 @@ import { KnowledgeSourcesWidget } from "@/components/knowledge-sources-widget";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Bot, Loader2, Send, User } from "lucide-react";
+import {
+	Bot,
+	ChevronDown,
+	ChevronRight,
+	Clock,
+	Loader2,
+	Send,
+	User,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 interface KnowledgeSource {
@@ -19,7 +32,6 @@ interface Timings {
 	total: number;
 	botFetch: number;
 	knowledgeSearch: number;
-	promptConstruction: number;
 	genAIGeneration: number;
 }
 
@@ -38,6 +50,8 @@ interface ChatInterfaceProps {
 }
 
 function TimingBreakdown({ timings }: { timings: Timings }) {
+	const [isOpen, setIsOpen] = useState(false);
+
 	const formatTime = (ms: number) => {
 		if (ms >= 1000) {
 			return `${(ms / 1000).toFixed(2)}s`;
@@ -50,76 +64,77 @@ function TimingBreakdown({ timings }: { timings: Timings }) {
 	};
 
 	return (
-		<div className="mt-2 p-3 bg-muted/50 rounded-md text-xs">
-			<div className="flex items-center justify-between mb-2">
-				<span className="font-medium text-muted-foreground">
-					Performance Breakdown
-				</span>
-				<span className="font-mono text-muted-foreground">
-					Total: {formatTime(timings.total)}
-				</span>
-			</div>
-			<div className="space-y-1">
-				<div className="flex justify-between items-center">
-					<span className="text-muted-foreground">Bot Fetch:</span>
-					<div className="flex items-center gap-2">
-						<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-							<div
-								className="h-full bg-blue-500"
-								style={{ width: `${getPercentage(timings.botFetch)}%` }}
-							/>
+		<Card className="mt-2 bg-slate-50/50 border-slate-200">
+			<Collapsible open={isOpen} onOpenChange={setIsOpen}>
+				<CollapsibleTrigger asChild>
+					<CardHeader className="pb-2 pt-3 px-3 cursor-pointer hover:bg-slate-100/50 transition-colors">
+						<CardTitle className="text-xs font-medium text-slate-700 flex items-center gap-2">
+							<Clock className="h-3 w-3" />
+							Performance Breakdown ({formatTime(timings.total)})
+							{isOpen ? (
+								<ChevronDown className="h-3 w-3" />
+							) : (
+								<ChevronRight className="h-3 w-3" />
+							)}
+						</CardTitle>
+					</CardHeader>
+				</CollapsibleTrigger>
+				<CollapsibleContent>
+					<CardContent className="pt-0 px-3 pb-3">
+						<div className="space-y-1">
+							<div className="flex justify-between items-center">
+								<span className="text-muted-foreground">Bot Fetch:</span>
+								<div className="flex items-center gap-2">
+									<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+										<div
+											className="h-full bg-blue-500"
+											style={{ width: `${getPercentage(timings.botFetch)}%` }}
+										/>
+									</div>
+									<span className="font-mono w-12 text-right text-xs">
+										{formatTime(timings.botFetch)}
+									</span>
+								</div>
+							</div>
+							<div className="flex justify-between items-center">
+								<span className="text-muted-foreground">Knowledge Search:</span>
+								<div className="flex items-center gap-2">
+									<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+										<div
+											className="h-full bg-green-500"
+											style={{
+												width: `${getPercentage(timings.knowledgeSearch)}%`,
+											}}
+										/>
+									</div>
+									<span className="font-mono w-12 text-right text-xs">
+										{formatTime(timings.knowledgeSearch)}
+									</span>
+								</div>
+							</div>
+							<div className="flex justify-between items-center">
+								<span className="text-muted-foreground">
+									Gemini Generation:
+								</span>
+								<div className="flex items-center gap-2">
+									<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+										<div
+											className="h-full bg-purple-500"
+											style={{
+												width: `${getPercentage(timings.genAIGeneration)}%`,
+											}}
+										/>
+									</div>
+									<span className="font-mono w-12 text-right text-xs">
+										{formatTime(timings.genAIGeneration)}
+									</span>
+								</div>
+							</div>
 						</div>
-						<span className="font-mono w-12 text-right">
-							{formatTime(timings.botFetch)}
-						</span>
-					</div>
-				</div>
-				<div className="flex justify-between items-center">
-					<span className="text-muted-foreground">Knowledge Search:</span>
-					<div className="flex items-center gap-2">
-						<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-							<div
-								className="h-full bg-green-500"
-								style={{ width: `${getPercentage(timings.knowledgeSearch)}%` }}
-							/>
-						</div>
-						<span className="font-mono w-12 text-right">
-							{formatTime(timings.knowledgeSearch)}
-						</span>
-					</div>
-				</div>
-				<div className="flex justify-between items-center">
-					<span className="text-muted-foreground">Prompt Construction:</span>
-					<div className="flex items-center gap-2">
-						<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-							<div
-								className="h-full bg-yellow-500"
-								style={{
-									width: `${getPercentage(timings.promptConstruction)}%`,
-								}}
-							/>
-						</div>
-						<span className="font-mono w-12 text-right">
-							{formatTime(timings.promptConstruction)}
-						</span>
-					</div>
-				</div>
-				<div className="flex justify-between items-center">
-					<span className="text-muted-foreground">Gemini Generation:</span>
-					<div className="flex items-center gap-2">
-						<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-							<div
-								className="h-full bg-purple-500"
-								style={{ width: `${getPercentage(timings.genAIGeneration)}%` }}
-							/>
-						</div>
-						<span className="font-mono w-12 text-right">
-							{formatTime(timings.genAIGeneration)}
-						</span>
-					</div>
-				</div>
-			</div>
-		</div>
+					</CardContent>
+				</CollapsibleContent>
+			</Collapsible>
+		</Card>
 	);
 }
 

@@ -67,7 +67,6 @@ export async function POST(
 		timings.knowledgeSearch = Date.now() - knowledgeSearchStart;
 
 		// Construct the system prompt
-		const promptConstructionStart = Date.now();
 		const systemPrompt = `${
 			botData.systemPrompt || "You are a helpful AI assistant."
 		}
@@ -85,7 +84,6 @@ Please use this information to help answer the user's question. If the informati
 		const fullPrompt = `${systemPrompt}
 
 User: ${message}`;
-		timings.promptConstruction = Date.now() - promptConstructionStart;
 
 		// Generate response using Gemini
 		const genAIStart = Date.now();
@@ -110,7 +108,6 @@ User: ${message}`;
 				total: timings.total,
 				botFetch: timings.botFetch,
 				knowledgeSearch: timings.knowledgeSearch,
-				promptConstruction: timings.promptConstruction,
 				genAIGeneration: timings.genAIGeneration,
 			},
 		});
