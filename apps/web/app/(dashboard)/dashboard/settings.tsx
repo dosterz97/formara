@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { removeTeamMember } from "@/app/(login)/actions";
 import { TeamDataWithMembers, User } from "@/lib/db/schema";
 import { useActionState } from "react";
-import { InviteTeamMember } from "./invite-team";
 
 type ActionState = {
 	error?: string;
@@ -116,7 +115,7 @@ export function Settings({ teamData }: { teamData: TeamDataWithMembers }) {
 					)}
 				</CardContent>
 			</Card>
-			<InviteTeamMember />
+			{/* <InviteTeamMember /> */}
 		</section>
 	);
 }
