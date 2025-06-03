@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Menu, MessageSquare, Settings, Shield, Users } from "lucide-react";
+import { Menu, MessageSquare, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -16,9 +16,8 @@ export default function DashboardLayout({
 
 	const navItems = [
 		{ href: "/dashboard/bots", icon: MessageSquare, label: "Bots" },
-		{ href: "/dashboard/general", icon: Settings, label: "General" },
+		{ href: "/dashboard/general", icon: Settings, label: "Settings" },
 		{ href: "/dashboard", icon: Users, label: "Team" },
-		{ href: "/dashboard/security", icon: Shield, label: "Security" },
 	];
 
 	return (
