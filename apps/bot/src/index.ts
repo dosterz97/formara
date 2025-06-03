@@ -83,7 +83,10 @@ client.on(Events.MessageCreate, async (message: Message) => {
 			return;
 		}
 
-		console.log("Bot was mentioned, fetching bot data");
+		console.log(
+			"Bot was mentioned, fetching bot data for guild",
+			message.guild.id
+		);
 		try {
 			const bot = await getBotByGuildId(message.guild.id);
 

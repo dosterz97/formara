@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Bot } from "@/lib/db/schema";
-import { Loader2, Trash2 } from "lucide-react";
+import { getDiscordOAuthUrl } from "@/lib/discord/constants";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
@@ -95,6 +96,14 @@ export default function BotsPage() {
 	const handleEditClick = (bot: Bot) => {
 		setSelectedBot(bot);
 		setIsEditModalOpen(true);
+	};
+
+	const handleAddToDiscord = (bot: Bot) => {
+		const discordUrl = getDiscordOAuthUrl(
+			process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID!,
+			bot.id
+		);
+		window.open(discordUrl, "_blank");
 	};
 
 	return (
@@ -180,6 +189,14 @@ export default function BotsPage() {
 											</AlertDialogContent>
 										</AlertDialog>
 									</div>
+									<Button
+										variant="outline"
+										size="sm"
+										onClick={() => handleAddToDiscord(bot)}
+									>
+										<Plus className="mr-2 h-4 w-4" />
+										Add to Server
+									</Button>
 									<Button
 										variant="outline"
 										size="sm"
