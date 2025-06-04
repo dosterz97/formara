@@ -31,22 +31,6 @@ export async function GET(request: NextRequest) {
 
 		const botSlug = bot[0].slug;
 
-		// Check if this Discord bot relationship already exists
-		const existingBot = await db
-			.select()
-			.from(discordBots)
-			.where(
-				and(eq(discordBots.botId, state), eq(discordBots.guildId, guildId))
-			)
-			.limit(1);
-
-		if (existingBot.length > 0) {
-			console.log("Bot already exists for this guild");
-			return NextResponse.redirect(
-				`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bots/${botSlug}?error=already_exists`
-			);
-		}
-
 		// Exchange the code for an access token
 		const tokenResponse = await fetch("https://discord.com/api/oauth2/token", {
 			method: "POST",
@@ -75,6 +59,45 @@ export async function GET(request: NextRequest) {
 			type: tokenData.token_type,
 			scope: tokenData.scope,
 		});
+
+		// Check if this Discord bot relationship already exists
+		const existingBot = await db
+			.select()
+			.from(discordBots)
+			.where(
+				and(eq(discordBots.botId, state), eq(discordBots.guildId, guildId))
+			)
+			.limit(1);
+
+		if (existingBot.length > 0) {
+			console.log(
+				"Bot already exists for this guild, updating token information"
+			);
+			try {
+				await db
+					.update(discordBots)
+					.set({
+						settings: {
+							accessToken: tokenData.access_token,
+							refreshToken: tokenData.refresh_token,
+							tokenType: tokenData.token_type,
+							scope: tokenData.scope,
+						},
+					})
+					.where(
+						and(eq(discordBots.botId, state), eq(discordBots.guildId, guildId))
+					);
+
+				return NextResponse.redirect(
+					`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bots/${botSlug}?success=updated`
+				);
+			} catch (error) {
+				console.error("Failed to update existing Discord bot:", error);
+				return NextResponse.redirect(
+					`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bots/${botSlug}?error=update_failed`
+				);
+			}
+		}
 
 		// Get guild information
 		const guildResponse = await fetch(
