@@ -8,6 +8,9 @@ import { generateBotResponse } from "./services/gemini";
 // Load .env from root directory
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
+// List of banned words that will trigger message deletion
+const BANNED_WORDS = ["bitch"];
+
 const client = new Client({
 	intents: [
 		GatewayIntentBits.Guilds,
@@ -71,6 +74,27 @@ client.on(Events.MessageCreate, async (message: Message) => {
 	// Ignore messages from bots
 	if (message.author.bot) {
 		console.log("Ignoring bot message");
+		return;
+	}
+
+	// Check for banned words
+	const messageContent = message.content.toLowerCase();
+	if (BANNED_WORDS.some((word) => messageContent.includes(word))) {
+		try {
+			await message.delete();
+			console.log(
+				`Deleted message containing banned word from ${message.author.tag}`
+			);
+			// Optionally send a warning message
+			if (message.channel.type === 0) {
+				// 0 is GUILD_TEXT
+				await message.channel.send(
+					`${message.author}, please keep the chat family-friendly.`
+				);
+			}
+		} catch (error) {
+			console.error("Error deleting message:", error);
+		}
 		return;
 	}
 
