@@ -64,18 +64,18 @@ client.once(Events.ClientReady, (c) => {
 });
 
 client.on(Events.MessageCreate, async (message: Message) => {
+	// Ignore messages from bots
+	if (message.author.bot) {
+		console.log("Ignoring bot message");
+		return;
+	}
+
 	console.log("Received message:", {
 		content: message.content,
 		author: message.author.tag,
 		isBotMentioned: message.mentions.users.has(client.user!.id),
 		botId: client.user!.id,
 	});
-
-	// Ignore messages from bots
-	if (message.author.bot) {
-		console.log("Ignoring bot message");
-		return;
-	}
 
 	// Check for banned words
 	const messageContent = message.content.toLowerCase();
