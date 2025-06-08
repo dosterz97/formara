@@ -3,7 +3,6 @@ import { knowledge } from "../schema";
 
 export async function createKnowledge(data: {
 	botId: string;
-	slug: string;
 	name: string;
 	content: string;
 	vectorId: string;
@@ -12,7 +11,6 @@ export async function createKnowledge(data: {
 }) {
 	const {
 		botId,
-		slug,
 		name,
 		content,
 		vectorId,
@@ -23,7 +21,6 @@ export async function createKnowledge(data: {
 		.insert(knowledge)
 		.values({
 			botId,
-			slug,
 			name,
 			content,
 			vectorId,

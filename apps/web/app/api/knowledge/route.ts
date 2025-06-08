@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
 	try {
 		const data = await request.json();
-		const { botId, slug, name, content, manualEntry = true, createdBy } = data;
+		const { botId, name, content, manualEntry = true, createdBy } = data;
 
 		// Generate a unique ID for the knowledge entry
 		const knowledgeId = `knowledge_${nanoid()}`;
@@ -22,7 +22,6 @@ export async function POST(request: Request) {
 		// Then store in database with the vector ID
 		const entry = await createKnowledge({
 			botId,
-			slug,
 			name,
 			content,
 			vectorId,
