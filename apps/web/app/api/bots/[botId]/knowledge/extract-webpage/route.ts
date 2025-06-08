@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
 // Initialize Gemini AI
@@ -7,8 +7,8 @@ const getGeminiModel = () => {
 	if (!geminiApiKey) {
 		throw new Error("GEMINI_API_KEY not configured");
 	}
-	const genAI = new GoogleGenerativeAI(geminiApiKey);
-	return genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+	const genAI = new GoogleGenAI({ apiKey: geminiApiKey });
+	return genAI.models.generateContent;
 };
 
 export async function POST(
@@ -278,9 +278,16 @@ Return ONLY a valid JSON array with this exact format (no markdown formatting, n
 
 IMPORTANT: Return ONLY the JSON array, no other text, no markdown code blocks, no explanations.`;
 
-		const result = await model.generateContent(prompt);
-		const response = await result.response;
-		const responseText = response.text();
+		const result = await model({
+			model: "gemini-2.0-flash",
+			contents: prompt,
+		});
+
+		if (!result.text) {
+			throw new Error("No response text from Gemini");
+		}
+
+		const responseText = result.text;
 
 		// Try to parse the JSON response
 		try {

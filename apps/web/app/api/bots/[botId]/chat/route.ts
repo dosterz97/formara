@@ -2,12 +2,12 @@ import { constructPrompt, formatKnowledgeSources } from "@/lib/chat/prompt";
 import { db } from "@/lib/db/drizzle";
 import { searchKnowledge } from "@/lib/db/qdrant-client";
 import { bots } from "@/lib/db/schema";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 // Initialize Gemini client
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 export async function POST(
 	request: Request,
@@ -72,15 +72,17 @@ export async function POST(
 
 		// Generate response using Gemini
 		const genAIStart = Date.now();
-		const model = genAI.getGenerativeModel({
+		const result = await genAI.models.generateContent({
 			model: "gemini-2.0-flash",
+			contents: fullPrompt,
 		});
-		const result = await model.generateContent(fullPrompt);
-		const response = result.response;
 		timings.genAIGeneration = Date.now() - genAIStart;
 
-		const responseText =
-			response.text() || "I'm sorry, I couldn't generate a response.";
+		if (!result.text) {
+			throw new Error("No response text from Gemini");
+		}
+
+		const responseText = result.text;
 
 		console.log("Generated response:", responseText);
 
