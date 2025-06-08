@@ -276,25 +276,25 @@ export function KnowledgeTable({
 											onSuccess={handleSuccess}
 										/>
 									) : (
-										<Tabs defaultValue="manual" className="w-full">
+										<Tabs defaultValue="ai" className="w-full">
 											<TabsList className="grid w-full grid-cols-3">
-												<TabsTrigger value="manual">
-													<Brain className="mr-2 h-4 w-4" />
-													Manual Entry
+												<TabsTrigger value="ai">
+													<Sparkles className="mr-2 h-4 w-4" />
+													Use AI
 												</TabsTrigger>
 												<TabsTrigger value="webpage">
 													<Globe className="mr-2 h-4 w-4" />
 													From Webpage
 												</TabsTrigger>
-												<TabsTrigger value="ai">
-													<Sparkles className="mr-2 h-4 w-4" />
-													Use AI
+												<TabsTrigger value="manual">
+													<Brain className="mr-2 h-4 w-4" />
+													Manual Entry
 												</TabsTrigger>
 											</TabsList>
-											<TabsContent value="manual">
-												<ManualKnowledgeEntryForm
+											<TabsContent value="ai">
+												<AIKnowledgeForm
 													botId={botId}
-													onSuccess={handleSuccess}
+													onSuccess={handleAISuccess}
 												/>
 											</TabsContent>
 											<TabsContent value="webpage">
@@ -303,10 +303,10 @@ export function KnowledgeTable({
 													onSuccess={handleWebPageSuccess}
 												/>
 											</TabsContent>
-											<TabsContent value="ai">
-												<AIKnowledgeForm
+											<TabsContent value="manual">
+												<ManualKnowledgeEntryForm
 													botId={botId}
-													onSuccess={handleAISuccess}
+													onSuccess={handleSuccess}
 												/>
 											</TabsContent>
 										</Tabs>
