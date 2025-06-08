@@ -352,6 +352,9 @@ importers:
       '@formspree/react':
         specifier: ^3.0.0
         version: 3.0.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      '@google/genai':
+        specifier: ^1.4.0
+        version: 1.4.0(@modelcontextprotocol/sdk@1.12.1)(bufferutil@4.0.9)
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1

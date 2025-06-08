@@ -11,18 +11,6 @@ const getGeminiModel = () => {
 	return genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 };
 
-interface JinaResponse {
-	code: number;
-	status: string;
-	data?: {
-		title?: string;
-		content?: string;
-		description?: string;
-		url?: string;
-	};
-	error?: string;
-}
-
 export async function POST(
 	request: Request,
 	{ params }: { params: Promise<{ botId: string }> }

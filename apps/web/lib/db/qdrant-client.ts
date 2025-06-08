@@ -40,6 +40,7 @@ export async function createKnowledgeVector(knowledge: {
 	botId: string;
 }): Promise<string> {
 	try {
+		console.log("Creating knowledge vector for:", knowledge);
 		const collectionName = `bot_${knowledge.botId}_knowledge`;
 
 		// Convert UUID to numeric ID for Qdrant

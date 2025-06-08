@@ -124,7 +124,6 @@ client.on(Events.MessageCreate, async (message: Message) => {
 				name: bot.name,
 				description: bot.description || "",
 				attributes: {
-					systemPrompt: bot.systemPrompt || "",
 					status: bot.status,
 					settings: bot.settings || {},
 				},

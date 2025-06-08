@@ -76,8 +76,6 @@ export async function POST(request: NextRequest) {
 				name: data.name,
 				slug,
 				description: data.description,
-				systemPrompt: data.systemPrompt,
-				status: data.status,
 				createdBy: user.id,
 			})
 			.returning();

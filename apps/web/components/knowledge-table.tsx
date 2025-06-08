@@ -1,5 +1,5 @@
+import { AIKnowledgeForm } from "@/components/AIKnowledgeForm";
 import { ManualKnowledgeEntryForm } from "@/components/ManualKnowledgeEntryForm";
-import { WebPageKnowledgeForm } from "@/components/WebPageKnowledgeForm";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -35,6 +35,7 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WebPageKnowledgeForm } from "@/components/WebPageKnowledgeForm";
 import { Knowledge } from "@/lib/db/schema";
 import {
 	AlertTriangle,
@@ -42,6 +43,7 @@ import {
 	Globe,
 	Loader2,
 	Plus,
+	Sparkles,
 	Trash2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -114,6 +116,19 @@ export function KnowledgeTable({
 
 	const handleWebPageSuccess = (results: any[]) => {
 		console.log("Webpage knowledge import successful:", results);
+
+		// Add all new items to local state
+		if (results && results.length > 0) {
+			setLocalKnowledge((prev) => [...results, ...prev]);
+		}
+
+		handleModalClose();
+		// Trigger refresh if available
+		onRefresh?.();
+	};
+
+	const handleAISuccess = (results: any[]) => {
+		console.log("AI knowledge import successful:", results);
 
 		// Add all new items to local state
 		if (results && results.length > 0) {
@@ -262,7 +277,7 @@ export function KnowledgeTable({
 										/>
 									) : (
 										<Tabs defaultValue="manual" className="w-full">
-											<TabsList className="grid w-full grid-cols-2">
+											<TabsList className="grid w-full grid-cols-3">
 												<TabsTrigger value="manual">
 													<Brain className="mr-2 h-4 w-4" />
 													Manual Entry
@@ -270,6 +285,10 @@ export function KnowledgeTable({
 												<TabsTrigger value="webpage">
 													<Globe className="mr-2 h-4 w-4" />
 													From Webpage
+												</TabsTrigger>
+												<TabsTrigger value="ai">
+													<Sparkles className="mr-2 h-4 w-4" />
+													Use AI
 												</TabsTrigger>
 											</TabsList>
 											<TabsContent value="manual">
@@ -282,6 +301,12 @@ export function KnowledgeTable({
 												<WebPageKnowledgeForm
 													botId={botId}
 													onSuccess={handleWebPageSuccess}
+												/>
+											</TabsContent>
+											<TabsContent value="ai">
+												<AIKnowledgeForm
+													botId={botId}
+													onSuccess={handleAISuccess}
 												/>
 											</TabsContent>
 										</Tabs>

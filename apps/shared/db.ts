@@ -22,7 +22,6 @@ export async function getBotByGuildId(guildId: string) {
 			.select({
 				name: bots.name,
 				description: bots.description,
-				systemPrompt: bots.systemPrompt,
 				status: bots.status,
 				settings: bots.settings,
 			})

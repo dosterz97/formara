@@ -20,13 +20,6 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot } from "@/lib/db/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,11 +36,6 @@ const formSchema = z.object({
 		.string()
 		.max(500, "Description must be less than 500 characters")
 		.optional(),
-	systemPrompt: z
-		.string()
-		.min(1, "System prompt is required")
-		.max(2000, "System prompt must be less than 2000 characters"),
-	status: z.enum(["active", "inactive"]),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -77,8 +65,6 @@ export function BotForm({
 		defaultValues: {
 			name: bot?.name || "",
 			description: bot?.description || "",
-			systemPrompt: bot?.systemPrompt || "",
-			status: (bot?.status as any) || "active",
 		},
 	});
 
@@ -88,8 +74,6 @@ export function BotForm({
 			form.reset({
 				name: bot.name,
 				description: bot.description || "",
-				systemPrompt: bot.systemPrompt || "",
-				status: (bot.status as any) || "active",
 			});
 		}
 	}, [bot, form, mode]);
@@ -179,59 +163,6 @@ export function BotForm({
 											{...field}
 										/>
 									</FormControl>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="systemPrompt"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>System Prompt</FormLabel>
-									<FormControl>
-										<Textarea
-											placeholder="Enter the system prompt that defines your bot's behavior..."
-											className="resize-none h-32"
-											{...field}
-										/>
-									</FormControl>
-									<FormDescription>
-										This prompt defines your bot's personality and behavior.
-									</FormDescription>
-									<FormMessage />
-								</FormItem>
-							)}
-						/>
-
-						<FormField
-							control={form.control}
-							name="status"
-							render={({ field }) => (
-								<FormItem>
-									<FormLabel>Status</FormLabel>
-									<Select
-										onValueChange={field.onChange}
-										defaultValue={field.value}
-										value={field.value}
-									>
-										<FormControl>
-											<SelectTrigger>
-												<SelectValue placeholder="Select a status" />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{["active", "inactive"].map((status) => (
-												<SelectItem key={status} value={status}>
-													{status.charAt(0).toUpperCase() + status.slice(1)}
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-									<FormDescription>
-										The current status of this bot.
-									</FormDescription>
 									<FormMessage />
 								</FormItem>
 							)}

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db/drizzle";
+import { deleteBotKnowledgeCollection } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
-import { bots } from "@/lib/db/schema";
+import { bots, discordBots } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import slugify from "slugify";
@@ -115,8 +116,6 @@ export async function PUT(
 				name: data.name || existingBot[0].name,
 				slug,
 				description: data.description,
-				systemPrompt: data.systemPrompt,
-				status: data.status,
 				updatedAt: new Date(),
 			})
 			.where(eq(bots.id, botId))
@@ -149,23 +148,62 @@ export async function DELETE(
 
 		const { botId } = await params;
 
-		// Get the bot to verify ownership
-		const bot = await db.select().from(bots).where(eq(bots.id, botId)).limit(1);
+		// First try to find by slug since it's not a UUID
+		let bot = await db.query.bots.findFirst({
+			where: eq(bots.slug, botId),
+		});
 
-		if (!bot || bot.length === 0) {
+		// If not found by slug, try by ID (this will fail gracefully if botId is not a valid UUID)
+		if (!bot) {
+			try {
+				bot = await db.query.bots.findFirst({
+					where: eq(bots.id, botId),
+				});
+			} catch (err) {
+				// Ignore UUID parse errors
+				if (!(err instanceof Error) || !err.message.includes("uuid")) {
+					throw err;
+				}
+			}
+		}
+
+		if (!bot) {
 			return NextResponse.json({ error: "Bot not found" }, { status: 404 });
 		}
 
 		// Verify the bot belongs to the user's team
-		if (bot[0].teamId !== teamData.id) {
+		if (bot.teamId !== teamData.id) {
 			return NextResponse.json(
 				{ error: "Unauthorized access to bot" },
 				{ status: 403 }
 			);
 		}
 
-		// Delete the bot
-		await db.delete(bots).where(eq(bots.id, botId));
+		// Delete the knowledge collection from Qdrant first
+		try {
+			await deleteBotKnowledgeCollection(bot.id);
+			console.log(
+				`Successfully deleted knowledge collection for bot ${bot.id}`
+			);
+		} catch (vectorError) {
+			console.warn(
+				"Failed to delete knowledge collection from Qdrant:",
+				vectorError
+			);
+			// Continue with database deletion even if vector collection deletion fails
+		}
+
+		// Delete associated Discord bot records first
+		try {
+			await db.delete(discordBots).where(eq(discordBots.botId, bot.id));
+			console.log(`Successfully deleted Discord bot records for bot ${bot.id}`);
+		} catch (discordError) {
+			console.warn("Failed to delete Discord bot records:", discordError);
+			// Continue with bot deletion even if Discord records deletion fails
+		}
+
+		// Delete the bot (this will cascade delete knowledge entries due to foreign key constraint)
+		await db.delete(bots).where(eq(bots.id, bot.id));
 
 		return NextResponse.json({ success: true });
 	} catch (error) {

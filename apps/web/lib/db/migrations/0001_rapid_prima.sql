@@ -1,0 +1,1 @@
+ALTER TABLE "knowledge" DROP COLUMN "slug";

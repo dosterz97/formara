@@ -10,7 +10,6 @@ export interface ChatHistoryMessage {
 }
 
 export interface PromptOptions {
-	systemPrompt?: string;
 	description?: string;
 	knowledgeSources?: KnowledgeSource[];
 	userMessage: string;
@@ -24,7 +23,6 @@ export interface PromptOptions {
  */
 export function constructPrompt(options: PromptOptions): string {
 	const {
-		systemPrompt,
 		description,
 		knowledgeSources = [],
 		userMessage,
@@ -40,12 +38,7 @@ ${description}
 		: "";
 
 	// System instructions section
-	const systemInstructionsSection = systemPrompt
-		? `SYSTEM INSTRUCTIONS:
-${systemPrompt}
-
-`
-		: `SYSTEM INSTRUCTIONS:
+	const systemInstructionsSection = `SYSTEM INSTRUCTIONS:
 You are a helpful AI assistant.
 
 `;

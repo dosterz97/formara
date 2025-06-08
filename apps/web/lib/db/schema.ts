@@ -83,7 +83,6 @@ export const bots = pgTable(
 		slug: varchar("slug", { length: 100 }).notNull(),
 		name: varchar("name", { length: 255 }).notNull(),
 		description: text("description"),
-		systemPrompt: text("system_prompt"),
 		status: varchar("status", { length: 20 }).notNull().default("active"),
 		voiceId: varchar("voice_id", { length: 100 }),
 		imageUrl: varchar("image_url", { length: 2048 }),
@@ -139,7 +138,6 @@ export const knowledge = pgTable(
 		botId: uuid("bot_id")
 			.notNull()
 			.references(() => bots.id, { onDelete: "cascade" }),
-		slug: varchar("slug", { length: 100 }).notNull(),
 		name: varchar("name", { length: 255 }).notNull(),
 		content: text("content").notNull(),
 		vectorId: varchar("vector_id", { length: 100 }).notNull(),
@@ -152,8 +150,7 @@ export const knowledge = pgTable(
 		return [
 			{
 				botKnowledgeSlugIdx: uniqueIndex("bot_knowledge_slug_idx").on(
-					table.botId,
-					table.slug
+					table.botId
 				),
 			},
 		];

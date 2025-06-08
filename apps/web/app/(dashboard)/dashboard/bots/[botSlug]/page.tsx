@@ -73,10 +73,6 @@ const formSchema = z.object({
 		.string()
 		.max(500, "Description must be less than 500 characters")
 		.optional(),
-	systemPrompt: z
-		.string()
-		.min(1, "System prompt is required")
-		.max(2000, "System prompt must be less than 2000 characters"),
 	status: z.enum(["active", "inactive"]),
 });
 
@@ -110,7 +106,6 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 		defaultValues: {
 			name: "",
 			description: "",
-			systemPrompt: "",
 			status: "active",
 		},
 	});
@@ -121,7 +116,6 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 			form.reset({
 				name: bot.name,
 				description: bot.description || "",
-				systemPrompt: bot.systemPrompt || "",
 				status: (bot.status as any) || "active",
 			});
 		}
@@ -285,7 +279,6 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 			form.reset({
 				name: bot.name,
 				description: bot.description || "",
-				systemPrompt: bot.systemPrompt || "",
 				status: (bot.status as any) || "active",
 			});
 		}
@@ -498,18 +491,6 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 											</p>
 										</div>
 										<div>
-											<h3 className="font-medium mb-2">System Prompt</h3>
-											<p className="text-sm text-muted-foreground">
-												{bot?.systemPrompt || "No system prompt set"}
-											</p>
-										</div>
-										<div>
-											<h3 className="font-medium mb-2">Voice</h3>
-											<p className="text-sm text-muted-foreground">
-												{bot?.voiceId || "No voice selected"}
-											</p>
-										</div>
-										<div>
 											<h3 className="font-medium mb-2">Status</h3>
 											<Badge variant="outline">{bot?.status}</Badge>
 										</div>
@@ -550,28 +531,6 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 																{...field}
 															/>
 														</FormControl>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-
-											<FormField
-												control={form.control}
-												name="systemPrompt"
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel>System Prompt</FormLabel>
-														<FormControl>
-															<Textarea
-																placeholder="Enter the system prompt that defines your bot's behavior..."
-																className="resize-none h-32"
-																{...field}
-															/>
-														</FormControl>
-														<FormDescription>
-															This prompt defines your bot's personality and
-															behavior.
-														</FormDescription>
 														<FormMessage />
 													</FormItem>
 												)}
