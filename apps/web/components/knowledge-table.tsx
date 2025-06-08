@@ -26,6 +26,7 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	Table,
 	TableBody,
@@ -46,7 +47,7 @@ import {
 	Sparkles,
 	Trash2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface KnowledgeTableProps {
 	botId: string;
@@ -54,6 +55,8 @@ interface KnowledgeTableProps {
 	isLoading?: boolean;
 	onRefresh?: () => void;
 }
+
+const PAGE_SIZE = 20;
 
 export function KnowledgeTable({
 	botId,
@@ -65,7 +68,7 @@ export function KnowledgeTable({
 	const [selectedKnowledge, setSelectedKnowledge] = useState<Knowledge | null>(
 		null
 	);
-	const [localKnowledge, setLocalKnowledge] = useState<Knowledge[]>(knowledge);
+	const [localKnowledge, setLocalKnowledge] = useState<Knowledge[]>([]);
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 	const [deleteAllDialogOpen, setDeleteAllDialogOpen] = useState(false);
 	const [knowledgeToDelete, setKnowledgeToDelete] = useState<Knowledge | null>(
@@ -73,11 +76,48 @@ export function KnowledgeTable({
 	);
 	const [isDeleting, setIsDeleting] = useState(false);
 	const [isDeletingAll, setIsDeletingAll] = useState(false);
+	const [page, setPage] = useState(1);
+	const [hasMore, setHasMore] = useState(true);
+	const [isLoadingMore, setIsLoadingMore] = useState(false);
 
 	// Update local knowledge when props change
 	useEffect(() => {
-		setLocalKnowledge(knowledge);
+		setLocalKnowledge(knowledge.slice(0, PAGE_SIZE));
+		setHasMore(knowledge.length > PAGE_SIZE);
+		setPage(1);
 	}, [knowledge]);
+
+	const loadMore = useCallback(async () => {
+		if (!hasMore || isLoadingMore) return;
+
+		setIsLoadingMore(true);
+		try {
+			const nextPage = page + 1;
+			const start = (nextPage - 1) * PAGE_SIZE;
+			const end = start + PAGE_SIZE;
+			const newItems = knowledge.slice(start, end);
+
+			if (newItems.length > 0) {
+				setLocalKnowledge((prev) => [...prev, ...newItems]);
+				setPage(nextPage);
+				setHasMore(end < knowledge.length);
+			} else {
+				setHasMore(false);
+			}
+		} finally {
+			setIsLoadingMore(false);
+		}
+	}, [page, hasMore, isLoadingMore, knowledge]);
+
+	const handleScroll = useCallback(
+		(event: React.UIEvent<HTMLDivElement>) => {
+			const { scrollTop, scrollHeight, clientHeight } = event.currentTarget;
+			if (scrollHeight - scrollTop <= clientHeight * 1.5) {
+				loadMore();
+			}
+		},
+		[loadMore]
+	);
 
 	const handleRowClick = (item: Knowledge) => {
 		setSelectedKnowledge(item);
@@ -318,8 +358,8 @@ export function KnowledgeTable({
 				</CardHeader>
 				<CardContent>
 					{localKnowledge.length > 0 ? (
-						<div className="w-full overflow-hidden rounded-md border">
-							<div className="w-full overflow-x-auto">
+						<ScrollArea className="h-[600px] w-full" onScroll={handleScroll}>
+							<div className="w-full overflow-hidden rounded-md border">
 								<Table className="w-full table-fixed">
 									<TableHeader>
 										<TableRow>
@@ -390,8 +430,13 @@ export function KnowledgeTable({
 										))}
 									</TableBody>
 								</Table>
+								{isLoadingMore && (
+									<div className="flex items-center justify-center p-4">
+										<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+									</div>
+								)}
 							</div>
-						</div>
+						</ScrollArea>
 					) : (
 						<div className="flex flex-col items-center justify-center py-12 px-4 text-center">
 							<div className="rounded-full bg-primary/10 p-3 mb-4">
