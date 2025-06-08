@@ -299,26 +299,21 @@ export async function clearBotKnowledge(botId: string): Promise<void> {
 		);
 
 		if (collectionExists) {
-			// Get collection info to see if it has any points
-			const collectionInfo = await qdrantClient.getCollection(collectionName);
+			// Get all points in the collection
+			const points = await qdrantClient.scroll(collectionName, {
+				limit: 1000, // Adjust this number based on your needs
+				with_payload: true,
+			});
 
-			if (collectionInfo.points_count && collectionInfo.points_count > 0) {
-				// Delete all points in the collection
+			if (points.points && points.points.length > 0) {
+				// Delete all points by their IDs
+				const pointIds = points.points.map((point) => point.id);
 				await qdrantClient.delete(collectionName, {
 					wait: true,
-					filter: {
-						must: [
-							{
-								key: "bot_id",
-								match: {
-									value: botId,
-								},
-							},
-						],
-					},
+					points: pointIds,
 				});
 				console.log(
-					`Successfully cleared ${collectionInfo.points_count} points from collection ${collectionName}`
+					`Successfully cleared ${pointIds.length} points from collection ${collectionName}`
 				);
 			} else {
 				console.log(`Collection ${collectionName} is already empty`);
