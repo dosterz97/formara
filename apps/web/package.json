@@ -16,11 +16,6 @@
 		"db:studio": "drizzle-kit studio"
 	},
 	"dependencies": {
-		"@codemirror/lang-javascript": "^6.2.2",
-		"@codemirror/lang-python": "^6.1.6",
-		"@codemirror/state": "^6.5.0",
-		"@codemirror/theme-one-dark": "^6.1.2",
-		"@codemirror/view": "^6.35.3",
 		"@formspree/react": "^3.0.0",
 		"@google/genai": "^1.4.0",
 		"@hookform/resolvers": "^4.1.3",
