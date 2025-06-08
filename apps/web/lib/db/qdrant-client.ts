@@ -373,13 +373,40 @@ export async function deleteBotKnowledgeCollection(
 	}
 }
 
-/*
-// TODO: Restore these functions when Entity and Universe types are available
+/**
+ * Scrolls through knowledge entries in Qdrant
+ * @param botId The bot ID to scroll knowledge for
+ * @param limit Maximum number of results to return per page
+ * @param offset Offset for pagination
+ * @returns Array of knowledge entries with their vectors
+ */
+export async function scrollKnowledge(
+	botId: string,
+	limit: number = 20,
+	offset: number = 0
+): Promise<Array<{ id: string; payload: any }>> {
+	try {
+		const collectionName = `bot_${botId}_knowledge`;
 
-export async function createUniverseCollection(universe: Universe): Promise<void> { ... }
-export async function deleteUniverseCollection(universe: Universe): Promise<void> { ... }
-export async function createEntityVector(entity: Entity, universe: Universe): Promise<string> { ... }
-export async function updateEntityVector(entity: Entity, universe: Universe): Promise<void> { ... }
-export async function deleteEntityVector(entity: Entity, universe: Universe): Promise<void> { ... }
-export async function searchEntities(query: string, universe: Universe, limit?: number, threshold?: number): Promise<Array<{ id: string; score: number; payload: any }>> { ... }
-*/
+		// Scroll through vectors
+		const scrollResponse = await qdrantClient.scroll(collectionName, {
+			limit: limit,
+			offset: offset,
+			with_payload: true,
+		});
+
+		console.log(
+			`Scrolled ${scrollResponse.points.length} knowledge entries for bot ${botId}`
+		);
+
+		return scrollResponse.points.map((point) => ({
+			id: (point.payload?.knowledge_id as string) || point.id.toString(),
+			payload: point.payload,
+		}));
+	} catch (error: any) {
+		console.error("Error scrolling knowledge:", error?.message || error);
+		throw new Error(
+			`Failed to scroll knowledge: ${error?.message || "Unknown error"}`
+		);
+	}
+}

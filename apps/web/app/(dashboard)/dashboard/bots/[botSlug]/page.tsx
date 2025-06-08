@@ -50,7 +50,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { Bot, Knowledge } from "@/lib/db/schema";
+import { Bot } from "@/lib/db/schema";
 import { getDiscordOAuthUrl } from "@/lib/discord/constants";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Loader2, Pencil, Save, Trash2, X } from "lucide-react";
@@ -59,6 +59,7 @@ import { use, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Knowledge } from "../../../../../../shared/knowledge";
 
 const getOAuthUrl = (botId: string) =>
 	getDiscordOAuthUrl(process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID!, botId);
@@ -83,6 +84,8 @@ interface BotDetailsProps {
 		botSlug: string;
 	}>;
 }
+
+const PAGE_SIZE = 20;
 
 export default function BotDetailsPage({ params }: BotDetailsProps) {
 	const { botSlug } = use(params);
@@ -186,7 +189,9 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 
 			try {
 				setKnowledgeLoading(true);
-				const response = await fetch(`/api/bots/${bot.id}/knowledge`);
+				const response = await fetch(
+					`/api/bots/${bot.id}/knowledge?limit=${PAGE_SIZE}&offset=0`
+				);
 
 				if (!response.ok) {
 					const errorData = await response.json();

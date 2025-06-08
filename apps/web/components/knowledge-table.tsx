@@ -37,7 +37,6 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WebPageKnowledgeForm } from "@/components/WebPageKnowledgeForm";
-import { Knowledge } from "@/lib/db/schema";
 import {
 	AlertTriangle,
 	Brain,
@@ -48,6 +47,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Knowledge } from "../../shared/knowledge";
 
 interface KnowledgeTableProps {
 	botId: string;
@@ -82,8 +82,8 @@ export function KnowledgeTable({
 
 	// Update local knowledge when props change
 	useEffect(() => {
-		setLocalKnowledge(knowledge.slice(0, PAGE_SIZE));
-		setHasMore(knowledge.length > PAGE_SIZE);
+		setLocalKnowledge(knowledge);
+		setHasMore(knowledge.length === PAGE_SIZE);
 		setPage(1);
 	}, [knowledge]);
 
@@ -93,21 +93,31 @@ export function KnowledgeTable({
 		setIsLoadingMore(true);
 		try {
 			const nextPage = page + 1;
-			const start = (nextPage - 1) * PAGE_SIZE;
-			const end = start + PAGE_SIZE;
-			const newItems = knowledge.slice(start, end);
+			const offset = (nextPage - 1) * PAGE_SIZE;
+			const response = await fetch(
+				`/api/bots/${botId}/knowledge?limit=${PAGE_SIZE}&offset=${offset}`
+			);
 
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || "Failed to fetch more knowledge");
+			}
+
+			const newItems = await response.json();
 			if (newItems.length > 0) {
 				setLocalKnowledge((prev) => [...prev, ...newItems]);
 				setPage(nextPage);
-				setHasMore(end < knowledge.length);
+				setHasMore(newItems.length === PAGE_SIZE);
 			} else {
 				setHasMore(false);
 			}
+		} catch (err: any) {
+			console.error("Error loading more knowledge:", err);
+			alert(err.message || "Failed to load more knowledge");
 		} finally {
 			setIsLoadingMore(false);
 		}
-	}, [page, hasMore, isLoadingMore, knowledge]);
+	}, [page, hasMore, isLoadingMore, botId]);
 
 	const handleScroll = useCallback(
 		(event: React.UIEvent<HTMLDivElement>) => {
@@ -192,9 +202,12 @@ export function KnowledgeTable({
 		setIsDeleting(true);
 		try {
 			console.log("Deleting knowledge:", knowledgeToDelete.id);
-			const res = await fetch(`/api/knowledge/${knowledgeToDelete.id}`, {
-				method: "DELETE",
-			});
+			const res = await fetch(
+				`/api/bots/${botId}/knowledge/${knowledgeToDelete.id}`,
+				{
+					method: "DELETE",
+				}
+			);
 
 			if (!res.ok) {
 				const errorData = await res.json();

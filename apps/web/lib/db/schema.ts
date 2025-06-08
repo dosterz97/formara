@@ -1,6 +1,5 @@
 import { relations } from "drizzle-orm";
 import {
-	boolean,
 	json,
 	pgTable,
 	text,
@@ -130,33 +129,6 @@ export const discordBots = pgTable(
 	}
 );
 
-// Knowledge table - for bot knowledge entries
-export const knowledge = pgTable(
-	"knowledge",
-	{
-		id: uuid("id").primaryKey().defaultRandom().notNull(),
-		botId: uuid("bot_id")
-			.notNull()
-			.references(() => bots.id, { onDelete: "cascade" }),
-		name: varchar("name", { length: 255 }).notNull(),
-		content: text("content").notNull(),
-		vectorId: varchar("vector_id", { length: 100 }).notNull(),
-		manualEntry: boolean("manual_entry").default(false).notNull(),
-		createdAt: timestamp("created_at").defaultNow().notNull(),
-		updatedAt: timestamp("updated_at").defaultNow().notNull(),
-		createdBy: uuid("created_by").references(() => users.id),
-	},
-	(table) => {
-		return [
-			{
-				botKnowledgeSlugIdx: uniqueIndex("bot_knowledge_slug_idx").on(
-					table.botId
-				),
-			},
-		];
-	}
-);
-
 // Relations
 export const teamsRelations = relations(teams, ({ many }) => ({
 	teamMembers: many(teamMembers),
@@ -213,24 +185,12 @@ export const botRelations = relations(bots, ({ one, many }) => ({
 		references: [users.id],
 	}),
 	discordBots: many(discordBots),
-	knowledge: many(knowledge),
 }));
 
 export const discordBotsRelations = relations(discordBots, ({ one }) => ({
 	bot: one(bots, {
 		fields: [discordBots.botId],
 		references: [bots.id],
-	}),
-}));
-
-export const knowledgeRelations = relations(knowledge, ({ one }) => ({
-	bot: one(bots, {
-		fields: [knowledge.botId],
-		references: [bots.id],
-	}),
-	creator: one(users, {
-		fields: [knowledge.createdBy],
-		references: [users.id],
 	}),
 }));
 
@@ -253,8 +213,6 @@ export type TeamDataWithMembers = Team & {
 
 export type Bot = typeof bots.$inferSelect;
 export type NewBot = typeof bots.$inferInsert;
-export type Knowledge = typeof knowledge.$inferSelect;
-export type NewKnowledge = typeof knowledge.$inferInsert;
 
 // Activity type enum
 export enum ActivityType {

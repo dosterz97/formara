@@ -22,7 +22,6 @@ import {
 	Plus,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import slugify from "slugify";
 import { toast } from "sonner";
 
 interface ExtractedContent {
@@ -303,17 +302,15 @@ export function WebPageKnowledgeForm({
 					continue;
 				}
 
-				const response = await fetch("/api/knowledge", {
+				const response = await fetch(`/api/bots/${botId}/knowledge`, {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						botId,
-						slug: slugify(chunkName, { lower: true, strict: true }),
 						name: chunkName,
 						content: chunkContent,
-						manualEntry: false, // This is from web import
+						botId,
 					}),
 				});
 
