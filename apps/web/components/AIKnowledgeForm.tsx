@@ -8,11 +8,12 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Knowledge } from "@/lib/db/schema";
 import { CheckCircle, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { Knowledge } from "../../shared/knowledge";
 
-interface PreviewKnowledge extends Knowledge {
+interface PreviewKnowledge
+	extends Omit<Knowledge, "id" | "botId" | "createdAt" | "updatedAt"> {
 	selected: boolean;
 }
 
@@ -35,16 +36,19 @@ export function AIKnowledgeForm({ botId, onSuccess }: AIKnowledgeFormProps) {
 
 		setIsProcessing(true);
 		try {
-			const processResponse = await fetch("/api/knowledge/process-ai", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					text: inputText,
-					botId,
-				}),
-			});
+			const processResponse = await fetch(
+				`/api/bots/${botId}/knowledge/process-ai`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						text: inputText,
+						botId,
+					}),
+				}
+			);
 
 			if (!processResponse.ok) {
 				throw new Error("Failed to process text with AI");
@@ -55,7 +59,6 @@ export function AIKnowledgeForm({ botId, onSuccess }: AIKnowledgeFormProps) {
 
 			// Ensure each item has name and content
 			const formattedData = processedData.map((item: any) => ({
-				id: item.id || Math.random().toString(36).substring(7),
 				name: item.name || "AI Generated Knowledge",
 				content: item.content || "",
 				selected: true,
@@ -81,16 +84,15 @@ export function AIKnowledgeForm({ botId, onSuccess }: AIKnowledgeFormProps) {
 			// Process each item individually to match API expectations
 			const results = [];
 			for (const item of selectedItems) {
-				const response = await fetch("/api/knowledge", {
+				const response = await fetch(`/api/bots/${botId}/knowledge`, {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						botId,
 						name: item.name,
 						content: item.content,
-						manualEntry: false,
+						botId,
 					}),
 				});
 
