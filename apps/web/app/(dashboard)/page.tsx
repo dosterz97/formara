@@ -14,6 +14,7 @@ import {
 	Sparkles,
 	Users,
 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -212,16 +213,18 @@ export default function FormLandingPage() {
 			<section className="w-full py-20 px-4 bg-slate-950">
 				<div className="max-w-4xl mx-auto bg-gradient-to-r from-indigo-900/40 to-purple-900/40 rounded-2xl p-8 md:p-12 border border-indigo-500/20 text-center">
 					<h2 className="text-3xl md:text-4xl font-bold mb-4">
-						Ready to Build Your Universe?
+						Ready to Transform Your Discord Server?
 					</h2>
-					<p className="text-lg text-white mb-8 max-w-2xl mx-auto">
-						Join thousands of creators who are using Formorra to build rich,
-						consistent worlds for their stories, games, and creative projects.
+					<p className="text-lg text-white mb-12 max-w-2xl mx-auto">
+						Automate moderation and answer questions with your own AI-powered
+						Discord bot.
 					</p>
 					<div className="flex flex-col sm:flex-row gap-4 justify-center">
-						<Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
-							Start Your Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-						</Button>
+						<Link href="/sign-up">
+							<Button size="lg" className="bg-indigo-600 hover:bg-indigo-700">
+								Get Started <ArrowRight className="ml-2 h-4 w-4" />
+							</Button>
+						</Link>
 						<IframePlayer src="https://app.supademo.com/embed/cm9vtplns12jfwbbibv5fty4b?embed_v=2">
 							<Button size="lg" variant="secondary">
 								Watch Demo
