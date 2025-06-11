@@ -1,6 +1,17 @@
-import React, { useState } from "react";
+"use client";
 
-type TabId = "create" | "connect" | "expand";
+import { Check } from "lucide-react";
+import React, { useState } from "react";
+import {
+	Area,
+	AreaChart,
+	CartesianGrid,
+	ResponsiveContainer,
+	Tooltip,
+	XAxis,
+} from "recharts";
+
+type TabId = "setup" | "train" | "launch";
 
 interface TabContent {
 	title: string;
@@ -14,62 +25,70 @@ interface TabsContent {
 	[key: string]: TabContent;
 }
 
+const performanceData = [
+	{ date: "Day 1", value: 20 },
+	{ date: "Day 2", value: 35 },
+	{ date: "Day 3", value: 45 },
+	{ date: "Day 4", value: 60 },
+	{ date: "Day 5", value: 75 },
+	{ date: "Day 6", value: 85 },
+];
+
 const AnimatedTabs: React.FC = () => {
-	const [activeTab, setActiveTab] = useState<TabId>("create");
+	const [activeTab, setActiveTab] = useState<TabId>("setup");
 
 	const tabContent: TabsContent = {
-		create: {
-			title: "Build Your Foundation",
+		setup: {
+			title: "Quick Setup",
 			description:
-				"Start by establishing the core elements of your universe—geography, history, rules, and key characters.",
+				"Get started in minutes with our simple Discord integration process.",
 			color: "bg-indigo-500",
 			items: [
-				"Define the foundational rules of your world",
-				"Establish key locations and time periods",
-				"Create character archetypes and cultural templates",
+				"Add our bot to your Discord server",
+				"Configure basic settings and permissions",
+				"Choose your moderation preferences",
 			],
 			visual: (
 				<div className="grid grid-cols-2 gap-4 w-full max-w-sm">
 					<div className="bg-slate-800 h-32 rounded flex items-center justify-center text-slate-500 transform transition-all duration-500 hover:scale-105 hover:bg-slate-700">
-						World Map
+						Discord Bot
 					</div>
 					<div className="bg-slate-800 h-32 rounded flex items-center justify-center text-slate-500 transform transition-all duration-500 hover:scale-105 hover:bg-slate-700">
-						Timeline
+						Settings
 					</div>
 					<div className="bg-slate-800 h-32 rounded flex items-center justify-center text-slate-500 transform transition-all duration-500 hover:scale-105 hover:bg-slate-700">
-						Rules
+						Permissions
 					</div>
 					<div className="bg-slate-800 h-32 rounded flex items-center justify-center text-slate-500 transform transition-all duration-500 hover:scale-105 hover:bg-slate-700">
-						Cultures
+						Preferences
 					</div>
 				</div>
 			),
 		},
-		connect: {
-			title: "Link Everything Together",
+		train: {
+			title: "Train Your Bot",
 			description:
-				"Establish relationships between elements to create a rich interconnected universe that maintains consistency.",
+				"Upload your community guidelines and FAQs to create a custom knowledge base.",
 			color: "bg-purple-500",
 			items: [
-				"Connect characters to locations, events, and other characters",
-				"Link historical events to their consequences",
-				"Create cause-effect relationships across your world",
+				"Upload your community guidelines and rules",
+				"Add FAQs and common questions",
+				"Customize response styles and tones",
 			],
 			visual: (
 				<div className="w-full max-w-sm h-48 relative">
 					<div className="absolute left-4 top-0 w-16 h-16 bg-slate-800 rounded-lg flex items-center justify-center text-xs transform transition-all duration-500 hover:scale-110 hover:bg-slate-700 hover:z-10">
-						Character
+						Guidelines
 					</div>
 					<div className="absolute left-0 bottom-0 w-16 h-16 bg-slate-800 rounded-lg flex items-center justify-center text-xs transform transition-all duration-500 hover:scale-110 hover:bg-slate-700 hover:z-10">
-						Location
+						FAQs
 					</div>
 					<div className="absolute right-4 top-0 w-16 h-16 bg-slate-800 rounded-lg flex items-center justify-center text-xs transform transition-all duration-500 hover:scale-110 hover:bg-slate-700 hover:z-10">
-						Event
+						Rules
 					</div>
 					<div className="absolute right-0 bottom-0 w-16 h-16 bg-slate-800 rounded-lg flex items-center justify-center text-xs transform transition-all duration-500 hover:scale-110 hover:bg-slate-700 hover:z-10">
-						Item
+						Style
 					</div>
-					{/* Animated connection lines */}
 					<svg
 						className="absolute inset-0 w-full h-full"
 						xmlns="http://www.w3.org/2000/svg"
@@ -134,29 +153,59 @@ const AnimatedTabs: React.FC = () => {
 				</div>
 			),
 		},
-		expand: {
-			title: "Grow Your Universe",
+		launch: {
+			title: "Watch It Work",
 			description:
-				"Expand your world by adding new characters, locations, and storylines that automatically inherit existing rules.",
+				"Your bot is ready to moderate content and answer questions automatically.",
 			color: "bg-emerald-500",
 			items: [
-				"Generate new characters that fit your established world",
-				"Expand regions with consistent cultural attributes",
-				"Create stories that respect your world's internal logic",
+				"Monitor moderation actions in real-time",
+				"Track question answering performance",
+				"Adjust settings and training as needed",
 			],
 			visual: (
-				<div className="grid grid-cols-3 gap-2 w-full">
-					<div className="bg-slate-800 h-12 rounded transform transition-all duration-300 hover:scale-105"></div>
-					<div className="bg-slate-800 h-12 rounded transform transition-all duration-300 hover:scale-105 delay-75"></div>
-					<div className="bg-slate-800 h-12 rounded transform transition-all duration-300 hover:scale-105 delay-150"></div>
-
-					<div className="bg-slate-700 h-12 rounded transform transition-all duration-300 hover:scale-105 delay-75"></div>
-					<div className="bg-slate-700 h-12 rounded transform transition-all duration-300 hover:scale-105 delay-150"></div>
-					<div className="bg-slate-700 h-12 rounded transform transition-all duration-300 hover:scale-105 delay-225"></div>
-
-					<div className="bg-slate-600 h-12 rounded transform transition-all duration-300 hover:scale-105 delay-150"></div>
-					<div className="bg-slate-600 h-12 rounded transform transition-all duration-300 hover:scale-105 delay-225"></div>
-					<div className="bg-slate-600 h-12 rounded transform transition-all duration-300 hover:scale-105 delay-300"></div>
+				<div className="w-full max-w-sm h-48 relative">
+					<div className="absolute inset-0 bg-slate-800/50 rounded-lg p-4">
+						<ResponsiveContainer width="100%" height="100%">
+							<AreaChart
+								data={performanceData}
+								margin={{ top: 5, right: 5, left: 20, bottom: 5 }}
+							>
+								<defs>
+									<linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+										<stop offset="5%" stopColor="#10B981" stopOpacity={0.8} />
+										<stop offset="95%" stopColor="#10B981" stopOpacity={0.1} />
+									</linearGradient>
+								</defs>
+								<CartesianGrid
+									strokeDasharray="3 3"
+									stroke="#475569"
+									vertical={false}
+								/>
+								<XAxis
+									dataKey="date"
+									stroke="#94A3B8"
+									tickLine={false}
+									axisLine={false}
+								/>
+								<Tooltip
+									contentStyle={{
+										backgroundColor: "#1E293B",
+										border: "none",
+										borderRadius: "0.5rem",
+										color: "#E2E8F0",
+									}}
+								/>
+								<Area
+									type="monotone"
+									dataKey="value"
+									stroke="#10B981"
+									fillOpacity={1}
+									fill="url(#colorValue)"
+								/>
+							</AreaChart>
+						</ResponsiveContainer>
+					</div>
 				</div>
 			),
 		},
@@ -171,85 +220,73 @@ const AnimatedTabs: React.FC = () => {
 			<div className="max-w-6xl mx-auto">
 				<div className="text-center mb-16">
 					<h2 className="text-3xl md:text-4xl font-bold mb-4 text-white">
-						How Formorra Works
+						How It Works
 					</h2>
 					<p className="text-lg text-white max-w-2xl mx-auto">
-						Our platform makes it easy to connect all the elements of your
-						creative universe.
+						Set up your AI-powered Discord bot in three simple steps.
 					</p>
 				</div>
 
-				<div className="max-w-4xl mx-auto">
+				<div className="max-w-5xl mx-auto">
 					{/* Tab Navigation */}
 					<div className="grid grid-cols-3 mb-8 bg-slate-800/50 rounded-lg overflow-hidden">
-						{Object.keys(tabContent).map((tab) => (
-							<button
-								key={tab}
-								onClick={() => handleTabChange(tab as TabId)}
-								className={`py-3 px-2 transition-all duration-300 relative ${
-									activeTab === tab
-										? "text-white font-medium"
-										: "text-slate-400 hover:text-white"
-								}`}
-							>
-								<span className="relative z-10 capitalize">{tab}</span>
-								{activeTab === tab && (
-									<div
-										className={`absolute inset-0 ${tabContent[tab].color} opacity-90`}
-										style={{
-											animation: "fadeIn 0.3s ease-out",
-										}}
-									/>
-								)}
-							</button>
-						))}
+						<button
+							onClick={() => setActiveTab("setup")}
+							className={`py-3 px-4 text-sm font-medium transition-colors ${
+								activeTab === "setup"
+									? "bg-slate-700 text-white"
+									: "text-slate-400 hover:text-white"
+							}`}
+						>
+							Setup
+						</button>
+						<button
+							onClick={() => setActiveTab("train")}
+							className={`py-3 px-4 text-sm font-medium transition-colors ${
+								activeTab === "train"
+									? "bg-slate-700 text-white"
+									: "text-slate-400 hover:text-white"
+							}`}
+						>
+							Train
+						</button>
+						<button
+							onClick={() => setActiveTab("launch")}
+							className={`py-3 px-4 text-sm font-medium transition-colors ${
+								activeTab === "launch"
+									? "bg-slate-700 text-white"
+									: "text-slate-400 hover:text-white"
+							}`}
+						>
+							Launch
+						</button>
 					</div>
 
 					{/* Tab Content */}
-					<div className="bg-slate-800/30 p-6 rounded-lg border border-slate-700 min-h-96">
-						{Object.keys(tabContent).map((tab) => (
-							<div
-								key={tab}
-								className={`transition-all duration-500 ${
-									activeTab === tab
-										? "opacity-100 translate-x-0"
-										: "opacity-0 absolute -translate-x-4"
-								}`}
-								style={{ display: activeTab === tab ? "block" : "none" }}
-							>
-								<div className="flex flex-col md:flex-row gap-8 items-center">
-									<div className="md:w-1/2">
-										<h3 className="text-2xl font-bold mb-4 text-white">
-											{tabContent[tab].title}
-										</h3>
-										<p className="text-white mb-4">
-											{tabContent[tab].description}
-										</p>
-										<ul className="space-y-2 text-white">
-											{tabContent[tab].items.map((item, i) => (
-												<li
-													key={i}
-													className="flex items-center gap-2"
-													style={{
-														animation: `slideInRight 0.5s ease-out ${
-															i * 0.1
-														}s both`,
-													}}
-												>
-													<div
-														className={`h-2 w-2 rounded-full ${tabContent[tab].color}`}
-													></div>
-													{item}
-												</li>
-											))}
-										</ul>
-									</div>
-									<div className="md:w-1/2 bg-slate-900 rounded-lg p-4 aspect-video flex items-center justify-center transition-all duration-500 hover:shadow-lg hover:shadow-slate-900/50">
-										{tabContent[tab].visual}
-									</div>
-								</div>
+					<div className="bg-slate-800/50 rounded-lg p-8">
+						<div className="grid md:grid-cols-2 gap-8 items-center">
+							<div>
+								<h3 className="text-2xl font-bold mb-4 text-white">
+									{tabContent[activeTab].title}
+								</h3>
+								<p className="text-lg text-white mb-6">
+									{tabContent[activeTab].description}
+								</p>
+								<ul className="space-y-4">
+									{tabContent[activeTab].items.map((item, index) => (
+										<div key={index} className="flex items-center gap-2">
+											<div className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 flex items-center justify-center">
+												<Check className="w-3 h-3 text-emerald-500" />
+											</div>
+											<span className="text-slate-300">{item}</span>
+										</div>
+									))}
+								</ul>
 							</div>
-						))}
+							<div className="flex justify-center">
+								{tabContent[activeTab].visual}
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>

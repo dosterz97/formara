@@ -60,11 +60,10 @@ export default function FormLandingPage() {
 			<section className="w-full py-20 px-4 bg-gradient-to-b from-slate-950 to-slate-900">
 				<div className="max-w-6xl mx-auto text-center">
 					<h1 className="text-4xl md:text-6xl font-bold mb-6">
-						Create Connected Universes for Your Stories
+						Your Discord Server's AI Assistant
 					</h1>
 					<p className="text-xl text-white max-w-3xl mx-auto mb-10">
-						Build rich metaverses where all your characters, lore, and
-						world-building connect seamlessly in one centralized hub.
+						Smart moderation and instant answers. Train your bot, watch it work.
 					</p>
 					<div className="flex flex-col sm:flex-row justify-center gap-4">
 						<Button
@@ -74,11 +73,11 @@ export default function FormLandingPage() {
 								router.push("/sign-up");
 							}}
 						>
-							Start Creating <ArrowRight className="ml-2 h-4 w-4" />
+							Add to Discord <ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
 						<IframePlayer src="https://app.supademo.com/embed/cm9vtplns12jfwbbibv5fty4b?embed_v=2">
 							<Button size="lg" variant="secondary">
-								Watch Demo
+								See How It Works
 							</Button>
 						</IframePlayer>
 					</div>
@@ -91,7 +90,7 @@ export default function FormLandingPage() {
 									<iframe
 										src="https://app.supademo.com/embed/cm9vtplns12jfwbbibv5fty4b?embed_v=2"
 										loading="lazy"
-										title="Formorra Crash Course"
+										title="Formorra Demo"
 										allow="clipboard-write"
 										frameBorder="0"
 										allowFullScreen
@@ -109,25 +108,25 @@ export default function FormLandingPage() {
 				<div className="max-w-6xl mx-auto">
 					<div className="text-center mb-16">
 						<h2 className="text-3xl md:text-4xl font-bold mb-4">
-							Everything You Need For World Building
+							Everything You Need For Your Discord Server
 						</h2>
 						<p className="text-lg text-white max-w-2xl mx-auto">
-							Formorra connects all elements of your creative universe, making
-							it easier than ever to develop consistent, rich worlds.
+							Powerful AI features to keep your community safe and informed, all
+							in one place.
 						</p>
 					</div>
 
-					<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+					<div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
 						<Card className="bg-slate-800/50 border-slate-700 p-6">
 							<div className="bg-indigo-500/10 w-12 h-12 rounded-md flex items-center justify-center mb-4">
 								<Database className="text-indigo-500 h-6 w-6" />
 							</div>
 							<h3 className="text-xl text-white font-bold mb-2">
-								Centralized Knowledge Base
+								Smart Moderation
 							</h3>
 							<p className="text-white">
-								Store all your world's information in one place, with powerful
-								linking and relationship tools.
+								AI-powered content filtering and rule enforcement to keep your
+								community safe and welcoming.
 							</p>
 						</Card>
 
@@ -136,11 +135,11 @@ export default function FormLandingPage() {
 								<Users className="text-purple-500 h-6 w-6" />
 							</div>
 							<h3 className="text-xl text-white font-bold mb-2">
-								Character Generation
+								Instant Answers
 							</h3>
 							<p className="text-white">
-								Quickly create new characters that automatically inherit
-								consistent traits from your universe.
+								Quick and accurate responses to community questions, powered by
+								your knowledge base.
 							</p>
 						</Card>
 
@@ -149,11 +148,11 @@ export default function FormLandingPage() {
 								<Layers className="text-pink-500 h-6 w-6" />
 							</div>
 							<h3 className="text-xl text-white font-bold mb-2">
-								Layered Worldbuilding
+								Easy Training
 							</h3>
 							<p className="text-white">
-								Build your universe in layers, from geography and cultures to
-								magic systems and technology.
+								Simply upload your documents and FAQs - our AI learns and adapts
+								to your community's needs.
 							</p>
 						</Card>
 
@@ -162,11 +161,11 @@ export default function FormLandingPage() {
 								<Globe className="text-blue-500 h-6 w-6" />
 							</div>
 							<h3 className="text-xl text-white font-bold mb-2">
-								Interactive Maps
+								Real-time Monitoring
 							</h3>
 							<p className="text-white">
-								Create detailed maps of your world with location-specific lore,
-								characters, and events.
+								Stay informed with instant alerts and detailed logs of all bot
+								activities and moderation actions.
 							</p>
 						</Card>
 
@@ -175,11 +174,11 @@ export default function FormLandingPage() {
 								<Sparkles className="text-emerald-500 h-6 w-6" />
 							</div>
 							<h3 className="text-xl text-white font-bold mb-2">
-								AI-Assisted Creation
+								Custom Responses
 							</h3>
 							<p className="text-white">
-								Generate ideas, expand lore, and develop characters with AI that
-								understands your universe.
+								Train your bot to respond in your community's voice and style,
+								maintaining your unique culture.
 							</p>
 						</Card>
 
@@ -188,11 +187,11 @@ export default function FormLandingPage() {
 								<ArrowRight className="text-amber-500 h-6 w-6" />
 							</div>
 							<h3 className="text-xl text-white font-bold mb-2">
-								Cross-Platform Export
+								Seamless Integration
 							</h3>
 							<p className="text-white">
-								Export your world data to various formats for use in games,
-								books, or other creative projects.
+								One-click setup with Discord, no coding required. Your bot is
+								ready to work in minutes.
 							</p>
 						</Card>
 					</div>

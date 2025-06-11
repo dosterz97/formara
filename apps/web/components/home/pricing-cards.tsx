@@ -11,8 +11,8 @@ const PricingSection: React.FC = () => {
 						Simple, Transparent Pricing
 					</h2>
 					<p className="text-lg text-white max-w-2xl mx-auto">
-						Choose the plan that fits your creative needs, from hobbyists to
-						professional world-builders.
+						Choose the plan that fits your Discord community, from small servers
+						to large networks.
 					</p>
 				</div>
 
@@ -23,7 +23,7 @@ const PricingSection: React.FC = () => {
 						<div className="p-6 flex-grow">
 							<div className="mb-4">
 								<h3 className="text-xl text-white font-bold">Free</h3>
-								<p className="text-white">For casual creators</p>
+								<p className="text-white">For small communities</p>
 							</div>
 							<div className="mb-6">
 								<span className="text-4xl font-bold text-white">$0</span>
@@ -34,13 +34,13 @@ const PricingSection: React.FC = () => {
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">3 Worlds Maximum</span>
+									<span className="text-white">1 Discord Server</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Basic World Templates</span>
+									<span className="text-white">Basic Moderation</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
@@ -52,7 +52,7 @@ const PricingSection: React.FC = () => {
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Standard Export Options</span>
+									<span className="text-white">Basic FAQ Support</span>
 								</li>
 							</ul>
 						</div>
@@ -74,7 +74,7 @@ const PricingSection: React.FC = () => {
 						<div className="p-6 flex-grow">
 							<div className="mb-4">
 								<h3 className="text-xl text-white font-bold">Creator</h3>
-								<p className="text-white">For serious world-builders</p>
+								<p className="text-white">For growing communities</p>
 							</div>
 							<div className="mb-6">
 								<span className="text-4xl font-bold text-white">$20</span>
@@ -88,15 +88,13 @@ const PricingSection: React.FC = () => {
 									<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Unlimited Worlds</span>
+									<span className="text-white">Up to 5 Discord Servers</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">
-										Unlimited Workspace Members
-									</span>
+									<span className="text-white">Advanced Moderation</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
@@ -108,13 +106,13 @@ const PricingSection: React.FC = () => {
 									<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Advanced Templates</span>
+									<span className="text-white">Custom FAQ Training</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Premium Export Options</span>
+									<span className="text-white">Moderation Analytics</span>
 								</li>
 							</ul>
 						</div>
@@ -133,7 +131,7 @@ const PricingSection: React.FC = () => {
 						<div className="p-6 flex-grow">
 							<div className="mb-4">
 								<h3 className="text-xl text-white font-bold">Studio</h3>
-								<p className="text-white">For professional teams</p>
+								<p className="text-white">For large networks</p>
 							</div>
 							<div className="mb-6">
 								<span className="text-4xl font-bold text-white">$100</span>
@@ -155,29 +153,27 @@ const PricingSection: React.FC = () => {
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">
-										Early Access to New Features
-									</span>
+									<span className="text-white">Unlimited Discord Servers</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
 									<span className="text-white">
-										24/7 Support + Slack Access
+										24/7 Support + Discord Access
 									</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">AI-Assisted Creation</span>
+									<span className="text-white">Advanced AI Training</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Custom Branded Exports</span>
+									<span className="text-white">Custom Bot Branding</span>
 								</li>
 							</ul>
 						</div>
