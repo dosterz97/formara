@@ -29,6 +29,9 @@ const PricingSection: React.FC = () => {
 								<span className="text-4xl font-bold text-white">$0</span>
 								<span className="text-white">/month</span>
 							</div>
+							<p className="text-sm text-slate-300 mb-4 opacity-0">
+								with 7 day free trial
+							</p>
 							<ul className="space-y-3 mb-8">
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
@@ -40,19 +43,19 @@ const PricingSection: React.FC = () => {
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Basic Moderation</span>
+									<span className="text-white">1,000 messages per month</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Community Support</span>
+									<span className="text-white">Public Forum Support</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Basic FAQ Support</span>
+									<span className="text-white">Standard Moderation</span>
 								</li>
 							</ul>
 						</div>
@@ -88,31 +91,31 @@ const PricingSection: React.FC = () => {
 									<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Up to 5 Discord Servers</span>
+									<span className="text-white">Everything in Free, plus:</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Advanced Moderation</span>
+									<span className="text-white">3 Discord Servers</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Email Support</span>
+									<span className="text-white">10,000 messages per month</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Custom FAQ Training</span>
+									<span className="text-white">Personal Support</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Moderation Analytics</span>
+									<span className="text-white">Customized Moderation</span>
 								</li>
 							</ul>
 						</div>
@@ -153,27 +156,29 @@ const PricingSection: React.FC = () => {
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Unlimited Discord Servers</span>
+									<span className="text-white">10 Discord Servers</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
 									<span className="text-white">
-										24/7 Support + Discord Access
+										1,000,000 messages per month
 									</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Advanced AI Training</span>
+									<span className="text-white">
+										Private Discord Channel Support
+									</span>
 								</li>
 								<li className="flex items-start gap-2">
 									<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
 										✓
 									</div>
-									<span className="text-white">Custom Bot Branding</span>
+									<span className="text-white">Full Customization</span>
 								</li>
 							</ul>
 						</div>

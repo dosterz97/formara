@@ -34,8 +34,8 @@ export default async function PricingPage() {
 						Simple, Transparent Pricing
 					</h1>
 					<p className="text-lg text-white max-w-2xl mx-auto mb-8">
-						Choose the plan that's right for your world-building needs. No
-						hidden fees or surprise charges.
+						Choose the plan that fits your Discord community, from small servers
+						to large networks.
 					</p>
 				</div>
 			</section>
@@ -49,7 +49,7 @@ export default async function PricingPage() {
 							<div className="p-6 flex-grow">
 								<div className="mb-4">
 									<h3 className="text-xl text-white font-bold">Free</h3>
-									<p className="text-white">For casual creators</p>
+									<p className="text-white">For small communities</p>
 								</div>
 								<div className="mb-6">
 									<span className="text-4xl font-bold text-white">$0</span>
@@ -57,10 +57,10 @@ export default async function PricingPage() {
 								</div>
 								<ul className="space-y-3 mb-8">
 									{[
-										"3 Worlds Maximum",
-										"Basic World Templates",
-										"Community Support",
-										"Standard Export Options",
+										"1 Discord Server",
+										"1,000 messages per month",
+										"Public Forum Support",
+										"Standard Moderation",
 									].map((feature, index) => (
 										<li key={index} className="flex items-start gap-2">
 											<div className="rounded-full bg-emerald-500/20 text-emerald-500 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
@@ -90,7 +90,7 @@ export default async function PricingPage() {
 									<h3 className="text-xl text-white font-bold">
 										{creatorPlan?.name || "Creator"}
 									</h3>
-									<p className="text-white">For serious world-builders</p>
+									<p className="text-white">For growing communities</p>
 								</div>
 								<div className="mb-6">
 									<span className="text-4xl font-bold text-white">
@@ -108,11 +108,11 @@ export default async function PricingPage() {
 									)}
 								<ul className="space-y-3 mb-8">
 									{[
-										"Unlimited Worlds",
-										"Unlimited Workspace Members",
-										"Email Support",
-										"Advanced Templates",
-										"Premium Export Options",
+										"Everything in Free, plus:",
+										"3 Discord Servers",
+										"10,000 messages per month",
+										"Personal Support",
+										"Customized Moderation",
 									].map((feature, index) => (
 										<li key={index} className="flex items-start gap-2">
 											<div className="rounded-full bg-indigo-500/30 text-indigo-300 h-5 w-5 flex items-center justify-center text-xs mt-0.5">
@@ -142,7 +142,7 @@ export default async function PricingPage() {
 									<h3 className="text-xl text-white font-bold">
 										{studioPlan?.name || "Studio"}
 									</h3>
-									<p className="text-white">For professional teams</p>
+									<p className="text-white">For large networks</p>
 								</div>
 								<div className="mb-6">
 									<span className="text-4xl font-bold text-white">
@@ -161,6 +161,10 @@ export default async function PricingPage() {
 								<ul className="space-y-3 mb-8">
 									{[
 										"Everything in Creator, plus:",
+										"10 Discord Servers",
+										"1,000,000 messages per month",
+										"Private Discord Channel Support",
+										"Full Customization",
 										"Early Access to New Features",
 										"24/7 Support + Slack Access",
 										"AI-Assisted Creation",
