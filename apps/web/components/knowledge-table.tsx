@@ -377,9 +377,8 @@ export function KnowledgeTable({
 									<TableHeader>
 										<TableRow>
 											<TableHead className="w-1/2">Name</TableHead>
-											<TableHead className="w-1/6">Added</TableHead>
-											<TableHead className="w-1/6">Added By</TableHead>
-											<TableHead className="w-1/6 text-right">
+											<TableHead className="w-1/4">Added</TableHead>
+											<TableHead className="w-1/4 text-right">
 												Actions
 											</TableHead>
 										</TableRow>
@@ -401,15 +400,12 @@ export function KnowledgeTable({
 														</div>
 													</div>
 												</TableCell>
-												<TableCell className="w-1/6">
+												<TableCell className="w-1/4">
 													<div className="truncate">
 														{new Date(item.createdAt).toLocaleDateString()}
 													</div>
 												</TableCell>
-												<TableCell className="w-1/6">
-													<div className="truncate">User</div>
-												</TableCell>
-												<TableCell className="w-1/6 text-right">
+												<TableCell className="w-1/4 text-right">
 													<div className="flex items-center justify-end gap-2">
 														<Button
 															variant="ghost"
