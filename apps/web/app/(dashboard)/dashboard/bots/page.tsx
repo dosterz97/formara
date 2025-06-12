@@ -1,6 +1,5 @@
 "use client";
 
-import { BotForm } from "@/components/bot-form";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -24,13 +23,9 @@ export default function BotsPage() {
 	const [bots, setBots] = useState<Bot[]>([]);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
-	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 	const [deleteLoadingBotId, setDeleteLoadingBotId] = useState<string | null>(
 		null
 	);
-
-	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-	const [selectedBot, setSelectedBot] = useState<Bot | undefined>(undefined);
 
 	// Load bots from API when component mounts
 	useEffect(() => {
@@ -54,16 +49,6 @@ export default function BotsPage() {
 		} finally {
 			setLoading(false);
 		}
-	};
-
-	const handleCreateSuccess = (newBot: Bot) => {
-		// Add the new bot to the local state
-		setBots([...bots, newBot]);
-	};
-
-	const handleEditSuccess = (updatedBot: Bot) => {
-		// Update the bot in the local state
-		setBots(bots.map((b) => (b.id === updatedBot.id ? updatedBot : b)));
 	};
 
 	// Handle bot deletion
@@ -93,11 +78,6 @@ export default function BotsPage() {
 		}
 	};
 
-	const handleEditClick = (bot: Bot) => {
-		setSelectedBot(bot);
-		setIsEditModalOpen(true);
-	};
-
 	const handleAddToDiscord = (bot: Bot) => {
 		const discordUrl = getDiscordOAuthUrl(
 			process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID!,
@@ -108,161 +88,164 @@ export default function BotsPage() {
 
 	return (
 		<section className="flex-1 p-4 lg:p-8">
-			{/* Add Sonner component to the layout */}
 			<Toaster position="top-right" />
 
-			<h1 className="text-lg lg:text-2xl font-medium text-gray-900 mb-6">
-				Bots
-			</h1>
-			<div className="flex justify-between items-center mb-6">
-				{/* Create Bot Form */}
-				<BotForm
-					isOpen={isCreateModalOpen}
-					onOpenChange={setIsCreateModalOpen}
-					onSuccess={handleCreateSuccess}
-					mode="create"
-					trigger={<Button>Create New Bot</Button>}
-				/>
-			</div>
+			<div className="max-w-7xl mx-auto">
+				<div className="flex justify-between items-center mb-8">
+					<div>
+						<h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
+							Your Bots
+						</h1>
+						<p className="text-gray-500 mt-1">
+							Manage and configure your Discord bots
+						</p>
+					</div>
+					<Link href="/dashboard/bots/new">
+						<Button className="bg-indigo-600 hover:bg-indigo-700 shadow-sm">
+							<Plus className="mr-2 h-4 w-4" />
+							Create New Bot
+						</Button>
+					</Link>
+				</div>
 
-			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-				{loading ? (
-					<div className="col-span-full text-center p-12">
-						<p>Loading bots...</p>
-					</div>
-				) : error ? (
-					<div className="col-span-full text-center p-12 bg-red-50 rounded-lg border border-red-200">
-						<h3 className="text-lg font-medium text-red-600 mb-2">Error</h3>
-						<p className="text-red-500 mb-4">{error}</p>
-					</div>
-				) : bots.length > 0 ? (
-					bots.map((bot) => (
-						<div
-							key={bot.id}
-							className="border rounded-lg p-6 shadow-sm relative"
-						>
-							<h2 className="text-xl font-semibold mb-2">{bot.name}</h2>
-							<p className="text-gray-600 mb-4">{bot.description}</p>
-							<div className="flex justify-between items-center">
-								<span className="text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded">
-									{bot.status}
-								</span>
-								<div className="flex items-center gap-2">
-									<div className="absolute right-4 top-4">
-										<AlertDialog>
-											<AlertDialogTrigger asChild>
-												<Button size={"icon"} variant={"outline"}>
-													{deleteLoadingBotId === bot.id ? (
-														<>
-															<Loader2 className="h-4 w-4 animate-spin" />{" "}
-														</>
-													) : (
-														<Trash2 className="h-4 w-4" />
-													)}
-												</Button>
-											</AlertDialogTrigger>
-											<AlertDialogContent>
-												<AlertDialogHeader>
-													<AlertDialogTitle>Are you sure?</AlertDialogTitle>
-													<AlertDialogDescription>
-														This action cannot be undone. This will permanently
-														delete the bot &quot;{bot.name}&quot;.
-													</AlertDialogDescription>
-												</AlertDialogHeader>
-												<AlertDialogFooter>
-													<AlertDialogCancel>Cancel</AlertDialogCancel>
-													<AlertDialogAction
-														onClick={() => handleDeleteBot(bot)}
-														className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-														disabled={!!deleteLoadingBotId}
-													>
-														{deleteLoadingBotId === bot.id ? (
-															<>
-																<Loader2 className="mr-2 h-4 w-4 animate-spin" />{" "}
-																Deleting...
-															</>
-														) : (
-															"Delete"
-														)}
-													</AlertDialogAction>
-												</AlertDialogFooter>
-											</AlertDialogContent>
-										</AlertDialog>
+				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+					{loading ? (
+						<div className="col-span-full">
+							<div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+								<div className="flex items-center justify-center space-x-2">
+									<Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+									<p className="text-gray-600">Loading your bots...</p>
+								</div>
+							</div>
+						</div>
+					) : error ? (
+						<div className="col-span-full">
+							<div className="bg-red-50 rounded-lg border border-red-200 p-8">
+								<h3 className="text-lg font-medium text-red-600 mb-2">Error</h3>
+								<p className="text-red-500">{error}</p>
+							</div>
+						</div>
+					) : bots.length > 0 ? (
+						bots.map((bot) => (
+							<div
+								key={bot.id}
+								className="group bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200"
+							>
+								<Link href={`/dashboard/bots/${bot.slug}`} className="block">
+									<div className="p-6">
+										<div className="flex justify-between items-start mb-4">
+											<div>
+												<h2 className="text-xl font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+													{bot.name}
+												</h2>
+												<p className="text-gray-600 mt-1 line-clamp-2">
+													{bot.description}
+												</p>
+											</div>
+											<div onClick={(e) => e.preventDefault()}>
+												<AlertDialog>
+													<AlertDialogTrigger asChild>
+														<Button
+															size="icon"
+															variant="ghost"
+															className="text-gray-400 hover:text-red-600 hover:bg-red-50"
+														>
+															{deleteLoadingBotId === bot.id ? (
+																<Loader2 className="h-4 w-4 animate-spin" />
+															) : (
+																<Trash2 className="h-4 w-4" />
+															)}
+														</Button>
+													</AlertDialogTrigger>
+													<AlertDialogContent>
+														<AlertDialogHeader>
+															<AlertDialogTitle>Delete Bot</AlertDialogTitle>
+															<AlertDialogDescription>
+																This action cannot be undone. This will
+																permanently delete the bot &quot;{bot.name}
+																&quot;.
+															</AlertDialogDescription>
+														</AlertDialogHeader>
+														<AlertDialogFooter>
+															<AlertDialogCancel>Cancel</AlertDialogCancel>
+															<AlertDialogAction
+																onClick={() => handleDeleteBot(bot)}
+																className="bg-red-600 text-white hover:bg-red-700"
+																disabled={!!deleteLoadingBotId}
+															>
+																{deleteLoadingBotId === bot.id ? (
+																	<>
+																		<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+																		Deleting...
+																	</>
+																) : (
+																	"Delete Bot"
+																)}
+															</AlertDialogAction>
+														</AlertDialogFooter>
+													</AlertDialogContent>
+												</AlertDialog>
+											</div>
+										</div>
+										<div className="flex items-center gap-2 mb-6">
+											<span
+												className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+													bot.status === "active"
+														? "bg-green-100 text-green-800"
+														: "bg-yellow-100 text-yellow-800"
+												}`}
+											>
+												{bot.status}
+											</span>
+										</div>
 									</div>
+								</Link>
+								<div className="px-6 pb-6 grid grid-cols-2 gap-2">
 									<Button
 										variant="outline"
 										size="sm"
 										onClick={() => handleAddToDiscord(bot)}
+										className="w-full bg-[#5865F2] hover:bg-[#4752C4] text-white border-none"
 									>
-										<Plus className="mr-2 h-4 w-4" />
-										Add to Server
-									</Button>
-									<Button
-										variant="outline"
-										size="sm"
-										onClick={() => handleEditClick(bot)}
-									>
-										Edit
+										<svg
+											className="mr-2 h-4 w-4"
+											viewBox="0 0 24 24"
+											fill="currentColor"
+										>
+											<path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z" />
+										</svg>
+										Add to Discord
 									</Button>
 									<Link href={`/dashboard/bots/${bot.slug}`}>
-										<Button variant="outline" size="sm">
-											View
+										<Button variant="outline" size="sm" className="w-full">
+											Edit
+										</Button>
+									</Link>
+								</div>
+							</div>
+						))
+					) : (
+						<div className="col-span-full">
+							<div className="bg-white rounded-lg border border-dashed border-gray-300 p-12 text-center">
+								<div className="max-w-md mx-auto">
+									<h3 className="text-xl font-semibold text-gray-900 mb-2">
+										No bots yet
+									</h3>
+									<p className="text-gray-600 mb-6">
+										Create your first bot to start managing your Discord servers
+									</p>
+									<Link href="/dashboard/bots/new">
+										<Button className="bg-indigo-600 hover:bg-indigo-700 shadow-sm">
+											<Plus className="mr-2 h-4 w-4" />
+											Create Your First Bot
 										</Button>
 									</Link>
 								</div>
 							</div>
 						</div>
-					))
-				) : (
-					<div className="col-span-full text-center p-12 bg-gray-100 rounded-lg border border-dashed border-gray-300">
-						<h3 className="text-lg font-medium text-gray-700 mb-2">
-							No bots yet
-						</h3>
-						<p className="text-gray-600 mb-4">
-							Create your first bot to get started
-						</p>
-						<div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6 w-full">
-							<div className="col-span-1 bg-white rounded-md p-4 h-64 shadow-sm border border-gray-200">
-								<div className="h-8 w-32 bg-indigo-100 rounded mb-4"></div>
-								<div className="space-y-2">
-									<div className="h-4 w-full bg-gray-200 rounded"></div>
-									<div className="h-4 w-full bg-gray-200 rounded"></div>
-									<div className="h-4 w-3/4 bg-gray-200 rounded"></div>
-								</div>
-							</div>
-							<div className="col-span-2 bg-white rounded-md p-4 hidden md:block shadow-sm border border-gray-200">
-								<div className="h-full flex flex-col">
-									<div className="flex justify-between mb-4">
-										<div className="h-8 w-40 bg-purple-100 rounded"></div>
-										<div className="h-8 w-20 bg-indigo-100 rounded"></div>
-									</div>
-									<div className="flex-1 grid grid-cols-2 gap-4">
-										<div className="bg-gray-100 rounded-md p-3">
-											<div className="h-24 bg-gray-200 rounded mb-3"></div>
-											<div className="h-4 w-3/4 bg-gray-300 rounded mb-2"></div>
-											<div className="h-4 w-1/2 bg-gray-300 rounded"></div>
-										</div>
-										<div className="bg-gray-100 rounded-md p-3">
-											<div className="h-24 bg-gray-200 rounded mb-3"></div>
-											<div className="h-4 w-3/4 bg-gray-300 rounded mb-2"></div>
-											<div className="h-4 w-1/2 bg-gray-300 rounded"></div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				)}
+					)}
+				</div>
 			</div>
-
-			{/* Edit Bot Form */}
-			<BotForm
-				isOpen={isEditModalOpen}
-				onOpenChange={setIsEditModalOpen}
-				onSuccess={handleEditSuccess}
-				bot={selectedBot}
-				mode="edit"
-			/>
 		</section>
 	);
 }
