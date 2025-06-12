@@ -165,7 +165,7 @@ export function Login({ mode = "signin" }: { mode?: "signin" | "signup" }) {
 			</div>
 
 			{/* Add some keyframe animations */}
-			<style jsx global>{`
+			<style>{`
 				@keyframes float {
 					0% {
 						transform: translateY(0) translateX(0);
