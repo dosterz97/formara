@@ -1,7 +1,10 @@
 import { relations } from "drizzle-orm";
 import {
+	boolean,
+	integer,
 	json,
 	pgTable,
+	real,
 	text,
 	timestamp,
 	uniqueIndex,
@@ -129,6 +132,29 @@ export const discordBots = pgTable(
 	}
 );
 
+// Bot moderation table
+export const botModeration = pgTable("bot_moderation", {
+	id: uuid("id").primaryKey().defaultRandom(),
+	botId: uuid("bot_id")
+		.notNull()
+		.references(() => bots.id, { onDelete: "cascade" }),
+	enabled: boolean("enabled").notNull().default(false),
+	toxicityThreshold: real("toxicity_threshold").notNull().default(0.7),
+	harassmentThreshold: real("harassment_threshold").notNull().default(0.7),
+	sexualContentThreshold: real("sexual_content_threshold")
+		.notNull()
+		.default(0.7),
+	spamThreshold: real("spam_threshold").notNull().default(0.7),
+	actionOnViolation: text("action_on_violation", {
+		enum: ["warn", "delete", "timeout"],
+	})
+		.notNull()
+		.default("warn"),
+	timeoutDuration: integer("timeout_duration"),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const teamsRelations = relations(teams, ({ many }) => ({
 	teamMembers: many(teamMembers),
@@ -213,6 +239,8 @@ export type TeamDataWithMembers = Team & {
 
 export type Bot = typeof bots.$inferSelect;
 export type NewBot = typeof bots.$inferInsert;
+export type BotModeration = typeof botModeration.$inferSelect;
+export type NewBotModeration = typeof botModeration.$inferInsert;
 
 // Activity type enum
 export enum ActivityType {

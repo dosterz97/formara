@@ -48,6 +48,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Bot } from "@/lib/db/schema";
@@ -77,7 +79,19 @@ const formSchema = z.object({
 	status: z.enum(["active", "inactive"]),
 });
 
+// Moderation settings schema
+const moderationSchema = z.object({
+	enabled: z.boolean(),
+	toxicityThreshold: z.number().min(0).max(1),
+	harassmentThreshold: z.number().min(0).max(1),
+	sexualContentThreshold: z.number().min(0).max(1),
+	spamThreshold: z.number().min(0).max(1),
+	actionOnViolation: z.enum(["warn", "delete", "timeout"]),
+	timeoutDuration: z.number().min(1).max(1440).optional(), // in minutes
+});
+
 type FormValues = z.infer<typeof formSchema>;
+type ModerationValues = z.infer<typeof moderationSchema>;
 
 interface BotDetailsProps {
 	params: Promise<{
@@ -111,6 +125,23 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 			description: "",
 			status: "active",
 		},
+	});
+
+	// Moderation settings
+	const [moderationSettings, setModerationSettings] =
+		useState<ModerationValues>({
+			enabled: false,
+			toxicityThreshold: 0.7,
+			harassmentThreshold: 0.7,
+			sexualContentThreshold: 0.7,
+			spamThreshold: 0.7,
+			actionOnViolation: "warn",
+			timeoutDuration: 30,
+		});
+
+	const moderationForm = useForm<ModerationValues>({
+		resolver: zodResolver(moderationSchema),
+		defaultValues: moderationSettings,
 	});
 
 	// Update form when bot data changes
@@ -167,6 +198,16 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 
 				const data = await response.json();
 				setBot(data);
+
+				// Fetch moderation settings
+				const moderationResponse = await fetch(
+					`/api/bot/${data.id}/moderation`
+				);
+				if (moderationResponse.ok) {
+					const moderationData = await moderationResponse.json();
+					setModerationSettings(moderationData);
+					moderationForm.reset(moderationData);
+				}
 			} catch (err) {
 				console.error("Error fetching bot:", err);
 				setError(
@@ -180,7 +221,7 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 		if (botSlug) {
 			fetchBot();
 		}
-	}, [botSlug]);
+	}, [botSlug, moderationForm]);
 
 	// Fetch knowledge data
 	useEffect(() => {
@@ -290,6 +331,34 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 		setIsEditing(false);
 	};
 
+	// Handle moderation settings update
+	const handleModerationUpdate = async (values: ModerationValues) => {
+		if (!bot) return;
+
+		try {
+			const response = await fetch(`/api/bot/${bot.id}/moderation`, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(values),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(
+					errorData.error || "Failed to update moderation settings"
+				);
+			}
+
+			setModerationSettings(values);
+			toast.success("Moderation settings updated successfully");
+		} catch (error) {
+			console.error("Error updating moderation settings:", error);
+			toast.error("Failed to update moderation settings");
+		}
+	};
+
 	// Loading state
 	if (loading) {
 		return (
@@ -371,225 +440,466 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 
 	return (
 		<>
-			<div className="mb-6">
-				<Button
-					variant="outline"
-					onClick={() => router.push("/dashboard/bots")}
-					className="mb-4"
-				>
-					<ArrowLeft className="mr-2 h-4 w-4" /> Back to Bots
-				</Button>
-				<div className="flex items-center justify-between">
-					<div>
-						<h1 className="text-2xl font-bold tracking-tight">{bot?.name}</h1>
-						<p className="text-muted-foreground">{bot?.description}</p>
-					</div>
-					<div className="flex items-center gap-2">
-						<Button variant="outline" onClick={() => setIsEditModalOpen(true)}>
-							<Pencil className="mr-2 h-4 w-4" /> Edit
-						</Button>
-						<AlertDialog>
-							<AlertDialogTrigger asChild>
-								<Button variant="destructive">
-									{deleteLoading ? (
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-									) : (
-										<Trash2 className="mr-2 h-4 w-4" />
-									)}
-									Delete
-								</Button>
-							</AlertDialogTrigger>
-							<AlertDialogContent>
-								<AlertDialogHeader>
-									<AlertDialogTitle>
-										Are you sure you want to delete this bot?
-									</AlertDialogTitle>
-									<AlertDialogDescription>
-										This action cannot be undone. This will permanently delete
-										the bot and all its data.
-									</AlertDialogDescription>
-								</AlertDialogHeader>
-								<AlertDialogFooter>
-									<AlertDialogCancel>Cancel</AlertDialogCancel>
-									<AlertDialogAction
-										onClick={handleDeleteBot}
-										className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-									>
+			<div className="mx-auto max-w-7xl">
+				<div className="mb-6">
+					<Button
+						variant="outline"
+						onClick={() => router.push("/dashboard/bots")}
+						className="mb-4"
+					>
+						<ArrowLeft className="mr-2 h-4 w-4" /> Back to Bots
+					</Button>
+					<div className="flex items-center justify-between">
+						<div>
+							<h1 className="text-2xl font-bold tracking-tight">{bot?.name}</h1>
+							<p className="text-muted-foreground">{bot?.description}</p>
+						</div>
+						<div className="flex items-center gap-2">
+							<Button
+								variant="outline"
+								onClick={() => setIsEditModalOpen(true)}
+							>
+								<Pencil className="mr-2 h-4 w-4" /> Edit
+							</Button>
+							<AlertDialog>
+								<AlertDialogTrigger asChild>
+									<Button variant="destructive">
+										{deleteLoading ? (
+											<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										) : (
+											<Trash2 className="mr-2 h-4 w-4" />
+										)}
 										Delete
-									</AlertDialogAction>
-								</AlertDialogFooter>
-							</AlertDialogContent>
-						</AlertDialog>
+									</Button>
+								</AlertDialogTrigger>
+								<AlertDialogContent>
+									<AlertDialogHeader>
+										<AlertDialogTitle>
+											Are you sure you want to delete this bot?
+										</AlertDialogTitle>
+										<AlertDialogDescription>
+											This action cannot be undone. This will permanently delete
+											the bot and all its data.
+										</AlertDialogDescription>
+									</AlertDialogHeader>
+									<AlertDialogFooter>
+										<AlertDialogCancel>Cancel</AlertDialogCancel>
+										<AlertDialogAction
+											onClick={handleDeleteBot}
+											className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+										>
+											Delete
+										</AlertDialogAction>
+									</AlertDialogFooter>
+								</AlertDialogContent>
+							</AlertDialog>
+						</div>
 					</div>
 				</div>
-			</div>
 
-			<div className="grid gap-6">
-				<Tabs defaultValue="details" className="w-full">
-					<TabsList className="grid w-full grid-cols-3">
-						<TabsTrigger value="details">Details</TabsTrigger>
-						<TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
-						<TabsTrigger value="chat">Chat Interface</TabsTrigger>
-					</TabsList>
-					<TabsContent value="details">
-						<Card>
-							<CardHeader>
-								<div className="flex items-center justify-between">
-									<div>
-										<CardTitle>Bot Details</CardTitle>
-										<CardDescription>
-											Configure your bot's settings and behavior
-										</CardDescription>
-									</div>
-									<div className="flex items-center gap-2">
-										{!isEditing ? (
-											<Button
-												variant="outline"
-												size="sm"
-												onClick={() => setIsEditing(true)}
-												disabled={editLoading}
-											>
-												<Pencil className="mr-2 h-4 w-4" />
-												Edit
-											</Button>
-										) : (
-											<div className="flex gap-2">
+				<div className="grid gap-6">
+					<Tabs defaultValue="details" className="w-full">
+						<TabsList className="grid w-full grid-cols-4">
+							<TabsTrigger value="details">Details</TabsTrigger>
+							<TabsTrigger value="knowledge">Knowledge Base</TabsTrigger>
+							<TabsTrigger value="chat">Chat Interface</TabsTrigger>
+							<TabsTrigger value="moderation">Moderation</TabsTrigger>
+						</TabsList>
+						<TabsContent value="details">
+							<Card>
+								<CardHeader>
+									<div className="flex items-center justify-between">
+										<div>
+											<CardTitle>Bot Details</CardTitle>
+											<CardDescription>
+												Configure your bot's settings and behavior
+											</CardDescription>
+										</div>
+										<div className="flex items-center gap-2">
+											{!isEditing ? (
 												<Button
 													variant="outline"
 													size="sm"
-													onClick={handleCancelEdit}
+													onClick={() => setIsEditing(true)}
 													disabled={editLoading}
 												>
-													<X className="mr-2 h-4 w-4" />
-													Cancel
+													<Pencil className="mr-2 h-4 w-4" />
+													Edit
 												</Button>
-												<Button
-													size="sm"
-													onClick={form.handleSubmit(handleInlineEdit)}
-													disabled={editLoading}
-												>
-													{editLoading ? (
-														<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-													) : (
-														<Save className="mr-2 h-4 w-4" />
-													)}
-													Save
-												</Button>
+											) : (
+												<div className="flex gap-2">
+													<Button
+														variant="outline"
+														size="sm"
+														onClick={handleCancelEdit}
+														disabled={editLoading}
+													>
+														<X className="mr-2 h-4 w-4" />
+														Cancel
+													</Button>
+													<Button
+														size="sm"
+														onClick={form.handleSubmit(handleInlineEdit)}
+														disabled={editLoading}
+													>
+														{editLoading ? (
+															<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+														) : (
+															<Save className="mr-2 h-4 w-4" />
+														)}
+														Save
+													</Button>
+												</div>
+											)}
+										</div>
+									</div>
+								</CardHeader>
+								<CardContent>
+									{!isEditing ? (
+										<div className="space-y-4">
+											<div>
+												<h3 className="font-medium mb-2">Name</h3>
+												<p className="text-sm text-muted-foreground">
+													{bot?.name}
+												</p>
 											</div>
-										)}
-									</div>
-								</div>
-							</CardHeader>
-							<CardContent>
-								{!isEditing ? (
-									<div className="space-y-4">
-										<div>
-											<h3 className="font-medium mb-2">Name</h3>
-											<p className="text-sm text-muted-foreground">
-												{bot?.name}
-											</p>
+											<div>
+												<h3 className="font-medium mb-2">Description</h3>
+												<p className="text-sm text-muted-foreground">
+													{bot?.description || "No description set"}
+												</p>
+											</div>
+											<div>
+												<h3 className="font-medium mb-2">Status</h3>
+												<Badge variant="outline">{bot?.status}</Badge>
+											</div>
 										</div>
-										<div>
-											<h3 className="font-medium mb-2">Description</h3>
-											<p className="text-sm text-muted-foreground">
-												{bot?.description || "No description set"}
-											</p>
-										</div>
-										<div>
-											<h3 className="font-medium mb-2">Status</h3>
-											<Badge variant="outline">{bot?.status}</Badge>
-										</div>
-									</div>
-								) : (
-									<Form {...form}>
+									) : (
+										<Form {...form}>
+											<form
+												onSubmit={form.handleSubmit(handleInlineEdit)}
+												className="space-y-4"
+											>
+												<FormField
+													control={form.control}
+													name="name"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Name</FormLabel>
+															<FormControl>
+																<Input placeholder="Bot name" {...field} />
+															</FormControl>
+															<FormDescription>
+																The name of your bot.
+															</FormDescription>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+
+												<FormField
+													control={form.control}
+													name="description"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Description</FormLabel>
+															<FormControl>
+																<Textarea
+																	placeholder="Describe your bot..."
+																	className="resize-none"
+																	{...field}
+																/>
+															</FormControl>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+
+												<FormField
+													control={form.control}
+													name="status"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Status</FormLabel>
+															<Select
+																onValueChange={field.onChange}
+																defaultValue={field.value}
+																value={field.value}
+															>
+																<FormControl>
+																	<SelectTrigger>
+																		<SelectValue placeholder="Select a status" />
+																	</SelectTrigger>
+																</FormControl>
+																<SelectContent>
+																	{["active", "inactive"].map((status) => (
+																		<SelectItem key={status} value={status}>
+																			{status.charAt(0).toUpperCase() +
+																				status.slice(1)}
+																		</SelectItem>
+																	))}
+																</SelectContent>
+															</Select>
+															<FormDescription>
+																The current status of this bot.
+															</FormDescription>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+											</form>
+										</Form>
+									)}
+								</CardContent>
+							</Card>
+						</TabsContent>
+						<TabsContent value="knowledge">
+							<KnowledgeTable
+								botId={bot?.id || ""}
+								knowledge={knowledge}
+								isLoading={knowledgeLoading}
+							/>
+						</TabsContent>
+						<TabsContent value="chat">
+							<ChatInterface botId={bot?.id || ""} botName={bot?.name || ""} />
+						</TabsContent>
+						<TabsContent value="moderation">
+							<Card>
+								<CardHeader>
+									<CardTitle>Moderation Settings</CardTitle>
+									<CardDescription>
+										Configure content moderation thresholds and actions
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<Form {...moderationForm}>
 										<form
-											onSubmit={form.handleSubmit(handleInlineEdit)}
+											onSubmit={moderationForm.handleSubmit(
+												handleModerationUpdate
+											)}
 											className="space-y-4"
 										>
 											<FormField
-												control={form.control}
-												name="name"
+												control={moderationForm.control}
+												name="enabled"
 												render={({ field }) => (
-													<FormItem>
-														<FormLabel>Name</FormLabel>
+													<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+														<div className="space-y-0.5">
+															<FormLabel className="text-base">
+																Enable Moderation
+															</FormLabel>
+															<FormDescription>
+																Enable or disable content moderation for this
+																bot
+															</FormDescription>
+														</div>
 														<FormControl>
-															<Input placeholder="Bot name" {...field} />
-														</FormControl>
-														<FormDescription>
-															The name of your bot.
-														</FormDescription>
-														<FormMessage />
-													</FormItem>
-												)}
-											/>
-
-											<FormField
-												control={form.control}
-												name="description"
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel>Description</FormLabel>
-														<FormControl>
-															<Textarea
-																placeholder="Describe your bot..."
-																className="resize-none"
-																{...field}
+															<Switch
+																checked={field.value}
+																onCheckedChange={field.onChange}
 															/>
 														</FormControl>
-														<FormMessage />
 													</FormItem>
 												)}
 											/>
 
-											<FormField
-												control={form.control}
-												name="status"
-												render={({ field }) => (
-													<FormItem>
-														<FormLabel>Status</FormLabel>
-														<Select
-															onValueChange={field.onChange}
-															defaultValue={field.value}
-															value={field.value}
-														>
+											<div className="grid grid-cols-2 gap-4">
+												<FormField
+													control={moderationForm.control}
+													name="toxicityThreshold"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Toxicity Threshold</FormLabel>
 															<FormControl>
-																<SelectTrigger>
-																	<SelectValue placeholder="Select a status" />
-																</SelectTrigger>
+																<div className="space-y-1">
+																	<Slider
+																		min={0}
+																		max={1}
+																		step={0.1}
+																		value={[field.value]}
+																		onValueChange={(value: number[]) =>
+																			field.onChange(value[0])
+																		}
+																		className="cursor-grab active:cursor-grabbing"
+																		disabled={!moderationForm.watch("enabled")}
+																	/>
+																	<div className="flex justify-between text-xs text-muted-foreground">
+																		<span>0</span>
+																		<span>{field.value.toFixed(1)}</span>
+																		<span>1</span>
+																	</div>
+																</div>
 															</FormControl>
-															<SelectContent>
-																{["active", "inactive"].map((status) => (
-																	<SelectItem key={status} value={status}>
-																		{status.charAt(0).toUpperCase() +
-																			status.slice(1)}
-																	</SelectItem>
-																))}
-															</SelectContent>
-														</Select>
-														<FormDescription>
-															The current status of this bot.
-														</FormDescription>
-														<FormMessage />
-													</FormItem>
+															<FormDescription className="text-xs">
+																Threshold for detecting toxic content
+															</FormDescription>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+
+												<FormField
+													control={moderationForm.control}
+													name="harassmentThreshold"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Harassment Threshold</FormLabel>
+															<FormControl>
+																<div className="space-y-1">
+																	<Slider
+																		min={0}
+																		max={1}
+																		step={0.1}
+																		value={[field.value]}
+																		onValueChange={(value: number[]) =>
+																			field.onChange(value[0])
+																		}
+																		className="cursor-grab active:cursor-grabbing"
+																		disabled={!moderationForm.watch("enabled")}
+																	/>
+																	<div className="flex justify-between text-xs text-muted-foreground">
+																		<span>0</span>
+																		<span>{field.value.toFixed(1)}</span>
+																		<span>1</span>
+																	</div>
+																</div>
+															</FormControl>
+															<FormDescription className="text-xs">
+																Threshold for detecting harassment
+															</FormDescription>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+
+												<FormField
+													control={moderationForm.control}
+													name="sexualContentThreshold"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Sexual Content Threshold</FormLabel>
+															<FormControl>
+																<div className="space-y-1">
+																	<Slider
+																		min={0}
+																		max={1}
+																		step={0.1}
+																		value={[field.value]}
+																		onValueChange={(value: number[]) =>
+																			field.onChange(value[0])
+																		}
+																		className="cursor-grab active:cursor-grabbing"
+																		disabled={!moderationForm.watch("enabled")}
+																	/>
+																	<div className="flex justify-between text-xs text-muted-foreground">
+																		<span>0</span>
+																		<span>{field.value.toFixed(1)}</span>
+																		<span>1</span>
+																	</div>
+																</div>
+															</FormControl>
+															<FormDescription className="text-xs">
+																Threshold for detecting sexual content
+															</FormDescription>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+
+												<FormField
+													control={moderationForm.control}
+													name="spamThreshold"
+													render={({ field }) => (
+														<FormItem>
+															<FormLabel>Spam Threshold</FormLabel>
+															<FormControl>
+																<div className="space-y-1">
+																	<Slider
+																		min={0}
+																		max={1}
+																		step={0.1}
+																		value={[field.value]}
+																		onValueChange={(value: number[]) =>
+																			field.onChange(value[0])
+																		}
+																		className="cursor-grab active:cursor-grabbing"
+																		disabled={!moderationForm.watch("enabled")}
+																	/>
+																	<div className="flex justify-between text-xs text-muted-foreground">
+																		<span>0</span>
+																		<span>{field.value.toFixed(1)}</span>
+																		<span>1</span>
+																	</div>
+																</div>
+															</FormControl>
+															<FormDescription className="text-xs">
+																Threshold for detecting spam
+															</FormDescription>
+															<FormMessage />
+														</FormItem>
+													)}
+												/>
+											</div>
+
+											<div className="grid grid-cols-2 gap-4">
+												<FormField
+													control={moderationForm.control}
+													name="actionOnViolation"
+													render={({ field }) => (
+														<FormItem className="hidden">
+															<FormControl>
+																<input
+																	type="hidden"
+																	{...field}
+																	value="delete"
+																/>
+															</FormControl>
+														</FormItem>
+													)}
+												/>
+
+												{moderationForm.watch("actionOnViolation") ===
+													"timeout" && (
+													<FormField
+														control={moderationForm.control}
+														name="timeoutDuration"
+														render={({ field }) => (
+															<FormItem>
+																<FormLabel>
+																	Timeout Duration (minutes)
+																</FormLabel>
+																<FormControl>
+																	<Input
+																		type="number"
+																		min="1"
+																		max="1440"
+																		{...field}
+																		onChange={(e) =>
+																			field.onChange(parseInt(e.target.value))
+																		}
+																		disabled={!moderationForm.watch("enabled")}
+																	/>
+																</FormControl>
+																<FormDescription className="text-xs">
+																	Duration of timeout in minutes (1-1440)
+																</FormDescription>
+																<FormMessage />
+															</FormItem>
+														)}
+													/>
 												)}
-											/>
+											</div>
+
+											<Button type="submit" className="w-full">
+												Save Moderation Settings
+											</Button>
 										</form>
 									</Form>
-								)}
-							</CardContent>
-						</Card>
-					</TabsContent>
-					<TabsContent value="knowledge">
-						<KnowledgeTable
-							botId={bot?.id || ""}
-							knowledge={knowledge}
-							isLoading={knowledgeLoading}
-						/>
-					</TabsContent>
-					<TabsContent value="chat">
-						<ChatInterface botId={bot?.id || ""} botName={bot?.name || ""} />
-					</TabsContent>
-				</Tabs>
+								</CardContent>
+							</Card>
+						</TabsContent>
+					</Tabs>
+				</div>
 			</div>
 
 			{/* Edit modal */}
