@@ -1,7 +1,8 @@
 import { Client, Events, GatewayIntentBits, Message } from "discord.js";
 import dotenv from "dotenv";
 import path from "path";
-import { getBotByGuildId } from "../../shared/db";
+import { getBotByGuildId, getBotModerationSettings } from "../../shared/db";
+import { Bot } from "../../shared/types";
 import { handleGuildCreate, handleGuildDelete } from "./db";
 import { generateBotResponse } from "./services/gemini";
 import { moderateContent } from "./services/moderation";
@@ -76,10 +77,18 @@ client.on(Events.MessageCreate, async (message: Message) => {
 	});
 
 	// Get bot data first to check moderation settings
-	let bot;
+	let bot: Bot | null = null;
+	let moderationEnabled = true; // Default to true
 	if (message.guild) {
 		try {
 			bot = await getBotByGuildId(message.guild.id);
+			if (bot) {
+				const moderationSettings = await getBotModerationSettings(bot.id);
+				if (moderationSettings) {
+					moderationEnabled = moderationSettings.enabled;
+					console.log("Moderation settings:", moderationSettings);
+				}
+			}
 		} catch (error) {
 			console.error("Error fetching bot data:", error);
 		}
@@ -88,7 +97,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 	// Check content with Gemini moderation if enabled
 	try {
 		const moderationResult = await moderateContent(message.content, {
-			enabled: bot?.settings?.moderation?.enabled ?? false,
+			enabled: moderationEnabled,
 		});
 
 		if (moderationResult.violation) {
