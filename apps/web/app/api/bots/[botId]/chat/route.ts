@@ -73,7 +73,7 @@ export async function POST(
 		// Generate response using Gemini
 		const genAIStart = Date.now();
 		const result = await genAI.models.generateContent({
-			model: "gemini-2.0-flash",
+			model: "gemini-2.5-flash-preview-05-20",
 			contents: fullPrompt,
 		});
 		timings.genAIGeneration = Date.now() - genAIStart;

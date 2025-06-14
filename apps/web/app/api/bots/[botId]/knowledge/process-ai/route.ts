@@ -44,7 +44,7 @@ Each chunk should:
 Remember: Return ONLY the JSON array, nothing else.`;
 
 		const result = await model({
-			model: "gemini-2.0-flash",
+			model: "gemini-2.5-flash-preview-05-20",
 			contents: prompt,
 		});
 

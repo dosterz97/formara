@@ -4,12 +4,10 @@ import path from "path";
 import { getBotByGuildId } from "../../shared/db";
 import { handleGuildCreate, handleGuildDelete } from "./db";
 import { generateBotResponse } from "./services/gemini";
+import { moderateContent } from "./services/moderation";
 
 // Load .env from root directory
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
-
-// List of banned words that will trigger message deletion
-const BANNED_WORDS = ["bitch"];
 
 const client = new Client({
 	intents: [
@@ -77,25 +75,43 @@ client.on(Events.MessageCreate, async (message: Message) => {
 		botId: client.user!.id,
 	});
 
-	// Check for banned words
-	const messageContent = message.content.toLowerCase();
-	if (BANNED_WORDS.some((word) => messageContent.includes(word))) {
+	// Get bot data first to check moderation settings
+	let bot;
+	if (message.guild) {
 		try {
-			await message.delete();
-			console.log(
-				`Deleted message containing banned word from ${message.author.tag}`
-			);
-			// Optionally send a warning message
-			if (message.channel.type === 0) {
-				// 0 is GUILD_TEXT
-				await message.channel.send(
-					`${message.author}, please keep the chat family-friendly.`
-				);
-			}
+			bot = await getBotByGuildId(message.guild.id);
 		} catch (error) {
-			console.error("Error deleting message:", error);
+			console.error("Error fetching bot data:", error);
 		}
-		return;
+	}
+
+	// Check content with Gemini moderation if enabled
+	try {
+		const moderationResult = await moderateContent(message.content, {
+			enabled: bot?.settings?.moderation?.enabled ?? false,
+		});
+
+		if (moderationResult.violation) {
+			try {
+				await message.delete();
+				console.log(
+					`Deleted message containing ${moderationResult.harmType} content from ${message.author.tag}`
+				);
+				// Send a warning message
+				if (message.channel.type === 0) {
+					// GUILD_TEXT
+					await message.channel.send(
+						`${message.author}, please keep the chat family-friendly. Your message was flagged for ${moderationResult.harmType} content.`
+					);
+				}
+			} catch (error) {
+				console.error("Error deleting message:", error);
+			}
+			return;
+		}
+	} catch (error) {
+		console.error("Error in content moderation:", error);
+		// Continue with message processing if moderation fails
 	}
 
 	// Check if the message mentions the bot and is in a guild
@@ -112,7 +128,9 @@ client.on(Events.MessageCreate, async (message: Message) => {
 			message.guild.id
 		);
 		try {
-			const bot = await getBotByGuildId(message.guild.id);
+			if (!bot) {
+				bot = await getBotByGuildId(message.guild.id);
+			}
 
 			if (!bot) {
 				console.error("Bot configuration not found for this server");

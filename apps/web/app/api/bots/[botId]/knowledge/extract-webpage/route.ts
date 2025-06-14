@@ -279,7 +279,7 @@ Return ONLY a valid JSON array with this exact format (no markdown formatting, n
 IMPORTANT: Return ONLY the JSON array, no other text, no markdown code blocks, no explanations.`;
 
 		const result = await model({
-			model: "gemini-2.0-flash",
+			model: "gemini-2.5-flash-preview-05-20",
 			contents: prompt,
 		});
 
