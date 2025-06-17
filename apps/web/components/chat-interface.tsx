@@ -10,9 +10,11 @@ import {
 	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
+import { useUser } from "@/lib/auth";
 import { KnowledgeSource } from "@/lib/chat/prompt";
 import { cn } from "@/lib/utils";
 import {
+	AlertTriangle,
 	Bot,
 	ChevronDown,
 	ChevronRight,
@@ -31,6 +33,14 @@ interface Timings {
 	genAIGeneration: number;
 }
 
+interface ModerationResult {
+	toxicityScore: number;
+	harassmentScore: number;
+	sexualContentScore: number;
+	spamScore: number;
+	violation: boolean;
+}
+
 interface Message {
 	id: string;
 	content: string;
@@ -39,6 +49,8 @@ interface Message {
 	knowledgeSources?: KnowledgeSource[];
 	timings?: Timings;
 	prompt?: string;
+	isModerationWarning?: boolean;
+	moderationResult?: ModerationResult;
 }
 
 interface ChatInterfaceProps {
@@ -48,16 +60,33 @@ interface ChatInterfaceProps {
 
 function TimingBreakdown({ timings }: { timings: Timings }) {
 	const [isOpen, setIsOpen] = useState(false);
+	const { userPromise } = useUser();
+	const [shouldShow, setShouldShow] = useState(false);
+
+	useEffect(() => {
+		userPromise.then((user) => {
+			if (
+				user?.email === "chad.brogrammer@gmail.com" ||
+				user?.email === "dosterz97@gmail.com"
+			) {
+				setShouldShow(true);
+			}
+		});
+	}, [userPromise]);
+
+	if (!shouldShow) return null;
 
 	const formatTime = (ms: number) => {
 		if (ms >= 1000) {
 			return `${(ms / 1000).toFixed(2)}s`;
 		}
-		return `${ms}ms`;
+		return `${Math.round(ms)}ms`;
 	};
 
 	const getPercentage = (ms: number) => {
-		return ((ms / timings.total) * 100).toFixed(1);
+		const total =
+			timings.botFetch + timings.knowledgeSearch + timings.genAIGeneration;
+		return ((ms / total) * 100).toFixed(1);
 	};
 
 	return (
@@ -67,7 +96,13 @@ function TimingBreakdown({ timings }: { timings: Timings }) {
 					<CardHeader className="pb-2 pt-3 px-3 cursor-pointer hover:bg-slate-100/50 transition-colors">
 						<CardTitle className="text-xs font-medium text-slate-700 flex items-center gap-2">
 							<Clock className="h-3 w-3" />
-							Performance Breakdown ({formatTime(timings.total)})
+							Performance Breakdown (
+							{formatTime(
+								timings.botFetch +
+									timings.knowledgeSearch +
+									timings.genAIGeneration
+							)}
+							)
 							{isOpen ? (
 								<ChevronDown className="h-3 w-3" />
 							) : (
@@ -166,6 +201,82 @@ function PromptViewer({ prompt }: { prompt: string }) {
 	);
 }
 
+function ModerationDetails({ result }: { result: ModerationResult }) {
+	const [isOpen, setIsOpen] = useState(false);
+
+	const categories = [
+		{ name: "Toxicity", score: result.toxicityScore },
+		{ name: "Harassment", score: result.harassmentScore },
+		{ name: "Sexual Content", score: result.sexualContentScore },
+		{ name: "Spam", score: result.spamScore },
+	];
+
+	return (
+		<Card
+			className={cn(
+				"mt-2 border",
+				result.violation
+					? "bg-red-50/50 border-red-200"
+					: "bg-slate-50/50 border-slate-200"
+			)}
+		>
+			<Collapsible open={isOpen} onOpenChange={setIsOpen}>
+				<CollapsibleTrigger asChild>
+					<CardHeader className="pb-2 pt-3 px-3 cursor-pointer hover:bg-slate-100/50 transition-colors">
+						<CardTitle
+							className={cn(
+								"text-xs font-medium flex items-center gap-2",
+								result.violation ? "text-red-700" : "text-slate-700"
+							)}
+						>
+							<AlertTriangle className="h-3 w-3" />
+							Content Moderation Scores
+							{isOpen ? (
+								<ChevronDown className="h-3 w-3" />
+							) : (
+								<ChevronRight className="h-3 w-3" />
+							)}
+						</CardTitle>
+					</CardHeader>
+				</CollapsibleTrigger>
+				<CollapsibleContent>
+					<CardContent className="pt-0 px-3 pb-3">
+						<div className="space-y-1">
+							{categories.map(({ name, score }) => (
+								<div
+									key={name}
+									className="flex justify-between items-center mb-1"
+								>
+									<span className="text-muted-foreground text-xs">{name}:</span>
+									<div className="flex items-center gap-2">
+										<div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+											<div
+												className={cn(
+													"h-full",
+													result.violation ? "bg-red-500" : "bg-slate-500"
+												)}
+												style={{ width: `${(score * 100).toFixed(1)}%` }}
+											/>
+										</div>
+										<span
+											className={cn(
+												"font-mono w-12 text-right text-xs",
+												result.violation ? "text-red-700" : "text-slate-700"
+											)}
+										>
+											{(score * 100).toFixed(1)}%
+										</span>
+									</div>
+								</div>
+							))}
+						</div>
+					</CardContent>
+				</CollapsibleContent>
+			</Collapsible>
+		</Card>
+	);
+}
+
 export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [input, setInput] = useState("");
@@ -176,7 +287,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 	const chatStorageKey = `chat-history-${botId}`;
 
 	const scrollToBottom = () => {
-		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+		messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
 	};
 
 	useEffect(() => {
@@ -247,11 +358,24 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 				}),
 			});
 
-			if (!response.ok) {
-				throw new Error("Failed to get response");
-			}
-
 			const data = await response.json();
+
+			if (!response.ok) {
+				// Handle moderation error
+				if (response.status === 400 && data.moderationResult) {
+					const errorMessage: Message = {
+						id: (Date.now() + 1).toString(),
+						content: data.error,
+						role: "assistant",
+						timestamp: new Date(),
+						isModerationWarning: true,
+						moderationResult: data.moderationResult,
+					};
+					setMessages((prev) => [...prev, errorMessage]);
+					return;
+				}
+				throw new Error(data.error || "Failed to get response");
+			}
 
 			const assistantMessage: Message = {
 				id: (Date.now() + 1).toString(),
@@ -261,6 +385,7 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 				knowledgeSources: data.knowledgeSources || undefined,
 				timings: data.timings || undefined,
 				prompt: data.prompt || undefined,
+				moderationResult: data.moderationResult || undefined,
 			};
 
 			setMessages((prev) => [...prev, assistantMessage]);
@@ -343,6 +468,8 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 										"p-3 rounded-lg text-sm break-words",
 										message.role === "user"
 											? "bg-primary text-primary-foreground"
+											: message.isModerationWarning
+											? "bg-destructive/10 text-destructive border border-destructive/20"
 											: "bg-muted"
 									)}
 								>
@@ -363,6 +490,11 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 								{message.role === "assistant" && message.prompt && (
 									<div className="w-full">
 										<PromptViewer prompt={message.prompt} />
+									</div>
+								)}
+								{message.role === "assistant" && message.moderationResult && (
+									<div className="w-full">
+										<ModerationDetails result={message.moderationResult} />
 									</div>
 								)}
 							</div>

@@ -703,15 +703,22 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 												)}
 											/>
 
-											<div className="grid grid-cols-2 gap-4">
+											<div className="space-y-6 max-w-2xl">
 												<FormField
 													control={moderationForm.control}
 													name="toxicityThreshold"
 													render={({ field }) => (
 														<FormItem>
-															<FormLabel>Toxicity Threshold</FormLabel>
+															<div className="flex items-center justify-between">
+																<FormLabel className="text-base font-medium">
+																	Toxic Language
+																</FormLabel>
+																<span className="text-sm font-medium text-muted-foreground">
+																	{field.value.toFixed(1)}
+																</span>
+															</div>
 															<FormControl>
-																<div className="space-y-1">
+																<div className="space-y-2 mt-2">
 																	<Slider
 																		min={0}
 																		max={1}
@@ -723,15 +730,14 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 																		className="cursor-grab active:cursor-grabbing"
 																		disabled={!moderationForm.watch("enabled")}
 																	/>
-																	<div className="flex justify-between text-xs text-muted-foreground">
-																		<span>0</span>
-																		<span>{field.value.toFixed(1)}</span>
-																		<span>1</span>
+																	<div className="flex justify-between text-sm text-muted-foreground">
+																		<span>More Permissive</span>
+																		<span>More Strict</span>
 																	</div>
 																</div>
 															</FormControl>
-															<FormDescription className="text-xs">
-																Threshold for detecting toxic content
+															<FormDescription className="text-sm mt-2">
+																How strictly to filter toxic or harmful language
 															</FormDescription>
 															<FormMessage />
 														</FormItem>
@@ -743,9 +749,16 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 													name="harassmentThreshold"
 													render={({ field }) => (
 														<FormItem>
-															<FormLabel>Harassment Threshold</FormLabel>
+															<div className="flex items-center justify-between">
+																<FormLabel className="text-base font-medium">
+																	Bullying & Harassment
+																</FormLabel>
+																<span className="text-sm font-medium text-muted-foreground">
+																	{field.value.toFixed(1)}
+																</span>
+															</div>
 															<FormControl>
-																<div className="space-y-1">
+																<div className="space-y-2 mt-2">
 																	<Slider
 																		min={0}
 																		max={1}
@@ -757,15 +770,14 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 																		className="cursor-grab active:cursor-grabbing"
 																		disabled={!moderationForm.watch("enabled")}
 																	/>
-																	<div className="flex justify-between text-xs text-muted-foreground">
-																		<span>0</span>
-																		<span>{field.value.toFixed(1)}</span>
-																		<span>1</span>
+																	<div className="flex justify-between text-sm text-muted-foreground">
+																		<span>More Permissive</span>
+																		<span>More Strict</span>
 																	</div>
 																</div>
 															</FormControl>
-															<FormDescription className="text-xs">
-																Threshold for detecting harassment
+															<FormDescription className="text-sm mt-2">
+																How strictly to filter bullying and harassment
 															</FormDescription>
 															<FormMessage />
 														</FormItem>
@@ -777,9 +789,16 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 													name="sexualContentThreshold"
 													render={({ field }) => (
 														<FormItem>
-															<FormLabel>Sexual Content Threshold</FormLabel>
+															<div className="flex items-center justify-between">
+																<FormLabel className="text-base font-medium">
+																	Inappropriate Content
+																</FormLabel>
+																<span className="text-sm font-medium text-muted-foreground">
+																	{field.value.toFixed(1)}
+																</span>
+															</div>
 															<FormControl>
-																<div className="space-y-1">
+																<div className="space-y-2 mt-2">
 																	<Slider
 																		min={0}
 																		max={1}
@@ -791,15 +810,14 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 																		className="cursor-grab active:cursor-grabbing"
 																		disabled={!moderationForm.watch("enabled")}
 																	/>
-																	<div className="flex justify-between text-xs text-muted-foreground">
-																		<span>0</span>
-																		<span>{field.value.toFixed(1)}</span>
-																		<span>1</span>
+																	<div className="flex justify-between text-sm text-muted-foreground">
+																		<span>More Permissive</span>
+																		<span>More Strict</span>
 																	</div>
 																</div>
 															</FormControl>
-															<FormDescription className="text-xs">
-																Threshold for detecting sexual content
+															<FormDescription className="text-sm mt-2">
+																How strictly to filter inappropriate content
 															</FormDescription>
 															<FormMessage />
 														</FormItem>
@@ -811,9 +829,16 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 													name="spamThreshold"
 													render={({ field }) => (
 														<FormItem>
-															<FormLabel>Spam Threshold</FormLabel>
+															<div className="flex items-center justify-between">
+																<FormLabel className="text-base font-medium">
+																	Spam Detection
+																</FormLabel>
+																<span className="text-sm font-medium text-muted-foreground">
+																	{field.value.toFixed(1)}
+																</span>
+															</div>
 															<FormControl>
-																<div className="space-y-1">
+																<div className="space-y-2 mt-2">
 																	<Slider
 																		min={0}
 																		max={1}
@@ -825,15 +850,15 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 																		className="cursor-grab active:cursor-grabbing"
 																		disabled={!moderationForm.watch("enabled")}
 																	/>
-																	<div className="flex justify-between text-xs text-muted-foreground">
-																		<span>0</span>
-																		<span>{field.value.toFixed(1)}</span>
-																		<span>1</span>
+																	<div className="flex justify-between text-sm text-muted-foreground">
+																		<span>More Permissive</span>
+																		<span>More Strict</span>
 																	</div>
 																</div>
 															</FormControl>
-															<FormDescription className="text-xs">
-																Threshold for detecting spam
+															<FormDescription className="text-sm mt-2">
+																How strictly to filter spam and repetitive
+																content
 															</FormDescription>
 															<FormMessage />
 														</FormItem>
