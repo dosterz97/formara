@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@google/genai':
+        specifier: ^1.4.0
+        version: 1.4.0(@modelcontextprotocol/sdk@1.12.1)(bufferutil@4.0.9)
       '@vercel/postgres':
         specifier: ^0.10.0
         version: 0.10.0
@@ -18,6 +21,9 @@ importers:
         specifier: ^16.4.7
         version: 16.4.7
     devDependencies:
+      '@types/node':
+        specifier: ^20.11.24
+        version: 20.17.48
       concurrently:
         specifier: ^8.2.2
         version: 8.2.2
@@ -30,9 +36,6 @@ importers:
 
   apps/bot:
     dependencies:
-      '@google/genai':
-        specifier: ^1.4.0
-        version: 1.4.0(@modelcontextprotocol/sdk@1.12.1)(bufferutil@4.0.9)
       discord.js:
         specifier: ^14.14.1
         version: 14.19.3(bufferutil@4.0.9)
@@ -56,14 +59,23 @@ importers:
         specifier: ^5.4.2
         version: 5.8.2
 
+  apps/shared:
+    dependencies:
+      dotenv:
+        specifier: ^16.4.5
+        version: 16.4.7
+      drizzle-orm:
+        specifier: ^0.29.3
+        version: 0.29.5(@neondatabase/serverless@0.9.5)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@19.0.10)(@vercel/postgres@0.10.0)(postgres@3.4.5)(react@19.0.0)
+      postgres:
+        specifier: ^3.4.3
+        version: 3.4.5
+
   apps/web:
     dependencies:
       '@formspree/react':
         specifier: ^3.0.0
         version: 3.0.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      '@google/genai':
-        specifier: ^1.4.0
-        version: 1.4.0(@modelcontextprotocol/sdk@1.12.1)(bufferutil@4.0.9)
       '@hookform/resolvers':
         specifier: ^4.1.3
         version: 4.1.3(react-hook-form@7.54.2(react@19.0.0))
@@ -2313,6 +2325,77 @@ packages:
   drizzle-kit@0.30.5:
     resolution: {integrity: sha512-l6dMSE100u7sDaTbLczibrQZjA35jLsHNqIV+jmhNVO3O8jzM6kywMOmV9uOz9ZVSCMPQhAZEFjL/qDPVrqpUA==}
     hasBin: true
+
+  drizzle-orm@0.29.5:
+    resolution: {integrity: sha512-jS3+uyzTz4P0Y2CICx8FmRQ1eplURPaIMWDn/yq6k4ShRFj9V7vlJk67lSf2kyYPzQ60GkkNGXcJcwrxZ6QCRw==}
+    peerDependencies:
+      '@aws-sdk/client-rds-data': '>=3'
+      '@cloudflare/workers-types': '>=3'
+      '@libsql/client': '*'
+      '@neondatabase/serverless': '>=0.1'
+      '@opentelemetry/api': ^1.4.1
+      '@planetscale/database': '>=1'
+      '@types/better-sqlite3': '*'
+      '@types/pg': '*'
+      '@types/react': '>=18'
+      '@types/sql.js': '*'
+      '@vercel/postgres': '*'
+      better-sqlite3: '>=7'
+      bun-types: '*'
+      expo-sqlite: '>=13.2.0'
+      knex: '*'
+      kysely: '*'
+      mysql2: '>=2'
+      pg: '>=8'
+      postgres: '>=3'
+      react: '>=18'
+      sql.js: '>=1'
+      sqlite3: '>=5'
+    peerDependenciesMeta:
+      '@aws-sdk/client-rds-data':
+        optional: true
+      '@cloudflare/workers-types':
+        optional: true
+      '@libsql/client':
+        optional: true
+      '@neondatabase/serverless':
+        optional: true
+      '@opentelemetry/api':
+        optional: true
+      '@planetscale/database':
+        optional: true
+      '@types/better-sqlite3':
+        optional: true
+      '@types/pg':
+        optional: true
+      '@types/react':
+        optional: true
+      '@types/sql.js':
+        optional: true
+      '@vercel/postgres':
+        optional: true
+      better-sqlite3:
+        optional: true
+      bun-types:
+        optional: true
+      expo-sqlite:
+        optional: true
+      knex:
+        optional: true
+      kysely:
+        optional: true
+      mysql2:
+        optional: true
+      pg:
+        optional: true
+      postgres:
+        optional: true
+      react:
+        optional: true
+      sql.js:
+        optional: true
+      sqlite3:
+        optional: true
 
   drizzle-orm@0.30.10:
     resolution: {integrity: sha512-IRy/QmMWw9lAQHpwbUh1b8fcn27S/a9zMIzqea1WNOxK9/4EB8gIo+FZWLiPXzl2n9ixGSv8BhsLZiOppWEwBw==}
@@ -5264,7 +5347,7 @@ snapshots:
 
   '@types/pg@8.11.6':
     dependencies:
-      '@types/node': 20.17.48
+      '@types/node': 22.13.9
       pg-protocol: 1.8.0
       pg-types: 4.0.2
 
@@ -5642,6 +5725,16 @@ snapshots:
       gel: 2.0.1
     transitivePeerDependencies:
       - supports-color
+
+  drizzle-orm@0.29.5(@neondatabase/serverless@0.9.5)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@19.0.10)(@vercel/postgres@0.10.0)(postgres@3.4.5)(react@19.0.0):
+    optionalDependencies:
+      '@neondatabase/serverless': 0.9.5
+      '@opentelemetry/api': 1.9.0
+      '@types/pg': 8.11.6
+      '@types/react': 19.0.10
+      '@vercel/postgres': 0.10.0
+      postgres: 3.4.5
+      react: 19.0.0
 
   drizzle-orm@0.30.10(@neondatabase/serverless@0.9.5)(@opentelemetry/api@1.9.0)(@types/pg@8.11.6)(@types/react@19.0.10)(@vercel/postgres@0.10.0)(postgres@3.4.5)(react@19.0.0):
     optionalDependencies:

@@ -12,16 +12,19 @@
 		"db:seedQdrant": "pnpm --filter web db:seedQdrant",
 		"db:generate": "pnpm --filter web db:generate",
 		"db:migrate": "pnpm --filter web db:migrate",
-		"db:studio": "pnpm --filter web db:studio"
+		"db:studio": "pnpm --filter weppnb db:studio"
 	},
 	"dependencies": {
+		"@google/genai": "^1.4.0",
 		"@vercel/postgres": "^0.10.0",
 		"dedent": "^1.5.3",
 		"dotenv": "^16.4.7"
+		
 	},
 	"devDependencies": {
 		"concurrently": "^8.2.2",
 		"tsx": "^4.7.1",
-		"typescript": "^5.8.2"
+		"typescript": "^5.8.2",
+		"@types/node": "^20.11.24"
 	}
 }
