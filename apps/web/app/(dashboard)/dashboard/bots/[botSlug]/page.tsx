@@ -791,7 +791,7 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 														<FormItem>
 															<div className="flex items-center justify-between">
 																<FormLabel className="text-base font-medium">
-																	Inappropriate Content
+																	Sexual Content
 																</FormLabel>
 																<span className="text-sm font-medium text-muted-foreground">
 																	{field.value.toFixed(1)}
@@ -817,7 +817,7 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 																</div>
 															</FormControl>
 															<FormDescription className="text-sm mt-2">
-																How strictly to filter inappropriate content
+																How strictly to filter sexual content
 															</FormDescription>
 															<FormMessage />
 														</FormItem>

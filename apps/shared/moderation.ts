@@ -19,7 +19,8 @@ interface ModerationSettings {
 	spamThreshold: number;
 }
 
-const MODERATION_PROMPT = `You are a content moderator. Your task is to analyze the provided input and classify it based on the following categories:
+const MODERATION_PROMPT = `
+You are a content moderator. Your task is to analyze the provided input and classify it based on the following categories:
 
 * Toxicity: Rude, disrespectful, or unreasonable language.
 * Harassment: Harass, intimidate, or bully others.
@@ -80,10 +81,10 @@ export async function moderateContent(
 
 		// Check if any score exceeds its corresponding threshold
 		const hasViolation =
-			moderationResult.toxicityScore < settings.toxicityThreshold ||
-			moderationResult.harassmentScore < settings.harassmentThreshold ||
-			moderationResult.sexualContentScore < settings.sexualContentThreshold ||
-			moderationResult.spamScore < settings.spamThreshold;
+			moderationResult.toxicityScore > settings.toxicityThreshold ||
+			moderationResult.harassmentScore > settings.harassmentThreshold ||
+			moderationResult.sexualContentScore > settings.sexualContentThreshold ||
+			moderationResult.spamScore > settings.spamThreshold;
 
 		return {
 			...moderationResult,
