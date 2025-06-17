@@ -2,10 +2,13 @@ import { Client, Events, GatewayIntentBits, Message } from "discord.js";
 import dotenv from "dotenv";
 import path from "path";
 import { getBotByGuildId, getBotModerationSettings } from "../../shared/db";
-import { Bot } from "../../shared/types";
+import {
+	DEFAULT_MODERATION_THRESHOLDS,
+	moderateContent,
+} from "../../shared/moderation";
+import { Bot } from "../../web/lib/db/schema";
 import { handleGuildCreate, handleGuildDelete } from "./db";
 import { generateBotResponse } from "./services/gemini";
-import { moderateContent } from "./services/moderation";
 
 // Load .env from root directory
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
@@ -78,16 +81,13 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 	// Get bot data first to check moderation settings
 	let bot: Bot | null = null;
-	let moderationEnabled = true; // Default to true
+	let moderationSettings = null;
 	if (message.guild) {
 		try {
 			bot = await getBotByGuildId(message.guild.id);
 			if (bot) {
-				const moderationSettings = await getBotModerationSettings(bot.id);
-				if (moderationSettings) {
-					moderationEnabled = moderationSettings.enabled;
-					console.log("Moderation settings:", moderationSettings);
-				}
+				moderationSettings = await getBotModerationSettings(bot.id);
+				console.log("Moderation settings:", moderationSettings);
 			}
 		} catch (error) {
 			console.error("Error fetching bot data:", error);
@@ -97,20 +97,47 @@ client.on(Events.MessageCreate, async (message: Message) => {
 	// Check content with Gemini moderation if enabled
 	try {
 		const moderationResult = await moderateContent(message.content, {
-			enabled: moderationEnabled,
+			enabled: moderationSettings?.enabled ?? false,
+			toxicityThreshold:
+				moderationSettings?.toxicityThreshold ??
+				DEFAULT_MODERATION_THRESHOLDS.toxicityThreshold,
+			harassmentThreshold:
+				moderationSettings?.harassmentThreshold ??
+				DEFAULT_MODERATION_THRESHOLDS.harassmentThreshold,
+			sexualContentThreshold:
+				moderationSettings?.sexualContentThreshold ??
+				DEFAULT_MODERATION_THRESHOLDS.sexualContentThreshold,
+			spamThreshold:
+				moderationSettings?.spamThreshold ??
+				DEFAULT_MODERATION_THRESHOLDS.spamThreshold,
 		});
 
 		if (moderationResult.violation) {
+			// Find the highest scoring category
+			const scores = [
+				{ type: "Toxicity", score: moderationResult.toxicityScore },
+				{ type: "Harassment", score: moderationResult.harassmentScore },
+				{ type: "Sexual Content", score: moderationResult.sexualContentScore },
+				{ type: "Spam", score: moderationResult.spamScore },
+			];
+			const highestScore = scores.reduce((prev, current) =>
+				prev.score > current.score ? prev : current
+			);
+
 			try {
 				await message.delete();
 				console.log(
-					`Deleted message containing ${moderationResult.harmType} content from ${message.author.tag}`
+					`Deleted message containing ${highestScore.type.toLowerCase()} content from ${
+						message.author.tag
+					}`
 				);
 				// Send a warning message
 				if (message.channel.type === 0) {
 					// GUILD_TEXT
 					await message.channel.send(
-						`${message.author}, please keep the chat family-friendly. Your message was flagged for ${moderationResult.harmType} content.`
+						`${
+							message.author
+						}, your message was flagged for ${highestScore.type.toLowerCase()} content. Please keep the chat family-friendly.`
 					);
 				}
 			} catch (error) {

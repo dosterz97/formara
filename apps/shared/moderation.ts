@@ -3,6 +3,14 @@ import { GoogleGenAI } from "@google/genai";
 // Initialize Gemini client
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
+// Default moderation thresholds
+export const DEFAULT_MODERATION_THRESHOLDS = {
+	toxicityThreshold: 0.7,
+	harassmentThreshold: 0.7,
+	sexualContentThreshold: 0.7,
+	spamThreshold: 0.7,
+} as const;
+
 interface ModerationResult {
 	violation: boolean;
 	toxicityScore: number;

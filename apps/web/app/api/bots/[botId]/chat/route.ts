@@ -5,7 +5,10 @@ import { botModeration, bots } from "@/lib/db/schema";
 import { GoogleGenAI } from "@google/genai";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { moderateContent } from "../../../../../../shared/moderation";
+import {
+	DEFAULT_MODERATION_THRESHOLDS,
+	moderateContent,
+} from "../../../../../../shared/moderation";
 
 // Initialize Gemini client
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
@@ -54,21 +57,17 @@ export async function POST(
 			const moderationResult = await moderateContent(message, {
 				enabled: moderationSettings[0]?.enabled ?? false,
 				toxicityThreshold:
-					moderationSettings[0]?.toxicityThreshold != null
-						? moderationSettings[0].toxicityThreshold
-						: 0.7,
+					moderationSettings[0]?.toxicityThreshold ??
+					DEFAULT_MODERATION_THRESHOLDS.toxicityThreshold,
 				harassmentThreshold:
-					moderationSettings[0]?.harassmentThreshold != null
-						? moderationSettings[0].harassmentThreshold
-						: 0.7,
+					moderationSettings[0]?.harassmentThreshold ??
+					DEFAULT_MODERATION_THRESHOLDS.harassmentThreshold,
 				sexualContentThreshold:
-					moderationSettings[0]?.sexualContentThreshold != null
-						? moderationSettings[0].sexualContentThreshold
-						: 0.7,
+					moderationSettings[0]?.sexualContentThreshold ??
+					DEFAULT_MODERATION_THRESHOLDS.sexualContentThreshold,
 				spamThreshold:
-					moderationSettings[0]?.spamThreshold != null
-						? moderationSettings[0].spamThreshold
-						: 0.7,
+					moderationSettings[0]?.spamThreshold ??
+					DEFAULT_MODERATION_THRESHOLDS.spamThreshold,
 			});
 			console.log("Moderation result:", moderationResult);
 
