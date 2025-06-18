@@ -112,6 +112,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 				DEFAULT_MODERATION_THRESHOLDS.spamThreshold,
 		});
 
+		console.log("Moderation result:", moderationResult);
 		if (moderationResult.violation) {
 			// Find the highest scoring category
 			const scores = [

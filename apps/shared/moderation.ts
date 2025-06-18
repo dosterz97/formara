@@ -87,6 +87,7 @@ export async function moderateContent(
 		// Parse the response as JSON
 		const moderationResult = JSON.parse(cleanedResponse) as ModerationResult;
 
+		console.log("shared: Moderation result:", moderationResult);
 		// Check if any score exceeds its corresponding threshold
 		const hasViolation =
 			moderationResult.toxicityScore > settings.toxicityThreshold ||

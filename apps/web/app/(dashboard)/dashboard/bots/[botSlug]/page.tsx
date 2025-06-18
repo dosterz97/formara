@@ -731,8 +731,8 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 																		disabled={!moderationForm.watch("enabled")}
 																	/>
 																	<div className="flex justify-between text-sm text-muted-foreground">
-																		<span>More Permissive</span>
 																		<span>More Strict</span>
+																		<span>More Permissive</span>
 																	</div>
 																</div>
 															</FormControl>
@@ -771,8 +771,8 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 																		disabled={!moderationForm.watch("enabled")}
 																	/>
 																	<div className="flex justify-between text-sm text-muted-foreground">
-																		<span>More Permissive</span>
 																		<span>More Strict</span>
+																		<span>More Permissive</span>
 																	</div>
 																</div>
 															</FormControl>
@@ -811,8 +811,8 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 																		disabled={!moderationForm.watch("enabled")}
 																	/>
 																	<div className="flex justify-between text-sm text-muted-foreground">
-																		<span>More Permissive</span>
 																		<span>More Strict</span>
+																		<span>More Permissive</span>
 																	</div>
 																</div>
 															</FormControl>
@@ -851,8 +851,8 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 																		disabled={!moderationForm.watch("enabled")}
 																	/>
 																	<div className="flex justify-between text-sm text-muted-foreground">
-																		<span>More Permissive</span>
 																		<span>More Strict</span>
+																		<span>More Permissive</span>
 																	</div>
 																</div>
 															</FormControl>
