@@ -1,5 +1,6 @@
 "use client";
 
+import { BotForm } from "@/components/bot-form";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -12,6 +13,7 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Bot } from "@/lib/db/schema";
 import { getDiscordOAuthUrl } from "@/lib/discord/constants";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -26,6 +28,7 @@ export default function BotsPage() {
 	const [deleteLoadingBotId, setDeleteLoadingBotId] = useState<string | null>(
 		null
 	);
+	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
 	// Load bots from API when component mounts
 	useEffect(() => {
@@ -100,12 +103,13 @@ export default function BotsPage() {
 							Manage and configure your Discord bots
 						</p>
 					</div>
-					<Link href="/dashboard/bots/new">
-						<Button className="bg-indigo-600 hover:bg-indigo-700 shadow-sm">
-							<Plus className="mr-2 h-4 w-4" />
-							Create New Bot
-						</Button>
-					</Link>
+					<Button
+						className="bg-indigo-600 hover:bg-indigo-700 shadow-sm"
+						onClick={() => setIsCreateModalOpen(true)}
+					>
+						<Plus className="mr-2 h-4 w-4" />
+						Create New Bot
+					</Button>
 				</div>
 
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -234,18 +238,34 @@ export default function BotsPage() {
 									<p className="text-gray-600 mb-6">
 										Create your first bot to start managing your Discord servers
 									</p>
-									<Link href="/dashboard/bots/new">
-										<Button className="bg-indigo-600 hover:bg-indigo-700 shadow-sm">
-											<Plus className="mr-2 h-4 w-4" />
-											Create Your First Bot
-										</Button>
-									</Link>
+									<Button
+										className="bg-indigo-600 hover:bg-indigo-700 shadow-sm"
+										onClick={() => setIsCreateModalOpen(true)}
+									>
+										<Plus className="mr-2 h-4 w-4" />
+										Create Your First Bot
+									</Button>
 								</div>
 							</div>
 						</div>
 					)}
 				</div>
 			</div>
+
+			<Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+				<DialogContent>
+					<BotForm
+						isOpen={isCreateModalOpen}
+						onOpenChange={setIsCreateModalOpen}
+						mode="create"
+						onSuccess={(bot) => {
+							toast.success("Bot created successfully");
+							setIsCreateModalOpen(false);
+							fetchBots();
+						}}
+					/>
+				</DialogContent>
+			</Dialog>
 		</section>
 	);
 }
