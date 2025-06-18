@@ -10,7 +10,6 @@
 	"dependencies": {
 		"discord.js": "^14.14.1",
 		"dotenv": "^16.4.5",
-		"drizzle-orm": "^0.30.4",
 		"postgres": "^3.4.3"
 	},
 	"devDependencies": {
