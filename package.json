@@ -3,6 +3,7 @@
 	"private": true,
 	"scripts": {
 		"dev": "concurrently --names \"WEB,BOT\" --prefix-colors \"cyan,magenta\" \"pnpm --filter web dev\" \"pnpm --filter bot dev\"",
+		"build:bot": "pnpm --filter bot build",
 		"build": "pnpm --filter web build",
 		"start": "pnpm --filter web start",
 		"db:setup": "pnpm --filter web db:setup",
@@ -19,7 +20,6 @@
 		"@vercel/postgres": "^0.10.0",
 		"dedent": "^1.5.3",
 		"dotenv": "^16.4.7"
-		
 	},
 	"devDependencies": {
 		"concurrently": "^8.2.2",
