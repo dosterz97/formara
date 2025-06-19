@@ -19,13 +19,14 @@
 		"@google/genai": "^1.4.0",
 		"@vercel/postgres": "^0.10.0",
 		"dedent": "^1.5.3",
-		"drizzle-orm": "^0.40.0",
-		"dotenv": "^16.4.7"
+		"dotenv": "^16.4.7",
+		"drizzle-kit": "^0.31.1",
+		"drizzle-orm": "^0.40.0"
 	},
 	"devDependencies": {
+		"@types/node": "^20.11.24",
 		"concurrently": "^8.2.2",
 		"tsx": "^4.7.1",
-		"typescript": "^5.8.2",
-		"@types/node": "^20.11.24"
+		"typescript": "^5.8.2"
 	}
 }
