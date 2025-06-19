@@ -1,17 +1,15 @@
 {
 	"extends": "../../tsconfig.base.json",
 	"compilerOptions": {
-		"target": "ES2020",
-		"module": "CommonJS",
-		"lib": ["ES2020"],
-		"outDir": "./dist",
-		"rootDir": "../..",
-		"strict": true,
-		"esModuleInterop": true,
-		"skipLibCheck": true,
-		"forceConsistentCasingInFileNames": true,
-		"moduleResolution": "node"
-	},
-	"include": ["src/**/*", "../shared/**/*"],
-	"exclude": ["node_modules", "dist"]
+		"lib": ["ESNext"],
+		"module": "ESNext",
+		"moduleResolution": "node",
+		"target": "ESNext",
+		"baseUrl": ".",
+		"noEmit": true, // Only use `tsc` for type checking
+		"paths": {
+			"@/*": ["./*"],
+			"~/shared/*": ["../shared/*"]
+		}
+	}
 }
