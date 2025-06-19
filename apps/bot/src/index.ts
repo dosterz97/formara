@@ -114,31 +114,18 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 		console.log("Moderation result:", moderationResult);
 		if (moderationResult.violation) {
-			// Find the highest scoring category
-			const scores = [
-				{ type: "Toxicity", score: moderationResult.toxicityScore },
-				{ type: "Harassment", score: moderationResult.harassmentScore },
-				{ type: "Sexual Content", score: moderationResult.sexualContentScore },
-				{ type: "Spam", score: moderationResult.spamScore },
-			];
-			const highestScore = scores.reduce((prev, current) =>
-				prev.score > current.score ? prev : current
-			);
-
 			try {
 				await message.delete();
 				console.log(
-					`Deleted message containing ${highestScore.type.toLowerCase()} content from ${
+					`Deleted message containing ${moderationResult.violationType?.toLowerCase()} content from ${
 						message.author.tag
 					}`
 				);
 				// Send a warning message
-				if (message.channel.type === 0) {
+				if (message.channel.type === 0 && moderationResult.violationMessage) {
 					// GUILD_TEXT
 					await message.channel.send(
-						`${
-							message.author
-						}, your message was flagged for ${highestScore.type.toLowerCase()} content. Please keep the chat family-friendly.`
+						`${message.author}, ${moderationResult.violationMessage}`
 					);
 				}
 			} catch (error) {

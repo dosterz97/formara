@@ -17,6 +17,8 @@ interface ModerationResult {
 	harassmentScore: number;
 	sexualContentScore: number;
 	spamScore: number;
+	violationType?: string;
+	violationMessage?: string;
 }
 
 interface ModerationSettings {
@@ -88,6 +90,7 @@ export async function moderateContent(
 		const moderationResult = JSON.parse(cleanedResponse) as ModerationResult;
 
 		console.log("shared: Moderation result:", moderationResult);
+
 		// Check if any score exceeds its corresponding threshold
 		const hasViolation =
 			moderationResult.toxicityScore > settings.toxicityThreshold ||
@@ -95,9 +98,30 @@ export async function moderateContent(
 			moderationResult.sexualContentScore > settings.sexualContentThreshold ||
 			moderationResult.spamScore > settings.spamThreshold;
 
+		let violationType: string | undefined;
+		let violationMessage: string | undefined;
+
+		if (hasViolation) {
+			// Find the highest scoring category
+			const scores = [
+				{ type: "Toxicity", score: moderationResult.toxicityScore },
+				{ type: "Harassment", score: moderationResult.harassmentScore },
+				{ type: "Sexual Content", score: moderationResult.sexualContentScore },
+				{ type: "Spam", score: moderationResult.spamScore },
+			];
+			const highestScore = scores.reduce((prev, current) =>
+				prev.score > current.score ? prev : current
+			);
+
+			violationType = highestScore.type;
+			violationMessage = `your message was flagged for ${highestScore.type.toLowerCase()} content. Please keep the chat family-friendly.`;
+		}
+
 		return {
 			...moderationResult,
 			violation: hasViolation,
+			violationType,
+			violationMessage,
 		};
 	} catch (error) {
 		console.error("Error in content moderation:", error);
