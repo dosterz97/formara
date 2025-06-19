@@ -10,7 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, Loader2, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { Knowledge } from "../../shared/knowledge";
+import { Knowledge } from "~/shared/knowledge";
 
 interface PreviewKnowledge
 	extends Omit<Knowledge, "id" | "botId" | "createdAt" | "updatedAt"> {

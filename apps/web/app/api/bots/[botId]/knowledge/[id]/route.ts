@@ -3,7 +3,7 @@ import {
 	updateKnowledgeVector,
 } from "@/lib/db/qdrant-client";
 import { NextResponse } from "next/server";
-import { Knowledge } from "../../../../../../../shared/knowledge";
+import { Knowledge } from "~/shared/knowledge";
 
 export async function DELETE(
 	request: Request,

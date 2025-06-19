@@ -61,7 +61,7 @@ import { use, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Knowledge } from "../../../../../../shared/knowledge";
+import { Knowledge } from "~/shared/knowledge";
 
 const getOAuthUrl = (botId: string) =>
 	getDiscordOAuthUrl(process.env.NEXT_PUBLIC_DISCORD_APPLICATION_ID!, botId);

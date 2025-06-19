@@ -1,11 +1,11 @@
 import { Client, Events, GatewayIntentBits, Message } from "discord.js";
 import dotenv from "dotenv";
 import path from "path";
-import { getBotByGuildId, getBotModerationSettings } from "../../shared/db";
+import { getBotByGuildId, getBotModerationSettings } from "~/shared/db";
 import {
 	DEFAULT_MODERATION_THRESHOLDS,
 	moderateContent,
-} from "../../shared/moderation";
+} from "~/shared/moderation";
 import { Bot } from "../../web/lib/db/schema";
 import { handleGuildCreate, handleGuildDelete } from "./db";
 import { generateBotResponse } from "./services/gemini";

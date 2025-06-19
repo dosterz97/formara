@@ -8,7 +8,7 @@ import { NextResponse } from "next/server";
 import {
 	DEFAULT_MODERATION_THRESHOLDS,
 	moderateContent,
-} from "../../../../../../shared/moderation";
+} from "~/shared/moderation";
 
 // Initialize Gemini client
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });

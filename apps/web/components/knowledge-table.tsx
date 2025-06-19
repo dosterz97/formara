@@ -47,7 +47,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Knowledge } from "../../shared/knowledge";
+import { Knowledge } from "~/shared/knowledge";
 
 interface KnowledgeTableProps {
 	botId: string;

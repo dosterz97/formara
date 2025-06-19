@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"useDefineForClassFields": true,
+		"skipLibCheck": true,
+
+		"allowImportingTsExtensions": true,
+		"isolatedModules": true,
+		"noEmit": true,
+		"allowSyntheticDefaultImports": true,
+
+		"strict": true,
+		"noFallthroughCasesInSwitch": true,
+		"strictNullChecks": true,
+		"paths": {
+			"~/*": ["./apps/*"],
+			"@/*": ["./*"]
+		}
+	}
+}

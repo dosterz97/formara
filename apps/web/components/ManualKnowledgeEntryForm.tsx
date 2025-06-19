@@ -18,7 +18,7 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Knowledge } from "../../shared/knowledge";
+import { Knowledge } from "~/shared/knowledge";
 
 // Define the Zod schema
 const knowledgeSchema = z.object({
