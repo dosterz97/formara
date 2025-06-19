@@ -87,7 +87,6 @@ const moderationSchema = z.object({
 	sexualContentThreshold: z.number().min(0).max(1),
 	spamThreshold: z.number().min(0).max(1),
 	actionOnViolation: z.enum(["warn", "delete", "timeout"]),
-	timeoutDuration: z.number().min(1).max(1440).optional(), // in minutes
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -136,7 +135,6 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 			sexualContentThreshold: 0.7,
 			spamThreshold: 0.7,
 			actionOnViolation: "warn",
-			timeoutDuration: 30,
 		});
 
 	const moderationForm = useForm<ModerationValues>({
@@ -333,6 +331,7 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 
 	// Handle moderation settings update
 	const handleModerationUpdate = async (values: ModerationValues) => {
+		console.log("values", values, bot);
 		if (!bot) return;
 
 		try {
@@ -882,37 +881,6 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 														</FormItem>
 													)}
 												/>
-
-												{moderationForm.watch("actionOnViolation") ===
-													"timeout" && (
-													<FormField
-														control={moderationForm.control}
-														name="timeoutDuration"
-														render={({ field }) => (
-															<FormItem>
-																<FormLabel>
-																	Timeout Duration (minutes)
-																</FormLabel>
-																<FormControl>
-																	<Input
-																		type="number"
-																		min="1"
-																		max="1440"
-																		{...field}
-																		onChange={(e) =>
-																			field.onChange(parseInt(e.target.value))
-																		}
-																		disabled={!moderationForm.watch("enabled")}
-																	/>
-																</FormControl>
-																<FormDescription className="text-xs">
-																	Duration of timeout in minutes (1-1440)
-																</FormDescription>
-																<FormMessage />
-															</FormItem>
-														)}
-													/>
-												)}
 											</div>
 
 											<Button type="submit" className="w-full">

@@ -1,7 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
 	boolean,
-	integer,
 	json,
 	pgTable,
 	real,
@@ -150,7 +149,6 @@ export const botModeration = pgTable("bot_moderation", {
 	})
 		.notNull()
 		.default("warn"),
-	timeoutDuration: integer("timeout_duration"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

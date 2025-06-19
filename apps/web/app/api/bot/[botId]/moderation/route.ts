@@ -11,7 +11,6 @@ const moderationSchema = z.object({
 	sexualContentThreshold: z.number().min(0).max(1),
 	spamThreshold: z.number().min(0).max(1),
 	actionOnViolation: z.enum(["warn", "delete", "timeout"]),
-	timeoutDuration: z.number().min(1).max(1440).optional(),
 });
 
 export async function GET(
