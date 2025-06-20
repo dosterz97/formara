@@ -71,7 +71,7 @@ function UserMenu({ isLandingPage, darkMode }: UserMenuProps) {
 	}
 
 	return (
-		<div className={`${!darkMode ? "text-white" : "text-black"}`}>
+		<div className={`text-black`}>
 			<DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
 				<DropdownMenuTrigger>
 					<Avatar className="cursor-pointer size-9">
