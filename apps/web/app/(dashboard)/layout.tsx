@@ -230,8 +230,8 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
 	const pathname = usePathname();
-	const isLandingPage = pathname === "/";
-	const darkMode = pathname === "/" || pathname === "/contact";
+	const darkMode =
+		pathname === "/" || pathname === "/contact" || pathname === "/privacy";
 
 	return (
 		<section

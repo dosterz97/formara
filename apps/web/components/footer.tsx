@@ -123,7 +123,7 @@ export function Footer() {
 							</li>
 							<li>
 								<a
-									href="#"
+									href="/privacy"
 									className="text-white hover:text-indigo-300 transition"
 								>
 									Privacy
