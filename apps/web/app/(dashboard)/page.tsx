@@ -76,7 +76,7 @@ export default function FormLandingPage() {
 						>
 							Add to Discord <ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
-						<IframePlayer src="https://app.supademo.com/embed/cm9vtplns12jfwbbibv5fty4b?embed_v=2">
+						<IframePlayer src="https://app.supademo.com/embed/cmc4ehxpw040jllpnu540nng8?embed_v=2">
 							<Button size="lg" variant="secondary">
 								See How It Works
 							</Button>
@@ -89,7 +89,7 @@ export default function FormLandingPage() {
 							<div className="absolute inset-0 flex items-center justify-center">
 								<div className="relative box-content max-h-[80vh] w-full aspect-[1.7419] py-10">
 									<iframe
-										src="https://app.supademo.com/embed/cm9vtplns12jfwbbibv5fty4b?embed_v=2"
+										src="https://app.supademo.com/embed/cmc4ehxpw040jllpnu540nng8?embed_v=2"
 										loading="lazy"
 										title="Formorra Demo"
 										allow="clipboard-write"
@@ -225,7 +225,7 @@ export default function FormLandingPage() {
 								Get Started <ArrowRight className="ml-2 h-4 w-4" />
 							</Button>
 						</Link>
-						<IframePlayer src="https://app.supademo.com/embed/cm9vtplns12jfwbbibv5fty4b?embed_v=2">
+						<IframePlayer src="https://app.supademo.com/embed/cmc4ehxpw040jllpnu540nng8?embed_v=2">
 							<Button size="lg" variant="secondary">
 								Watch Demo
 							</Button>
