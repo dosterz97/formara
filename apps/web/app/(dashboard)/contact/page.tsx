@@ -37,7 +37,7 @@ export default function ContactPage() {
 	return (
 		<div className="w-full min-h-screen bg-slate-950 text-slate-50">
 			{/* Hero Section */}
-			<section className="w-full py-16 px-4 bg-gradient-to-b from-slate-950 to-slate-900">
+			<section className="w-full py-12 px-4 bg-gradient-to-b from-slate-950 to-slate-900">
 				<div className="max-w-3xl mx-auto text-center">
 					<h1 className="text-3xl md:text-5xl font-bold mb-6">Get in Touch</h1>
 					<p className="text-lg text-white max-w-2xl mx-auto mb-8">
@@ -47,7 +47,7 @@ export default function ContactPage() {
 			</section>
 
 			{/* Contact Form */}
-			<section className="w-full py-16 px-4 bg-slate-900">
+			<section className="w-full pb-12 px-4 bg-slate-900">
 				<div className="max-w-md mx-auto">
 					<Card className="bg-slate-800/50 border-slate-700 p-6">
 						<h2 className="text-xl font-bold mb-6 text-white">
