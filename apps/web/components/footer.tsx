@@ -18,7 +18,7 @@ export function Footer() {
 							projects.
 						</p>
 						<a
-							href="https://discord.gg/abBZv2HRs8"
+							href="https://discord.gg/b64p5jputp"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="inline-flex items-center gap-2 text-white hover:text-indigo-300 transition"
@@ -35,7 +35,7 @@ export function Footer() {
 						<ul className="space-y-2">
 							<li>
 								<a
-									href="#features"
+									href="/#features"
 									className="text-white hover:text-indigo-300 transition"
 								>
 									Features
@@ -51,7 +51,9 @@ export function Footer() {
 							</li>
 							<li>
 								<a
-									href="#"
+									href="https://discord.gg/b64p5jputp"
+									target="_blank"
+									rel="noopener noreferrer"
 									className="text-white hover:text-indigo-300 transition"
 								>
 									API
@@ -59,7 +61,9 @@ export function Footer() {
 							</li>
 							<li>
 								<a
-									href="#"
+									href="https://discord.gg/b64p5jputp"
+									target="_blank"
+									rel="noopener noreferrer"
 									className="text-white hover:text-indigo-300 transition"
 								>
 									Templates
@@ -75,7 +79,7 @@ export function Footer() {
 						<ul className="space-y-2">
 							<li>
 								<a
-									href="https://discord.gg/abBZv2HRs8"
+									href="https://discord.gg/b64p5jputp"
 									target="_blank"
 									rel="noopener noreferrer"
 									className="text-white hover:text-indigo-300 transition"
@@ -85,7 +89,7 @@ export function Footer() {
 							</li>
 							<li>
 								<a
-									href="https://discord.gg/abBZv2HRs8"
+									href="https://discord.gg/b64p5jputp"
 									target="_blank"
 									rel="noopener noreferrer"
 									className="text-white hover:text-indigo-300 transition"
@@ -96,7 +100,7 @@ export function Footer() {
 
 							<li>
 								<a
-									href="https://discord.gg/abBZv2HRs8"
+									href="https://discord.gg/b64p5jputp"
 									target="_blank"
 									rel="noopener noreferrer"
 									className="text-white hover:text-indigo-300 transition"
