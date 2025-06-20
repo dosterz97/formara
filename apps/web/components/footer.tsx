@@ -115,22 +115,6 @@ export function Footer() {
 						<ul className="space-y-2">
 							<li>
 								<a
-									href="#"
-									className="text-white hover:text-indigo-300 transition"
-								>
-									About
-								</a>
-							</li>
-							<li>
-								<a
-									href="#"
-									className="text-white hover:text-indigo-300 transition"
-								>
-									Careers
-								</a>
-							</li>
-							<li>
-								<a
 									href="/contact"
 									className="text-white hover:text-indigo-300 transition"
 								>

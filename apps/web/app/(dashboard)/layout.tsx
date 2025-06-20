@@ -17,9 +17,10 @@ import { ReactNode, Suspense, use, useEffect, useState } from "react";
 
 interface UserMenuProps {
 	isLandingPage: boolean;
+	darkMode?: boolean;
 }
 
-function UserMenu({ isLandingPage }: UserMenuProps) {
+function UserMenu({ isLandingPage, darkMode }: UserMenuProps) {
 	const [isMenuOpen, setIsMenuOpen] = useState(false);
 	const { userPromise } = useUser();
 	const user = use(userPromise);
@@ -38,7 +39,7 @@ function UserMenu({ isLandingPage }: UserMenuProps) {
 					asChild
 					variant={"link"}
 					className={`${
-						isLandingPage
+						darkMode
 							? "text-indigo-600 hover:text-indigo-700"
 							: "text-black hover:text-gray-800"
 					}`}
@@ -58,7 +59,7 @@ function UserMenu({ isLandingPage }: UserMenuProps) {
 				<Button
 					asChild
 					className={`${
-						isLandingPage
+						darkMode
 							? "bg-indigo-600 hover:bg-indigo-700"
 							: "bg-black hover:bg-gray-800"
 					} text-white text-sm px-4 py-2 rounded-full`}
@@ -70,35 +71,37 @@ function UserMenu({ isLandingPage }: UserMenuProps) {
 	}
 
 	return (
-		<DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-			<DropdownMenuTrigger>
-				<Avatar className="cursor-pointer size-9">
-					<AvatarImage alt={user.name || ""} />
-					<AvatarFallback>
-						{user.email
-							.split(" ")
-							.map((n) => n[0])
-							.join("")}
-					</AvatarFallback>
-				</Avatar>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="flex flex-col gap-1">
-				<DropdownMenuItem className="cursor-pointer">
-					<Link href="/dashboard" className="flex w-full items-center">
-						<Home className="mr-2 h-4 w-4" />
-						<span>Dashboard</span>
-					</Link>
-				</DropdownMenuItem>
-				<form action={handleSignOut} className="w-full">
-					<button type="submit" className="flex w-full">
-						<DropdownMenuItem className="w-full flex-1 cursor-pointer">
-							<LogOut className="mr-2 h-4 w-4" />
-							<span>Sign out</span>
-						</DropdownMenuItem>
-					</button>
-				</form>
-			</DropdownMenuContent>
-		</DropdownMenu>
+		<div className={`${!darkMode ? "text-white" : "text-black"}`}>
+			<DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+				<DropdownMenuTrigger>
+					<Avatar className="cursor-pointer size-9">
+						<AvatarImage alt={user.name || ""} />
+						<AvatarFallback>
+							{user.email
+								.split(" ")
+								.map((n) => n[0])
+								.join("")}
+						</AvatarFallback>
+					</Avatar>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="end" className="flex flex-col gap-1">
+					<DropdownMenuItem className="cursor-pointer">
+						<Link href="/dashboard" className="flex w-full items-center">
+							<Home className="mr-2 h-4 w-4" />
+							<span>Dashboard</span>
+						</Link>
+					</DropdownMenuItem>
+					<form action={handleSignOut} className="w-full">
+						<button type="submit" className="flex w-full">
+							<DropdownMenuItem className="w-full flex-1 cursor-pointer">
+								<LogOut className="mr-2 h-4 w-4" />
+								<span>Sign out</span>
+							</DropdownMenuItem>
+						</button>
+					</form>
+				</DropdownMenuContent>
+			</DropdownMenu>
+		</div>
 	);
 }
 
@@ -170,14 +173,14 @@ function Navigation({ isLandingPage }: NavigationProps) {
 	);
 }
 
-function Header() {
+function Header({ darkMode }: { darkMode?: boolean }) {
 	const pathname = usePathname();
 	const isLandingPage = pathname === "/";
 
 	return (
 		<header
 			className={
-				isLandingPage
+				darkMode
 					? "w-full border-b border-slate-800"
 					: "border-b border-gray-200"
 			}
@@ -190,12 +193,12 @@ function Header() {
 					<Link href="/" className="flex items-center gap-2">
 						<Globe2
 							className={`h-8 w-8 ${
-								isLandingPage ? "text-indigo-500" : "text-indigo-500"
+								darkMode ? "text-indigo-500" : "text-indigo-500"
 							}`}
 						/>
 						<span
 							className={
-								isLandingPage
+								darkMode
 									? "text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600"
 									: "text-xl font-semibold text-gray-900"
 							}
@@ -213,7 +216,7 @@ function Header() {
 				{/* User menu on the right */}
 				<div className="flex-none flex items-center space-x-4 w-[250px] justify-end">
 					<Suspense fallback={<div className="h-9" />}>
-						<UserMenu isLandingPage={isLandingPage} />
+						<UserMenu isLandingPage={isLandingPage} darkMode={darkMode} />
 					</Suspense>
 				</div>
 			</div>
@@ -228,14 +231,15 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
 	const pathname = usePathname();
 	const isLandingPage = pathname === "/";
+	const darkMode = pathname === "/" || pathname === "/contact";
 
 	return (
 		<section
 			className={`flex flex-col min-h-screen ${
-				isLandingPage ? "bg-slate-950 text-slate-50" : ""
+				darkMode ? "bg-slate-950 text-slate-50" : ""
 			}`}
 		>
-			<Header />
+			<Header darkMode={darkMode} />
 			<main className="flex-1 relative">{children}</main>
 		</section>
 	);
