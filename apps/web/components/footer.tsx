@@ -18,7 +18,7 @@ export function Footer() {
 							projects.
 						</p>
 						<a
-							href="https://discord.gg/eE8Bjxrn"
+							href="https://discord.gg/abBZv2HRs8"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="inline-flex items-center gap-2 text-white hover:text-indigo-300 transition"
