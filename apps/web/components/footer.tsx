@@ -75,7 +75,9 @@ export function Footer() {
 						<ul className="space-y-2">
 							<li>
 								<a
-									href="#"
+									href="https://discord.gg/abBZv2HRs8"
+									target="_blank"
+									rel="noopener noreferrer"
 									className="text-white hover:text-indigo-300 transition"
 								>
 									Documentation
@@ -83,23 +85,20 @@ export function Footer() {
 							</li>
 							<li>
 								<a
-									href="#"
+									href="https://discord.gg/abBZv2HRs8"
+									target="_blank"
+									rel="noopener noreferrer"
 									className="text-white hover:text-indigo-300 transition"
 								>
 									Tutorials
 								</a>
 							</li>
+
 							<li>
 								<a
-									href="#"
-									className="text-white hover:text-indigo-300 transition"
-								>
-									Blog
-								</a>
-							</li>
-							<li>
-								<a
-									href="#"
+									href="https://discord.gg/abBZv2HRs8"
+									target="_blank"
+									rel="noopener noreferrer"
 									className="text-white hover:text-indigo-300 transition"
 								>
 									Community
