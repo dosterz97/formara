@@ -1,6 +1,9 @@
 import { db } from "@/lib/db/drizzle";
-import { initializeBotKnowledgeCollection } from "@/lib/db/qdrant-client";
-import { getTeamForUser, getUser } from "@/lib/db/queries";
+import {
+	createBotWithKnowledge,
+	getTeamForUser,
+	getUser,
+} from "@/lib/db/queries";
 import { bots } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -69,20 +72,14 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Create the bot
-		const [newBot] = await db
-			.insert(bots)
-			.values({
-				teamId: teamData.id,
-				name: data.name,
-				slug,
-				description: data.description,
-				createdBy: user.id,
-			})
-			.returning();
-
-		// Initialize the Qdrant collection for the new bot
-		await initializeBotKnowledgeCollection(newBot.id);
+		// Create the bot using the shared function
+		const newBot = await createBotWithKnowledge({
+			teamId: teamData.id,
+			name: data.name,
+			slug,
+			description: data.description,
+			createdBy: user.id,
+		});
 
 		return NextResponse.json(newBot);
 	} catch (error) {

@@ -2,7 +2,8 @@ import { verifyToken } from "@/lib/auth/session";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { db } from "./drizzle";
-import { activityLogs, teamMembers, teams, users } from "./schema";
+import { initializeBotKnowledgeCollection } from "./qdrant-client";
+import { activityLogs, bots, teamMembers, teams, users } from "./schema";
 
 export async function getUser() {
 	const sessionCookie = (await cookies()).get("session");
@@ -126,4 +127,36 @@ export async function getTeamForUser(userId: string) {
 	});
 
 	return result?.teamMembers[0]?.team || null;
+}
+
+/**
+ * Creates a new bot with Qdrant collection initialization
+ * @param botData The bot data to create
+ * @returns The created bot
+ */
+export async function createBotWithKnowledge(botData: {
+	teamId: string;
+	name: string;
+	slug: string;
+	description?: string;
+	createdBy: string;
+	status?: string;
+}) {
+	// Create the bot in the database
+	const [newBot] = await db
+		.insert(bots)
+		.values({
+			teamId: botData.teamId,
+			name: botData.name,
+			slug: botData.slug,
+			description: botData.description,
+			status: botData.status || "active",
+			createdBy: botData.createdBy,
+		})
+		.returning();
+
+	// Initialize the Qdrant collection for the new bot
+	await initializeBotKnowledgeCollection(newBot.id);
+
+	return newBot;
 }

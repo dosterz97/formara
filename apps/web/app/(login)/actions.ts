@@ -7,7 +7,11 @@ import {
 import { comparePasswords, hashPassword, setSession } from "@/lib/auth/session";
 import { db } from "@/lib/db/drizzle";
 import { initializeBotKnowledgeCollection } from "@/lib/db/qdrant-client";
-import { getUser, getUserWithTeam } from "@/lib/db/queries";
+import {
+	createBotWithKnowledge,
+	getUser,
+	getUserWithTeam,
+} from "@/lib/db/queries";
 import {
 	activityLogs,
 	ActivityType,
@@ -18,7 +22,6 @@ import {
 	User,
 	users,
 	type NewActivityLog,
-	type NewBot,
 	type NewTeam,
 	type NewTeamMember,
 	type NewUser,
@@ -125,22 +128,17 @@ async function createTemplateBot(teamId: string, userId: string) {
 			return existingBot[0];
 		}
 
-		const templateBot: NewBot = {
+		// Create the bot using the shared function
+		const newBot = await createBotWithKnowledge({
 			teamId,
 			name: "Formorra",
 			slug: "formorra",
 			description:
 				"Welcome to Formorra! I'm your AI assistant ready to help you with any questions or tasks. Feel free to customize my behavior and settings to better suit your needs.",
-			status: "active",
 			createdBy: userId,
-		};
+		});
 
-		const [newBot] = await db.insert(bots).values(templateBot).returning();
 		console.log("Template bot created:", newBot.id);
-
-		// Initialize the Qdrant collection for the new bot
-		await initializeBotKnowledgeCollection(newBot.id);
-
 		return newBot;
 	} catch (error) {
 		console.error("Error creating template bot:", error);
