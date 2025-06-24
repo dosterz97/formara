@@ -28,6 +28,38 @@ function uuidToNumericId(uuid: string): number {
 }
 
 /**
+ * Internal function to ensure a bot's knowledge collection exists
+ * @param botId The bot ID to create/ensure collection for
+ * @returns Promise<string> The collection name
+ */
+async function ensureKnowledgeCollection(botId: string): Promise<string> {
+	const collectionName = `bot_${botId}_knowledge`;
+
+	try {
+		// Check if collection already exists
+		const collections = await qdrantClient.getCollections();
+		if (!collections.collections.some((c) => c.name === collectionName)) {
+			await qdrantClient.createCollection(collectionName, {
+				vectors: {
+					size: 1536, // OpenAI embeddings size
+					distance: "Cosine",
+				},
+				optimizers_config: {
+					default_segment_number: 2,
+				},
+				replication_factor: 1,
+			});
+			console.log(`Created collection ${collectionName}`);
+		}
+	} catch (collectionError) {
+		console.error("Error creating collection:", collectionError);
+		throw collectionError;
+	}
+
+	return collectionName;
+}
+
+/**
  * Creates knowledge vector in Qdrant
  * @param knowledge The knowledge object
  * @param botId The bot ID this knowledge belongs to
@@ -41,7 +73,9 @@ export async function createKnowledgeVector(knowledge: {
 }): Promise<string> {
 	try {
 		console.log("Creating knowledge vector for:", knowledge);
-		const collectionName = `bot_${knowledge.botId}_knowledge`;
+
+		// Ensure collection exists
+		const collectionName = await ensureKnowledgeCollection(knowledge.botId);
 
 		// Convert UUID to numeric ID for Qdrant
 		const numericId = uuidToNumericId(knowledge.id);
@@ -61,26 +95,6 @@ export async function createKnowledgeVector(knowledge: {
 
 		const embedding = embeddingResponse.data[0].embedding;
 		console.log("Got embedding with length:", embedding.length);
-
-		// Create collection if it doesn't exist
-		try {
-			const collections = await qdrantClient.getCollections();
-			if (!collections.collections.some((c) => c.name === collectionName)) {
-				await qdrantClient.createCollection(collectionName, {
-					vectors: {
-						size: 1536, // OpenAI embeddings size
-						distance: "Cosine",
-					},
-					optimizers_config: {
-						default_segment_number: 2,
-					},
-					replication_factor: 1,
-				});
-				console.log(`Created collection ${collectionName}`);
-			}
-		} catch (collectionError) {
-			console.error("Error creating collection:", collectionError);
-		}
 
 		const payload = {
 			knowledge_id: knowledge.id,
@@ -408,5 +422,22 @@ export async function scrollKnowledge(
 		throw new Error(
 			`Failed to scroll knowledge: ${error?.message || "Unknown error"}`
 		);
+	}
+}
+
+/**
+ * Initializes a bot's knowledge collection in Qdrant
+ * @param botId The bot ID to initialize the collection for
+ * @returns Promise<void>
+ */
+export async function initializeBotKnowledgeCollection(
+	botId: string
+): Promise<void> {
+	try {
+		await ensureKnowledgeCollection(botId);
+		console.log(`Initialized Qdrant collection for bot: ${botId}`);
+	} catch (error) {
+		console.error("Error initializing bot knowledge collection:", error);
+		// Don't throw error as this shouldn't block bot creation
 	}
 }

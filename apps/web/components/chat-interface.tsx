@@ -437,7 +437,8 @@ export function ChatInterface({ botId, botName }: ChatInterfaceProps) {
 				<div className="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
 					{messages.length === 0 && (
 						<div className="text-center text-muted-foreground py-8">
-							Start a conversation to test the bot's knowledge base!
+							Start a conversation to test the bot's knowledge base and
+							moderation settings!
 						</div>
 					)}
 					{messages.map((message) => (

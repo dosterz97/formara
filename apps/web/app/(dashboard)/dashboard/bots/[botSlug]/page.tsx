@@ -439,7 +439,7 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 
 	return (
 		<>
-			<div className="mx-auto max-w-7xl">
+			<div className="mx-auto max-w-7xl p-4">
 				<div className="mb-6">
 					<Button
 						variant="outline"

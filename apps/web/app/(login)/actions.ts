@@ -6,6 +6,7 @@ import {
 } from "@/lib/auth/middleware";
 import { comparePasswords, hashPassword, setSession } from "@/lib/auth/session";
 import { db } from "@/lib/db/drizzle";
+import { initializeBotKnowledgeCollection } from "@/lib/db/qdrant-client";
 import { getUser, getUserWithTeam } from "@/lib/db/queries";
 import {
 	activityLogs,
@@ -119,6 +120,8 @@ async function createTemplateBot(teamId: string, userId: string) {
 
 		if (existingBot.length > 0) {
 			console.log("Template bot already exists for team:", teamId);
+			// Initialize collection for existing bot if it doesn't exist
+			await initializeBotKnowledgeCollection(existingBot[0].id);
 			return existingBot[0];
 		}
 
@@ -134,6 +137,10 @@ async function createTemplateBot(teamId: string, userId: string) {
 
 		const [newBot] = await db.insert(bots).values(templateBot).returning();
 		console.log("Template bot created:", newBot.id);
+
+		// Initialize the Qdrant collection for the new bot
+		await initializeBotKnowledgeCollection(newBot.id);
+
 		return newBot;
 	} catch (error) {
 		console.error("Error creating template bot:", error);

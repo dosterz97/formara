@@ -1,4 +1,5 @@
 import { db } from "@/lib/db/drizzle";
+import { initializeBotKnowledgeCollection } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
 import { bots } from "@/lib/db/schema";
 import { desc, eq } from "drizzle-orm";
@@ -79,6 +80,9 @@ export async function POST(request: NextRequest) {
 				createdBy: user.id,
 			})
 			.returning();
+
+		// Initialize the Qdrant collection for the new bot
+		await initializeBotKnowledgeCollection(newBot.id);
 
 		return NextResponse.json(newBot);
 	} catch (error) {
