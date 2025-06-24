@@ -10,12 +10,14 @@ import { getUser, getUserWithTeam } from "@/lib/db/queries";
 import {
 	activityLogs,
 	ActivityType,
+	bots,
 	invitations,
 	teamMembers,
 	teams,
 	User,
 	users,
 	type NewActivityLog,
+	type NewBot,
 	type NewTeam,
 	type NewTeamMember,
 	type NewUser,
@@ -97,7 +99,7 @@ export const signIn = validatedAction(signInSchema, async (data, formData) => {
 		return createCheckoutSession({ team: foundTeam, priceId });
 	}
 
-	redirect("/dashboard");
+	redirect("/dashboard/bots");
 });
 
 const signUpSchema = z.object({
@@ -105,6 +107,40 @@ const signUpSchema = z.object({
 	password: z.string().min(8),
 	inviteId: z.string().optional(),
 });
+
+async function createTemplateBot(teamId: string, userId: string) {
+	try {
+		// Check if a bot with slug "formorra" already exists for this team
+		const existingBot = await db
+			.select()
+			.from(bots)
+			.where(and(eq(bots.teamId, teamId), eq(bots.slug, "formorra")))
+			.limit(1);
+
+		if (existingBot.length > 0) {
+			console.log("Template bot already exists for team:", teamId);
+			return existingBot[0];
+		}
+
+		const templateBot: NewBot = {
+			teamId,
+			name: "Formorra",
+			slug: "formorra",
+			description:
+				"Welcome to Formorra! I'm your AI assistant ready to help you with any questions or tasks. Feel free to customize my behavior and settings to better suit your needs.",
+			status: "active",
+			createdBy: userId,
+		};
+
+		const [newBot] = await db.insert(bots).values(templateBot).returning();
+		console.log("Template bot created:", newBot.id);
+		return newBot;
+	} catch (error) {
+		console.error("Error creating template bot:", error);
+		// Don't throw error as this shouldn't block sign-up
+		return null;
+	}
+}
 
 export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 	const { email, password, inviteId } = data;
@@ -210,6 +246,8 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 		db.insert(teamMembers).values(newTeamMember),
 		logActivity(teamId, createdUser.id, ActivityType.SIGN_UP),
 		setSession(createdUser),
+		// Create template bot for new teams (not when joining existing team via invitation)
+		!inviteId ? createTemplateBot(teamId, createdUser.id) : Promise.resolve(),
 	]);
 
 	const redirectTo = formData.get("redirect") as string | null;
@@ -218,7 +256,7 @@ export const signUp = validatedAction(signUpSchema, async (data, formData) => {
 		return createCheckoutSession({ team: createdTeam, priceId });
 	}
 
-	redirect("/dashboard");
+	redirect("/dashboard/bots");
 });
 
 export async function signOut() {
