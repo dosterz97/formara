@@ -199,7 +199,7 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 
 				// Fetch moderation settings
 				const moderationResponse = await fetch(
-					`/api/bot/${data.id}/moderation`
+					`/api/bots/${data.id}/moderation`
 				);
 				if (moderationResponse.ok) {
 					const moderationData = await moderationResponse.json();
@@ -292,7 +292,7 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 		try {
 			setEditLoading(true);
 
-			const response = await fetch(`/api/bot/${bot.id}`, {
+			const response = await fetch(`/api/bots/${bot.id}`, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
@@ -335,7 +335,7 @@ export default function BotDetailsPage({ params }: BotDetailsProps) {
 		if (!bot) return;
 
 		try {
-			const response = await fetch(`/api/bot/${bot.id}/moderation`, {
+			const response = await fetch(`/api/bots/${bot.id}/moderation`, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",

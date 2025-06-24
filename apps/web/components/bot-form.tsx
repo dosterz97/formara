@@ -83,7 +83,7 @@ export function BotForm({
 			setLoading(true);
 
 			const response = await fetch(
-				mode === "create" ? "/api/bots" : `/api/bot/${bot?.id}`,
+				mode === "create" ? "/api/bots" : `/api/bots/${bot?.id}`,
 				{
 					method: mode === "create" ? "POST" : "PUT",
 					headers: {

@@ -61,7 +61,7 @@ export default function BotsPage() {
 		setDeleteLoadingBotId(bot.id);
 
 		try {
-			const response = await fetch(`/api/bot/${bot.id}`, {
+			const response = await fetch(`/api/bots/${bot.id}`, {
 				method: "DELETE",
 			});
 
