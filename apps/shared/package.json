@@ -4,7 +4,6 @@
 	"main": "index.js",
 	"scripts": {},
 	"dependencies": {
-		"dotenv": "^16.4.5",
 		"postgres": "^3.4.3"
 	}
 }

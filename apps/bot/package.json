@@ -9,7 +9,6 @@
 	},
 	"dependencies": {
 		"discord.js": "^14.14.1",
-		"dotenv": "^16.4.5",
 		"postgres": "^3.4.3"
 	},
 	"devDependencies": {
