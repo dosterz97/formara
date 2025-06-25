@@ -158,7 +158,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
 			if (!bot) {
 				console.error("Bot configuration not found for this server");
-				await message.reply("I'm not properly configured for this server yet.");
+				// await message.reply("I'm not properly configured for this server yet.");
 				return;
 			}
 
