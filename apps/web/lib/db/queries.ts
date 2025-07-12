@@ -1,8 +1,8 @@
 import { verifyToken } from "@/lib/auth/session";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { initializeBotKnowledgeCollection } from "~/shared/qdrant-client";
 import { db } from "./drizzle";
-import { initializeBotKnowledgeCollection } from "./qdrant-client";
 import { activityLogs, bots, teamMembers, teams, users } from "./schema";
 
 export async function getUser() {

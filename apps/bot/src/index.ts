@@ -1,14 +1,10 @@
 import { Client, Events, GatewayIntentBits, Message } from "discord.js";
 import dotenv from "dotenv";
 import path from "path";
-import { getBotByGuildId, getBotModerationSettings } from "~/shared/db";
-import {
-	DEFAULT_MODERATION_THRESHOLDS,
-	moderateContent,
-} from "~/shared/moderation";
+import { processChat } from "~/shared/chat";
+import { getBotByGuildId } from "~/shared/db";
 import { Bot } from "../../web/lib/db/schema";
 import { handleGuildCreate, handleGuildDelete } from "./db";
-import { generateBotResponse } from "./services/gemini";
 
 // Load .env from root directory
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
@@ -72,70 +68,21 @@ client.on(Events.MessageCreate, async (message: Message) => {
 		return;
 	}
 
-	console.log("Received message:", {
-		content: message.content,
-		author: message.author.tag,
-		isBotMentioned: message.mentions.users.has(client.user!.id),
-		botId: client.user!.id,
-	});
+	console.log("=== Received Message ===");
+	console.log("Content:", message.content);
+	console.log("Author:", message.author.tag);
+	console.log("Guild:", message.guild?.name || "DM");
+	console.log("Bot Mentioned:", message.mentions.users.has(client.user!.id));
+	console.log("========================");
 
-	// Get bot data first to check moderation settings
+	// Get bot data for guild
 	let bot: Bot | null = null;
-	let moderationSettings = null;
 	if (message.guild) {
 		try {
 			bot = await getBotByGuildId(message.guild.id);
-			if (bot) {
-				moderationSettings = await getBotModerationSettings(bot.id);
-				console.log("Moderation settings:", moderationSettings);
-			}
 		} catch (error) {
 			console.error("Error fetching bot data:", error);
 		}
-	}
-
-	// Check content with Gemini moderation if enabled
-	try {
-		const moderationResult = await moderateContent(message.content, {
-			enabled: moderationSettings?.enabled ?? false,
-			toxicityThreshold:
-				moderationSettings?.toxicityThreshold ??
-				DEFAULT_MODERATION_THRESHOLDS.toxicityThreshold,
-			harassmentThreshold:
-				moderationSettings?.harassmentThreshold ??
-				DEFAULT_MODERATION_THRESHOLDS.harassmentThreshold,
-			sexualContentThreshold:
-				moderationSettings?.sexualContentThreshold ??
-				DEFAULT_MODERATION_THRESHOLDS.sexualContentThreshold,
-			spamThreshold:
-				moderationSettings?.spamThreshold ??
-				DEFAULT_MODERATION_THRESHOLDS.spamThreshold,
-		});
-
-		console.log("Moderation result:", moderationResult);
-		if (moderationResult.violation) {
-			try {
-				await message.delete();
-				console.log(
-					`Deleted message containing ${moderationResult.violationType?.toLowerCase()} content from ${
-						message.author.tag
-					}`
-				);
-				// Send a warning message
-				if (message.channel.type === 0 && moderationResult.violationMessage) {
-					// GUILD_TEXT
-					await message.channel.send(
-						`${message.author}, ${moderationResult.violationMessage}`
-					);
-				}
-			} catch (error) {
-				console.error("Error deleting message:", error);
-			}
-			return;
-		}
-	} catch (error) {
-		console.error("Error in content moderation:", error);
-		// Continue with message processing if moderation fails
 	}
 
 	// Check if the message mentions the bot and is in a guild
@@ -162,21 +109,105 @@ client.on(Events.MessageCreate, async (message: Message) => {
 				return;
 			}
 
-			const botData = {
-				name: bot.name,
-				description: bot.description || "",
-				attributes: {
-					status: bot.status,
-					settings: bot.settings || {},
-				},
-			};
+			// Use shared chat processing function
+			const result = await processChat({
+				botId: bot.id,
+				message: message.content,
+				chatHistory: [], // No chat history for now
+			});
 
-			console.log("Bot data:", botData);
+			// Handle the response
+			if ("error" in result) {
+				console.error("Chat processing error:", result.error);
+				// Handle moderation violations by deleting the message
+				if (result.error.includes("flagged for")) {
+					try {
+						await message.delete();
+						console.log(
+							`Deleted message containing inappropriate content from ${message.author.tag}`
+						);
+						// Send a warning message
+						if (message.channel.type === 0) {
+							await message.channel.send(`${message.author}, ${result.error}`);
+						}
+					} catch (error) {
+						console.error("Error deleting message:", error);
+					}
+					return;
+				}
+				// For other errors, send a generic error message
+				await message.reply(
+					"I apologize, but I am experiencing difficulties processing your message right now."
+				);
+			} else {
+				// Log successful response details
+				console.log("=== Chat Response Details ===");
+				console.log("Bot ID:", bot.id);
+				console.log("User:", message.author.tag);
+				console.log("Guild:", message.guild.name);
+				console.log("User Message:", message.content);
+				console.log("Bot Response:", result.response);
 
-			// Get AI-generated response using bot data
-			const response = await generateBotResponse(message.content, botData);
-			await message.reply(response);
-			console.log("Response sent successfully");
+				// Log knowledge sources used
+				if (result.knowledgeSources && result.knowledgeSources.length > 0) {
+					console.log("Knowledge Sources Used:");
+					result.knowledgeSources.forEach((source, index) => {
+						console.log(
+							`  ${index + 1}. ${source.name} (Score: ${source.score.toFixed(
+								3
+							)})`
+						);
+						console.log(
+							`     Content: ${source.content.substring(0, 200)}${
+								source.content.length > 200 ? "..." : ""
+							}`
+						);
+					});
+				} else {
+					console.log("No knowledge sources used");
+				}
+
+				// Log performance timings
+				if (result.timings) {
+					console.log("Performance Timings:");
+					Object.entries(result.timings).forEach(([key, value]) => {
+						console.log(`  ${key}: ${value}ms`);
+					});
+				}
+
+				// Log moderation result if present
+				if (result.moderationResult) {
+					console.log("Moderation Result:");
+					console.log(`  Violation: ${result.moderationResult.violation}`);
+					if (result.moderationResult.violation) {
+						console.log(
+							`  Toxicity: ${
+								result.moderationResult.toxicityScore?.toFixed(3) || "N/A"
+							}`
+						);
+						console.log(
+							`  Harassment: ${
+								result.moderationResult.harassmentScore?.toFixed(3) || "N/A"
+							}`
+						);
+						console.log(
+							`  Sexual Content: ${
+								result.moderationResult.sexualContentScore?.toFixed(3) || "N/A"
+							}`
+						);
+						console.log(
+							`  Spam: ${
+								result.moderationResult.spamScore?.toFixed(3) || "N/A"
+							}`
+						);
+					}
+				}
+
+				console.log("==============================");
+
+				await message.reply(result.response);
+				console.log("Response sent successfully");
+			}
 		} catch (error) {
 			console.error("Error processing message:", error);
 			// Fall back to generic response if AI fails

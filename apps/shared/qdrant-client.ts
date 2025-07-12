@@ -201,20 +201,22 @@ export async function deleteKnowledgeVector(
 		const collectionName = `bot_${botId}_knowledge`;
 
 		// Convert string vector ID back to numeric ID for Qdrant
-		const numericId = parseInt(vectorId, 10);
+		const pointId = parseInt(vectorId, 10);
 
-		if (isNaN(numericId)) {
+		console.log("Deleting vector:", pointId);
+
+		if (isNaN(pointId)) {
 			throw new Error(`Invalid vector ID: ${vectorId}`);
 		}
 
 		console.log(
-			`Deleting vector ${vectorId} (numeric: ${numericId}) from collection ${collectionName}`
+			`Deleting vector ${vectorId} (numeric: ${pointId}) from collection ${collectionName}`
 		);
 
 		// Delete the vector from Qdrant
 		await qdrantClient.delete(collectionName, {
 			wait: true,
-			points: [numericId],
+			points: [pointId],
 		});
 
 		console.log(`Successfully deleted vector ${vectorId} from Qdrant`);
@@ -414,7 +416,7 @@ export async function scrollKnowledge(
 		);
 
 		return scrollResponse.points.map((point) => ({
-			id: (point.payload?.knowledge_id as string) || point.id.toString(),
+			id: point.id.toString(),
 			payload: point.payload,
 		}));
 	} catch (error: any) {

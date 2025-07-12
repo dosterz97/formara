@@ -1,9 +1,9 @@
+import { NextResponse } from "next/server";
+import { Knowledge } from "~/shared/knowledge";
 import {
 	deleteKnowledgeVector,
 	updateKnowledgeVector,
-} from "@/lib/db/qdrant-client";
-import { NextResponse } from "next/server";
-import { Knowledge } from "~/shared/knowledge";
+} from "~/shared/qdrant-client";
 
 export async function DELETE(
 	request: Request,
@@ -15,7 +15,6 @@ export async function DELETE(
 
 		// Delete the vector from Qdrant
 		await deleteKnowledgeVector(id, botId);
-		console.log(`Successfully deleted vector ${id} from Qdrant`);
 
 		return NextResponse.json({ success: true, deleted: id });
 	} catch (e: any) {

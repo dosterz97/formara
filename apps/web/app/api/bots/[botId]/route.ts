@@ -1,10 +1,10 @@
 import { db } from "@/lib/db/drizzle";
-import { deleteBotKnowledgeCollection } from "@/lib/db/qdrant-client";
 import { getTeamForUser, getUser } from "@/lib/db/queries";
 import { bots, discordBots } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import slugify from "slugify";
+import { deleteBotKnowledgeCollection } from "~/shared/qdrant-client";
 
 export async function GET(
 	request: NextRequest,

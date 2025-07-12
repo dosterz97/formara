@@ -6,7 +6,6 @@ import {
 } from "@/lib/auth/middleware";
 import { comparePasswords, hashPassword, setSession } from "@/lib/auth/session";
 import { db } from "@/lib/db/drizzle";
-import { initializeBotKnowledgeCollection } from "@/lib/db/qdrant-client";
 import {
 	createBotWithKnowledge,
 	getUser,
@@ -31,6 +30,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { initializeBotKnowledgeCollection } from "~/shared/qdrant-client";
 
 async function logActivity(
 	teamId: string | null | undefined,

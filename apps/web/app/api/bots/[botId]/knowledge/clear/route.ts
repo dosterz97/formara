@@ -1,5 +1,5 @@
-import { clearBotKnowledge } from "@/lib/db/qdrant-client";
 import { NextResponse } from "next/server";
+import { clearBotKnowledge } from "~/shared/qdrant-client";
 
 export async function DELETE(
 	request: Request,
