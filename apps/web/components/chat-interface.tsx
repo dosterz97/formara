@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { useUser } from "@/lib/auth";
-import { KnowledgeSource } from "@/lib/chat/prompt";
 import { cn } from "@/lib/utils";
 import {
 	AlertTriangle,
@@ -25,6 +24,7 @@ import {
 	User,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { KnowledgeSource } from "~/shared/prompt";
 
 interface Timings {
 	total: number;

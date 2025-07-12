@@ -1,4 +1,3 @@
-import { constructPrompt, formatKnowledgeSources } from "@/lib/chat/prompt";
 import { db } from "@/lib/db/drizzle";
 import { searchKnowledge } from "@/lib/db/qdrant-client";
 import { botModeration, bots } from "@/lib/db/schema";
@@ -9,6 +8,7 @@ import {
 	DEFAULT_MODERATION_THRESHOLDS,
 	moderateContent,
 } from "~/shared/moderation";
+import { constructPrompt, formatKnowledgeSources } from "~/shared/prompt";
 
 // Initialize Gemini client
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });

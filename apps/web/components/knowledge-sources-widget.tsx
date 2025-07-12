@@ -7,12 +7,7 @@ import {
 } from "@/components/ui/collapsible";
 import { BookOpen, ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
-
-interface KnowledgeSource {
-	name: string;
-	content: string;
-	score: number;
-}
+import { KnowledgeSource } from "~/shared/prompt";
 
 interface KnowledgeSourcesWidgetProps {
 	sources: KnowledgeSource[];
