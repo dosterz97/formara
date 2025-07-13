@@ -76,7 +76,7 @@ export default function FormLandingPage() {
 						>
 							Add to Discord <ArrowRight className="ml-2 h-4 w-4" />
 						</Button>
-						<IframePlayer src="https://app.supademo.com/embed/cmc4ehxpw040jllpnu540nng8?embed_v=2">
+						<IframePlayer src="https://www.youtube.com/embed/OYzrMr6o5OI">
 							<Button size="lg" variant="secondary">
 								See How It Works
 							</Button>
@@ -87,12 +87,12 @@ export default function FormLandingPage() {
 					<div className="mt-16 w-full max-w-5xl mx-auto bg-slate-800/50 rounded-lg border border-slate-700 p-4">
 						<div className="aspect-video rounded-md overflow-hidden relative bg-slate-900">
 							<div className="absolute inset-0 flex items-center justify-center">
-								<div className="relative box-content max-h-[80vh] w-full aspect-[1.7419] py-10">
+								<div className="relative box-content max-h-[80vh] w-full aspect-[2.1] py-10">
 									<iframe
-										src="https://app.supademo.com/embed/cmc4ehxpw040jllpnu540nng8?embed_v=2"
+										src="https://www.youtube.com/embed/OYzrMr6o5OI"
 										loading="lazy"
 										title="Formorra Demo"
-										allow="clipboard-write"
+										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
 										frameBorder="0"
 										allowFullScreen
 										className="absolute top-0 left-0 w-full h-full"
@@ -225,7 +225,7 @@ export default function FormLandingPage() {
 								Get Started <ArrowRight className="ml-2 h-4 w-4" />
 							</Button>
 						</Link>
-						<IframePlayer src="https://app.supademo.com/embed/cmc4ehxpw040jllpnu540nng8?embed_v=2">
+						<IframePlayer src="https://www.youtube.com/embed/OYzrMr6o5OI">
 							<Button size="lg" variant="secondary">
 								Watch Demo
 							</Button>
