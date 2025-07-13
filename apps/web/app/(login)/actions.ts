@@ -114,11 +114,15 @@ const signUpSchema = z.object({
 
 async function createTemplateBot(teamId: string, userId: string) {
 	try {
-		// Check if a bot with slug "formorra" already exists for this team
+		// Generate a unique slug with random suffix
+		const randomSuffix = Math.random().toString(36).substring(2, 8);
+		const uniqueSlug = `formorra-${randomSuffix}`;
+
+		// Check if a bot with this unique slug already exists for this team
 		const existingBot = await db
 			.select()
 			.from(bots)
-			.where(and(eq(bots.teamId, teamId), eq(bots.slug, "formorra")))
+			.where(and(eq(bots.teamId, teamId), eq(bots.slug, uniqueSlug)))
 			.limit(1);
 
 		if (existingBot.length > 0) {
@@ -132,7 +136,7 @@ async function createTemplateBot(teamId: string, userId: string) {
 		const newBot = await createBotWithKnowledge({
 			teamId,
 			name: "Formorra",
-			slug: "formorra",
+			slug: uniqueSlug,
 			description:
 				"Welcome to Formorra! I'm your AI assistant ready to help you with any questions or tasks. Feel free to customize my behavior and settings to better suit your needs.",
 			createdBy: userId,
