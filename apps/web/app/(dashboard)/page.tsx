@@ -61,10 +61,10 @@ export default function FormLandingPage() {
 			<section className="w-full py-20 px-4 bg-gradient-to-b from-slate-950 to-slate-900">
 				<div className="max-w-6xl mx-auto text-center">
 					<h1 className="text-4xl md:text-6xl font-bold mb-6">
-						Your Discord Server's AI Assistant
+						Round the clock Discord Moderation
 					</h1>
 					<p className="text-xl text-white max-w-3xl mx-auto mb-10">
-						Smart moderation and instant answers. Train your bot, watch it work.
+						AI Customer support, moderation, and more.
 					</p>
 					<div className="flex flex-col sm:flex-row justify-center gap-4">
 						<Button
