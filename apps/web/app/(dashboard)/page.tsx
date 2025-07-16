@@ -61,10 +61,12 @@ export default function FormLandingPage() {
 			<section className="w-full py-20 px-4 bg-gradient-to-b from-slate-950 to-slate-900">
 				<div className="max-w-6xl mx-auto text-center">
 					<h1 className="text-4xl md:text-6xl font-bold mb-6">
-						Round the clock Discord Moderation
+						AI-Powered Discord Moderation & Support
 					</h1>
 					<p className="text-xl text-white max-w-3xl mx-auto mb-10">
-						AI Customer support, moderation, and more.
+						Formorra is your ultimate AI solution for Discord server management.
+						It's designed to automate moderation and enhance member engagement,
+						giving you back valuable time.
 					</p>
 					<div className="flex flex-col sm:flex-row justify-center gap-4">
 						<Button
@@ -109,11 +111,11 @@ export default function FormLandingPage() {
 				<div className="max-w-6xl mx-auto">
 					<div className="text-center mb-16">
 						<h2 className="text-3xl md:text-4xl font-bold mb-4">
-							Everything You Need For Your Discord Server
+							What Formorra Does for You
 						</h2>
 						<p className="text-lg text-white max-w-2xl mx-auto">
-							Powerful AI features to keep your community safe and informed, all
-							in one place.
+							Automate moderation and enhance member engagement with powerful AI
+							features designed for Discord communities.
 						</p>
 					</div>
 
@@ -126,8 +128,8 @@ export default function FormLandingPage() {
 								Smart Moderation
 							</h3>
 							<p className="text-white">
-								AI-powered content filtering and rule enforcement to keep your
-								community safe and welcoming.
+								Keep your community safe 24/7 with AI-powered content filtering
+								and rule enforcement.
 							</p>
 						</Card>
 
@@ -139,8 +141,8 @@ export default function FormLandingPage() {
 								Instant Answers
 							</h3>
 							<p className="text-white">
-								Quick and accurate responses to community questions, powered by
-								your knowledge base.
+								Provide immediate, accurate responses to member questions using
+								your existing knowledge base.
 							</p>
 						</Card>
 
@@ -152,8 +154,8 @@ export default function FormLandingPage() {
 								Easy Training
 							</h3>
 							<p className="text-white">
-								Simply upload your documents and FAQs - our AI learns and adapts
-								to your community's needs.
+								Simply upload your documents; our AI learns and adapts to your
+								community's needs.
 							</p>
 						</Card>
 
@@ -162,11 +164,11 @@ export default function FormLandingPage() {
 								<Globe className="text-blue-500 h-6 w-6" />
 							</div>
 							<h3 className="text-xl text-white font-bold mb-2">
-								Real-time Monitoring
+								Real-time Insights
 							</h3>
 							<p className="text-white">
 								Stay informed with instant alerts and detailed logs of all bot
-								activities and moderation actions.
+								activity.
 							</p>
 						</Card>
 
@@ -178,8 +180,8 @@ export default function FormLandingPage() {
 								Custom Responses
 							</h3>
 							<p className="text-white">
-								Train your bot to respond in your community's voice and style,
-								maintaining your unique culture.
+								Train your bot to speak in your community's unique voice and
+								style.
 							</p>
 						</Card>
 
@@ -188,11 +190,11 @@ export default function FormLandingPage() {
 								<ArrowRight className="text-amber-500 h-6 w-6" />
 							</div>
 							<h3 className="text-xl text-white font-bold mb-2">
-								Seamless Integration
+								Seamless Setup
 							</h3>
 							<p className="text-white">
-								One-click setup with Discord, no coding required. Your bot is
-								ready to work in minutes.
+								Get started in minutes with one-click Discord integration – no
+								coding required.
 							</p>
 						</Card>
 					</div>
