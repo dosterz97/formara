@@ -91,7 +91,7 @@ export default function FormLandingPage() {
 							<div className="absolute inset-0 flex items-center justify-center">
 								<div className="relative box-content max-h-[80vh] w-full aspect-[2.1] py-10">
 									<iframe
-										src="https://www.youtube.com/embed/OYzrMr6o5OI"
+										src="https://www.youtube.com/embed/OYzrMr6o5OI?autoplay=1&mute=1"
 										loading="lazy"
 										title="Formorra Demo"
 										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
