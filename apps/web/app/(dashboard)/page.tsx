@@ -88,19 +88,18 @@ export default function FormLandingPage() {
 					{/* Hero Image */}
 					<div className="mt-16 w-full max-w-5xl mx-auto bg-slate-800/50 rounded-lg border border-slate-700 p-4">
 						<div className="aspect-video rounded-md overflow-hidden relative bg-slate-900">
-							<div className="absolute inset-0 flex items-center justify-center">
-								<div className="relative box-content max-h-[80vh] w-full aspect-[2.1] py-10">
-									<iframe
-										src="https://www.youtube.com/embed/OYzrMr6o5OI?autoplay=1&mute=1"
-										loading="lazy"
-										title="Formorra Demo"
-										allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-										frameBorder="0"
-										allowFullScreen
-										className="absolute top-0 left-0 w-full h-full"
-									></iframe>
-								</div>
-							</div>
+							<video
+								src="/videos/demo.mp4"
+								autoPlay
+								muted
+								loop
+								playsInline
+								controls
+								className="w-full h-full object-cover"
+								title="Formorra Demo"
+							>
+								Your browser does not support the video tag.
+							</video>
 						</div>
 					</div>
 				</div>
